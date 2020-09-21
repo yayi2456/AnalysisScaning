@@ -10,7 +10,9 @@ Targets=[]#通过Bits计算得到
 BlockHashes=[]
 BlockLists=[]
 CommunicationCost=[]
+BlockStoragePlaces=[]#er重数组
 BlockSizes=[]
+LevelBlockStorage=[]
 RandomBlockStorage=[]
 
 def loadData(beginID,endID):#不包括endID
@@ -459,11 +461,8 @@ def loadData_Sizes(beginID,endID):
             blocksize = float(datalineitem[1])
             BlockSizes.append(blocksize)
 
-def calReplicas(blocklevel,piece,nodesum):
-    num=pow(2,blocklevel-1)*piece
-    if num>nodesum:
-        num=nodesum
-    return num
+def calReplicas(blocklevel,piece):
+    return pow(2,blocklevel-1)*piece
 
 def generateNodesCommunicationCost_norm(nodesnums):
     mu=0.5
@@ -491,82 +490,134 @@ def generateCommunicationCost_1(nodesnums):
             CommunicationCost[nodeid1].append(1)
             position=position+1
 
+def getmyFarmostNode(mynodeid,blockID,beginID):
+    myline=CommunicationCost[mynodeid].copy()
+    farmost=max(myline)
+    farmostid=myline.index(farmost)
+    while farmostid in BlockStoragePlaces[blockID-beginID]:
+        myline[farmostid]=-1
+        farmost=max(myline)
+        farmostid=myline.index(farmost)
+    return farmostid
 
 def initialAssignOneBlock(beginID,endID,blockID,nodesum,assigntype,piece):
-    #random
-    blocklevel = BlockLists[blockID - beginID][0]
-    r = calReplicas(blocklevel, piece,nodesum)
-    randnode = random.randint(0, nodesum-1)
-    RandomBlockStorage.append({randnode})
-    if r>nodesum:
-        r=nodesum
-    r-=1
-    while r:
+    if assigntype not in [0b1,0b11,0b111,0b1111]:
+        print("ERROR")
+        exit(1)
+        return 0
+    #新方法
+    nodeid=blockID%nodesum
+    blocklevel=BlockLists[blockID-beginID][0]
+    replicates=calReplicas(blocklevel,piece)
+    BlockStoragePlaces.append({nodeid})
+    thisnode=nodeid
+    r=replicates
+    rl=replicates
+    if assigntype == 0b1 or assigntype == 0b11 or assigntype == 0b111:
+        if nodesum<replicates:
+            replicates=nodesum
+        replicates-=1
+        while replicates:
+            farnode=getmyFarmostNode(thisnode,blockID,beginID)
+            if farnode not in BlockStoragePlaces[blockID-beginID]:
+                BlockStoragePlaces[blockID-beginID].add(farnode)
+                replicates-=1
+            thisnode = farnode
+    #level
+    if assigntype==0b11 or assigntype==0b111:
+        LevelBlockStorage.append({blocklevel%nodesum})
+        if rl>nodesum:
+            rl=nodesum
+        rl-=1
+        while rl:
+            nextnode=(blocklevel+rl)%nodesum
+            LevelBlockStorage[blockID-beginID].add(nextnode)
+            rl-=1
+    if assigntype==0b111 or assigntype == 0b1111:
+        #random
         randnode = random.randint(0, nodesum-1)
-        if randnode not in RandomBlockStorage[blockID-beginID]:
-            RandomBlockStorage[blockID-beginID].add(randnode)
-            r-=1
+        RandomBlockStorage.append({randnode})
+        if r>nodesum:
+            r=nodesum
+        r-=1
+        while r:
+            randnode = random.randint(0, nodesum-1)
+            if randnode not in RandomBlockStorage[blockID-beginID]:
+                RandomBlockStorage[blockID-beginID].add(randnode)
+                r-=1
     return
-
-def initialNewComingBlock(beginID,blockID,nodesum,piece):
-    # randnode=random.randint(0,nodesum-1)
-    # RandomBlockStorage.append({randnode})
-    blocklevel = BlockLists[blockID - beginID][0]
-    r = calReplicas(blocklevel, piece, nodesum)
-    randnode = random.randint(0, nodesum - 1)
-    RandomBlockStorage.append({randnode})
-    if r > nodesum:
-        r = nodesum
-    r -= 1
-    while r:
-        randnode = random.randint(0, nodesum - 1)
-        if randnode not in RandomBlockStorage[blockID - beginID]:
-            RandomBlockStorage[blockID - beginID].add(randnode)
-            r -= 1
-    return
-    #print("LOG:new block is coming... blockid=",blockID,', randomnode=',randnode)
 
 def printAssignRes(beginID,endID,piece):
     filename = './initialAssign-' + str(beginID) + '-' + str(endID) + '.txt'
     fileoutput = open(filename, 'w')
     for blockID in range(beginID,endID):
-        print('blockID:',blockID,' , level:',BlockLists[blockID-beginID][0],', replicanums:', calReplicas(BlockLists[blockID-beginID][0],piece,nodesum),',replicaactually:',len(RandomBlockStorage[blockID-beginID]), ',replicas:',RandomBlockStorage[blockID-beginID],file=fileoutput)
+        print('blockID:',blockID,' , level:',BlockLists[blockID-beginID][0],', replicanums:', calReplicas(BlockLists[blockID-beginID][0],piece),',replicaactually:',len(BlockStoragePlaces[blockID-beginID]), ',replicas:',BlockStoragePlaces[blockID-beginID],file=fileoutput)
     fileoutput.close()
 
-def init(beginID,endID,endIDpreassign,nodesums,assigntype,piece):#assigntype=001=只有新方法，011=level+新方法，111=random+level+新方法
+def init(beginID,endID,nodesums,assigntype,piece):#assigntype=001=只有新方法，011=level+新方法，111=random+level+新方法
     loadData(beginID,endID)
     maxlevel = buildBlockList(beginID, endID)
     generateCommunicationCost_1(nodesums)
     loadData_Sizes(beginID,endID)
-    #printAssignRes(beginID,endID,piece)
     return maxlevel
-
-def randomAssign(beginID,endID,endIDpreassign,nodesums,assigntype,piece):
-    for blockID in range(beginID,endIDpreassign):
+def assignBlcoksStatically(beginID,endID,nodesums,assigntype,piece):
+    for blockID in range(beginID,endID):
         initialAssignOneBlock(beginID,endID,blockID,nodesums,assigntype,piece)
-
-def dynamicRep(nodesum,Chosen,mynodeid,beginID,endIDsince):
-    allrepblocknums=int(len(Chosen)/nodesum)
-    allrepblocks=random.sample(range(0,len(Chosen)),allrepblocknums)
-    #print("LOG:dynamic: mynodeid=",mynodeid,', blocks=')
-    for blockid in allrepblocks:
-        RandomBlockStorage[Chosen[blockid]-beginID].add(mynodeid)
-        #print('\t blockid=',Chosen[blockid],', nodeplace=',mynodeid)
+    printAssignRes(beginID,endID,piece)
 
 def Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,mynodeid,assigntype,nodesum):
-    assigntype=0b111
-    if assigntype not in [0b1,0b11,0b111]:
+    if assigntype not in [0b1,0b11,0b111,0b1111]:
         print("ERROR")
         exit(1)
         return 0
+    ReturnTimeCost=[]
     Chosen = scanBlockList_noRepeat(m, beginID, endIDsince, maxlevel)
-    #print("request node:",mynodeid," , endIDSince:",endIDSince," ,Chosen blocks:  ",Chosen)
-    AllTimeCost=[0]*nodesum
-    if assigntype==0b111:
+    if assigntype == 0b1 or assigntype == 0b11 or assigntype == 0b111:
+        AllTimeCost=[0]*nodesum
+        for blockID in Chosen:
+            storageNodes=BlockStoragePlaces[blockID-beginID]
+            first=storageNodes.pop()
+            minCommunicate=CommunicationCost[mynodeid][first]
+            minNode=first
+            storageNodes.add(first)
+            for nodes in storageNodes:
+                commuicate=CommunicationCost[mynodeid][nodes]
+                if commuicate<minCommunicate:
+                    minCommunicate=commuicate
+                    minNode=nodes
+            TimeCost=minCommunicate*BlockSizes[blockID-beginID]
+            AllTimeCost[minNode]+=TimeCost
+            # print("new:minnode",minNode)
+        if len(Chosen) != 0:
+            timemax = max(AllTimeCost)
+        else:
+            timemax = 0
+        ReturnTimeCost.append(timemax)
+    if assigntype==0b11 or assigntype==0b111:
+        LevelAllTimeCost=[0]*nodesum
+        for blockID in Chosen:
+            storageNodes = LevelBlockStorage[blockID - beginID]
+            first = storageNodes.pop()
+            minCommunicate = CommunicationCost[mynodeid][first]
+            minNode = first
+            storageNodes.add(first)
+            for nodes in storageNodes:
+                # print(mynodeid,',,,',nodes)
+                commuicate = CommunicationCost[mynodeid][nodes]
+                if commuicate < minCommunicate:
+                    minCommunicate = commuicate
+                    minNode = nodes
+            TimeCost = minCommunicate * BlockSizes[blockID - beginID]
+            LevelAllTimeCost[minNode]+=(TimeCost)
+            # print("level:minnode", minNode)
+        if len(Chosen)!=0:
+            timemax=max(LevelAllTimeCost)
+        else:
+            timemax=0
+        ReturnTimeCost.append(timemax)
+    if assigntype==0b111 or assigntype==0b1111:
         RandomAllTimeCost=[0]*nodesum
         for blockID in Chosen:
-            # minCommunicate=min(CommunicationCost[mynodeid])
-            # minNode=np.argmin(CommunicationCost[mynodeid])
             storageNodes = RandomBlockStorage[blockID - beginID]
             first = storageNodes.pop()
             minCommunicate = CommunicationCost[mynodeid][first]
@@ -585,74 +636,81 @@ def Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,mynodeid,assignt
             timemax=max(RandomAllTimeCost)
         else:
             timemax=0
-        dynamicRep(nodesum,Chosen,mynodeid,beginID,endIDSince)
-    return timemax
+        ReturnTimeCost.append(timemax)
+    return ReturnTimeCost
 
-def endIDAverageTime(m,beginID,endIDsince,maxlevel,nodesum,assigntype,lambdai):
+def endIDAverageTime(m,beginID,endIDsince,maxlevel,nodesum,assigntype):
     AllTimeMax=[]
-    #allaccessnodes=random.sample(range(0,nodesum),lambdai)
-    allaccessnodes=[]
-    for i in range(lambdai):
-        allaccessnodes.append(random.randint(0,nodesum-1))
-    for nodeid in allaccessnodes:
-        timemax=Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,nodeid,assigntype,nodesum)
-        #print(timemax)
-        AllTimeMax.append(timemax)
-    return AllTimeMax#np.mean(AllTimeMax,axis=1)###
+    if assigntype not in [0b1,0b11,0b111,0b1111]:
+        print("ERROR")
+        exit(1)
+        return 0
+    if assigntype == 0b1 or assigntype == 0b11 or assigntype == 0b111:
+        AllTimeMax.append([])
+    if assigntype==0b11 or assigntype==0b111:
+        AllTimeMax.append([])
+    if assigntype==0b111 or assigntype==0b1111:
+        AllTimeMax.append([])
+    #随机选择一个
+    nodeme=random.randint(0,nodesum-1)
+    timemax=Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,nodeme,assigntype,nodesum)
+    for i in range(len(timemax)):
+        AllTimeMax[i].append(timemax[i])
+    #全选求平均
+    # for nodeid in range(nodesum):
+    #     timemax=Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,nodeid,assigntype,nodesum)
+    #     #print(timemax)
+    #     for i in range(len(timemax)):
+    #         AllTimeMax[i].append(timemax[i])
+    return np.mean(AllTimeMax,axis=1)
 
 if __name__=='__main__':
     #随链长度变化
     beginID=2016*2
-    tailnodes=500
-    beginnodes=200
-    endID=beginnodes+beginID+tailnodes
+    endID=2016*2+400
     nodesum=10
     m=3
-    assigntype=0b0
+    assigntype=0b1111#0b1111=只有ranndom
     piece=1
-    lambdai=1
-    ##
-    maxlevel = init(beginID, endID, beginID + beginnodes, nodesum, assigntype, piece)
+    maxlevel=init(beginID,endID,nodesum,assigntype,piece)
+    assignBlcoksStatically(beginID,endID,nodesum,assigntype,piece)
     AvgTime=[]
     step=1
-    totaltimes=10#减小所得点的波动
-    for runtimes in range(0,totaltimes):
+    totaltimes=10
+    for runtimes in range(0, totaltimes):
         AvgTime.append([])
-        RandomBlockStorage.clear()
-        randomAssign(beginID, endID, beginID + beginnodes, nodesum, assigntype, piece)
-        for endIDSince in range(beginID+beginnodes,endID,step):
-            avgtime=endIDAverageTime(m,beginID,endIDSince,maxlevel,nodesum,assigntype,lambdai)
+        for endIDSince in range(beginID+m,endID,step):
+            avgtime=endIDAverageTime(m,beginID,endIDSince,maxlevel,nodesum,assigntype)
             AvgTime[runtimes].append(avgtime)
-            for allblocks in range(step):
-                initialNewComingBlock(beginID,endIDSince,nodesum,piece)
-    printAssignRes(beginID,endIDSince,1)
     AvgTime=np.array(AvgTime)
-    ResContainer=AvgTime[0]
-    for runtimes in range(1,totaltimes):
-        ResContainer=ResContainer+AvgTime[runtimes]
-    ResContainer=ResContainer/totaltimes
+    ResContainer = AvgTime[0]
+    for runtimes in range(1, totaltimes):
+        ResContainer = ResContainer + AvgTime[runtimes]
+    ResContainer = ResContainer / totaltimes
     filename='./testData-' + str(assigntype)+'-'+str(beginID) + '-' + str(endID)+'-'+str(step)+'-'+str(m)+'-'+str(nodesum)+'-'+str(piece) + '.txt'
     fileoutput=open(filename,'w')
-
-    #ResContainer=ResContainer.flatten()
-    #print(ResContainer)
-    ##plt.plot(range(0,lambdai*tailnodes),ResContainer,color='r',marker='.')
-    # plt.plot(range(0,lambdai),AvgTime[0],color='r')
-    # plt.plot(range(lambdai, 2*lambdai), AvgTime[1], color='g')
-    # plt.plot(range(lambdai*2, lambdai*3), AvgTime[2], color='b')
-    # plt.plot(range(lambdai*3, 4*lambdai), AvgTime[3], color='y')
-    for i in range(tailnodes):
-        plt.plot(range(lambdai * i, lambdai * (i+1)), ResContainer[i], color='r', marker='.')
-    #分割线
-    # for i in range(-1,tailnodes):
-    #     plt.axvline(x=lambdai*(i+1),color='grey')
-    #print(range(beginID+m,endID,step),file=fileoutput)
-    #print(ResContainer,file=fileoutput)
+    if assigntype==0b1 or assigntype==0b11 or assigntype==0b111:
+        plt.plot(range(beginID+m,endID,step),ResContainer[:,0],color='r',label='new method')
+        print(range(beginID+m,endID,step),file=fileoutput)
+        print('new-method',file=fileoutput)
+        print(ResContainer[:,0],file=fileoutput)
+    if assigntype==0b11 or assigntype==0b111:
+        plt.plot(range(beginID + m, endID,step), ResContainer[:, 1], color='g',label='level assign with r replicate')
+        print('level', file=fileoutput)
+        print(ResContainer[:, 1], file=fileoutput)
+    if assigntype==0b111:
+        plt.plot(range(beginID + m, endID,step), ResContainer[:, 2], color='b',label='random replicate with r replicate')
+        print('random', file=fileoutput)
+        print(ResContainer[:, 2], file=fileoutput)
+    if assigntype==0b1111:
+        plt.plot(range(beginID + m, endID,step), ResContainer[:, 0], color='b',label='random replicate with r replicate')
+        print('random', file=fileoutput)
+        print(ResContainer[:, 0], file=fileoutput)
     fileoutput.close()
-    # plt.legend()
-    plt.title('avgtime over length of chain (lambda='+str(lambdai))
+    plt.legend()
+    plt.title('avgtime over length of chain')
     plt.xlabel('length of chain')
     plt.ylabel('avgtime')
-    # plt.ylim(ymin=0,ymax=2)
+    #plt.ylim(ymin=1,ymax=3)
     plt.show()
     #链长为2016时随r变化
