@@ -464,9 +464,13 @@ def calReplicas(blocklevel,piece,nodesum):
     if num>nodesum:
         num=nodesum
     return num
+    # num=pow(2, (int)((blocklevel - 1) / 2)) * piece
+    # if num>nodesum:
+    #     num=nodesum
+    # return num
 
 def generateNodesCommunicationCost_norm(nodesnums):
-    mu=0.5
+    mu=1
     sigma=0.5
     pairsofCostnums=int(nodesnums*(nodesnums-1)/2)
     Costtmp=np.random.normal(mu,sigma,pairsofCostnums)
@@ -546,7 +550,7 @@ def randomAssign(beginID,endID,endIDpreassign,nodesums,assigntype,piece):
         initialAssignOneBlock(beginID,endID,blockID,nodesums,assigntype,piece)
 
 def dynamicRep(nodesum,Chosen,mynodeid,beginID,endIDsince):
-    allrepblocknums=int(len(Chosen)/nodesum)
+    allrepblocknums=int(len(Chosen)/(nodesum-1))
     allrepblocks=random.sample(range(0,len(Chosen)),allrepblocknums)
     #print("LOG:dynamic: mynodeid=",mynodeid,', blocks=')
     for blockid in allrepblocks:
@@ -603,14 +607,14 @@ def endIDAverageTime(m,beginID,endIDsince,maxlevel,nodesum,assigntype,lambdai):
 if __name__=='__main__':
     #随链长度变化
     beginID=2016*2
-    tailnodes=500
+    tailnodes=200
     beginnodes=200
     endID=beginnodes+beginID+tailnodes
     nodesum=10
     m=3
     assigntype=0b0
     piece=1
-    lambdai=1
+    lambdai=10
     ##
     maxlevel = init(beginID, endID, beginID + beginnodes, nodesum, assigntype, piece)
     AvgTime=[]
@@ -624,8 +628,8 @@ if __name__=='__main__':
             avgtime=endIDAverageTime(m,beginID,endIDSince,maxlevel,nodesum,assigntype,lambdai)
             AvgTime[runtimes].append(avgtime)
             for allblocks in range(step):
-                initialNewComingBlock(beginID,endIDSince,nodesum,piece)
-    printAssignRes(beginID,endIDSince,1)
+                initialNewComingBlock(beginID,endIDSince+allblocks,nodesum,piece)
+    printAssignRes(beginID,endID,1)
     AvgTime=np.array(AvgTime)
     ResContainer=AvgTime[0]
     for runtimes in range(1,totaltimes):

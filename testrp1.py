@@ -465,7 +465,7 @@ def calReplicas(blocklevel,piece):
     return pow(2,blocklevel-1)*piece
 
 def generateNodesCommunicationCost_norm(nodesnums):
-    mu=0.5
+    mu=1
     sigma=0.5
     pairsofCostnums=int(nodesnums*(nodesnums-1)/2)
     Costtmp=np.random.normal(mu,sigma,pairsofCostnums)
@@ -557,7 +557,7 @@ def printAssignRes(beginID,endID,piece):
 def init(beginID,endID,nodesums,assigntype,piece):#assigntype=001=只有新方法，011=level+新方法，111=random+level+新方法
     loadData(beginID,endID)
     maxlevel = buildBlockList(beginID, endID)
-    generateCommunicationCost_1(nodesums)
+    generateNodesCommunicationCost_norm(nodesums)
     loadData_Sizes(beginID,endID)
     return maxlevel
 def assignBlcoksStatically(beginID,endID,nodesums,assigntype,piece):
@@ -588,10 +588,13 @@ def Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,mynodeid,assignt
             TimeCost=minCommunicate*BlockSizes[blockID-beginID]
             AllTimeCost[minNode]+=TimeCost
             # print("new:minnode",minNode)
-        if len(Chosen) != 0:
-            timemax = max(AllTimeCost)
-        else:
-            timemax = 0
+        # if len(Chosen) != 0:
+        #     timemax = max(AllTimeCost)
+        # else:
+        #     timemax = 0
+        timemax = 0
+        for i in AllTimeCost:
+            timemax = timemax + i
         ReturnTimeCost.append(timemax)
     if assigntype==0b11 or assigntype==0b111:
         LevelAllTimeCost=[0]*nodesum
@@ -610,10 +613,13 @@ def Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,mynodeid,assignt
             TimeCost = minCommunicate * BlockSizes[blockID - beginID]
             LevelAllTimeCost[minNode]+=(TimeCost)
             # print("level:minnode", minNode)
-        if len(Chosen)!=0:
-            timemax=max(LevelAllTimeCost)
-        else:
-            timemax=0
+        # if len(Chosen)!=0:
+        #     timemax=max(LevelAllTimeCost)
+        # else:
+        #     timemax=0
+        timemax = 0
+        for i in LevelAllTimeCost:
+            timemax = timemax + i
         ReturnTimeCost.append(timemax)
     if assigntype==0b111 or assigntype==0b1111:
         RandomAllTimeCost=[0]*nodesum
@@ -632,10 +638,13 @@ def Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,mynodeid,assignt
             TimeCost = minCommunicate * BlockSizes[blockID - beginID]
             RandomAllTimeCost[minNode]+=(TimeCost)
             #print("random:minnode", minNode)
-        if len(Chosen)!=0:
-            timemax=max(RandomAllTimeCost)
-        else:
-            timemax=0
+        # if len(Chosen)!=0:
+        #     timemax=max(RandomAllTimeCost)
+        # else:
+        #     timemax=0
+        timemax = 0
+        for i in RandomAllTimeCost:
+            timemax = timemax + i
         ReturnTimeCost.append(timemax)
     return ReturnTimeCost
 
@@ -652,16 +661,16 @@ def endIDAverageTime(m,beginID,endIDsince,maxlevel,nodesum,assigntype):
     if assigntype==0b111 or assigntype==0b1111:
         AllTimeMax.append([])
     #随机选择一个
-    nodeme=random.randint(0,nodesum-1)
-    timemax=Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,nodeme,assigntype,nodesum)
-    for i in range(len(timemax)):
-        AllTimeMax[i].append(timemax[i])
+    # nodeme=random.randint(0,nodesum-1)
+    # timemax=Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,nodeme,assigntype,nodesum)
+    # for i in range(len(timemax)):
+    #     AllTimeMax[i].append(timemax[i])
     #全选求平均
-    # for nodeid in range(nodesum):
-    #     timemax=Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,nodeid,assigntype,nodesum)
-    #     #print(timemax)
-    #     for i in range(len(timemax)):
-    #         AllTimeMax[i].append(timemax[i])
+    for nodeid in range(nodesum):
+        timemax=Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,nodeid,assigntype,nodesum)
+        # print(timemax)
+        for i in range(len(timemax)):
+            AllTimeMax[i].append(timemax[i])
     return np.mean(AllTimeMax,axis=1)
 
 if __name__=='__main__':
@@ -670,16 +679,17 @@ if __name__=='__main__':
     endID=2016*2+400
     nodesum=10
     m=3
-    assigntype=0b1111#0b1111=只有ranndom
+    assigntype=0b111#0b1111=只有ranndom
     piece=1
     maxlevel=init(beginID,endID,nodesum,assigntype,piece)
     assignBlcoksStatically(beginID,endID,nodesum,assigntype,piece)
     AvgTime=[]
-    step=1
+    step=10
     totaltimes=10
+    MBEGIN=m*15
     for runtimes in range(0, totaltimes):
         AvgTime.append([])
-        for endIDSince in range(beginID+m,endID,step):
+        for endIDSince in range(beginID+MBEGIN,endID,step):
             avgtime=endIDAverageTime(m,beginID,endIDSince,maxlevel,nodesum,assigntype)
             AvgTime[runtimes].append(avgtime)
     AvgTime=np.array(AvgTime)
@@ -690,20 +700,20 @@ if __name__=='__main__':
     filename='./testData-' + str(assigntype)+'-'+str(beginID) + '-' + str(endID)+'-'+str(step)+'-'+str(m)+'-'+str(nodesum)+'-'+str(piece) + '.txt'
     fileoutput=open(filename,'w')
     if assigntype==0b1 or assigntype==0b11 or assigntype==0b111:
-        plt.plot(range(beginID+m,endID,step),ResContainer[:,0],color='r',label='new method')
-        print(range(beginID+m,endID,step),file=fileoutput)
+        plt.plot(range(beginID+MBEGIN,endID,step),ResContainer[:,0],color='r',label='new method')
+        print(range(beginID+MBEGIN,endID,step),file=fileoutput)
         print('new-method',file=fileoutput)
         print(ResContainer[:,0],file=fileoutput)
     if assigntype==0b11 or assigntype==0b111:
-        plt.plot(range(beginID + m, endID,step), ResContainer[:, 1], color='g',label='level assign with r replicate')
+        plt.plot(range(beginID + MBEGIN, endID,step), ResContainer[:, 1], color='g',label='level assign with r replicate')
         print('level', file=fileoutput)
         print(ResContainer[:, 1], file=fileoutput)
     if assigntype==0b111:
-        plt.plot(range(beginID + m, endID,step), ResContainer[:, 2], color='b',label='random replicate with r replicate')
+        plt.plot(range(beginID + MBEGIN, endID,step), ResContainer[:, 2], color='b',label='random replicate with r replicate')
         print('random', file=fileoutput)
         print(ResContainer[:, 2], file=fileoutput)
     if assigntype==0b1111:
-        plt.plot(range(beginID + m, endID,step), ResContainer[:, 0], color='b',label='random replicate with r replicate')
+        plt.plot(range(beginID + MBEGIN, endID,step), ResContainer[:, 0], color='b',label='random replicate with r replicate')
         print('random', file=fileoutput)
         print(ResContainer[:, 0], file=fileoutput)
     fileoutput.close()

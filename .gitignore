@@ -1,2 +1,9 @@
 /normalT_levelBlocks-0-2016-not-only-4.txt
-/.idea/vcs.xml
+/.idea/
+*.txt
+*.log
+*.svg
+*.pdf
+*.png
+/*figs/
+/__pycache__/

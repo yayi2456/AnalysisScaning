@@ -10,10 +10,12 @@ Targets=[]#通过Bits计算得到
 BlockHashes=[]
 BlockLists=[]
 CommunicationCost=[]
-BlockStoragePlaces=[]#er重数组
 BlockSizes=[]
+
+ExpBlockStorage=[]
+ExpSqrtBlockStorage=[]
 LevelBlockStorage=[]
-RandomBlockStorage=[]
+LevelSqrtBlockStorage=[]
 
 def loadData(beginID,endID):#不包括endID
     filedataname='E:/CUB/bh.dat/bh.dat'
@@ -461,11 +463,26 @@ def loadData_Sizes(beginID,endID):
             blocksize = float(datalineitem[1])
             BlockSizes.append(blocksize)
 
-def calReplicas(blocklevel,piece):
+def calReplicas_exp(blocklevel,piece):
     return pow(2,blocklevel-1)*piece
+def calReplicas_expsqrt(blocklevel,piece):
+    return pow(2,(int)((blocklevel-1)/2))*piece
+def calReplicas_level(blocklevel,piece):
+    return piece*(blocklevel)
+    #暂时替换：
+    # return 8
+#IMPORTANT: 那么我们知道大约7的时候和exp性能接近
+def calReplicas_levelsqrt(blocklevel,piece):
+    return piece*((int)(math.sqrt(blocklevel)))
+    # 暂时替换：
+    # return 7
+    # numreverse=8-blocklevel-1
+    # if numreverse<0:
+    #     numreverse=0
+    # return pow(2,numreverse)*piece
 
 def generateNodesCommunicationCost_norm(nodesnums):
-    mu=0.5
+    mu=1
     sigma=0.5
     pairsofCostnums=int(nodesnums*(nodesnums-1)/2)
     Costtmp=np.random.normal(mu,sigma,pairsofCostnums)
@@ -490,71 +507,62 @@ def generateCommunicationCost_1(nodesnums):
             CommunicationCost[nodeid1].append(1)
             position=position+1
 
-def getmyFarmostNode(mynodeid,blockID,beginID):
-    myline=CommunicationCost[mynodeid].copy()
-    farmost=max(myline)
-    farmostid=myline.index(farmost)
-    while farmostid in BlockStoragePlaces[blockID-beginID]:
-        myline[farmostid]=-1
-        farmost=max(myline)
-        farmostid=myline.index(farmost)
-    return farmostid
 
 def initialAssignOneBlock(beginID,endID,blockID,nodesum,assigntype,piece):
-    if assigntype not in [0b1,0b11,0b111,0b1111]:
+    if assigntype==0b0 or assigntype>0b1111:
         print("ERROR")
         exit(1)
-        return 0
-    #新方法
+    #exp
     nodeid=blockID%nodesum
     blocklevel=BlockLists[blockID-beginID][0]
-    replicates=calReplicas(blocklevel,piece)
-    BlockStoragePlaces.append({nodeid})
     thisnode=nodeid
-    r=replicates
-    rl=replicates
-    if assigntype == 0b1 or assigntype == 0b11 or assigntype == 0b111:
+    if assigntype&0b1:
+        replicates = calReplicas_exp(blocklevel, piece)
         if nodesum<replicates:
             replicates=nodesum
-        replicates-=1
-        while replicates:
-            farnode=getmyFarmostNode(thisnode,blockID,beginID)
-            if farnode not in BlockStoragePlaces[blockID-beginID]:
-                BlockStoragePlaces[blockID-beginID].add(farnode)
-                replicates-=1
-            thisnode = farnode
+        nodereplicas=random.sample(range(0,nodesum),replicates)
+        ExpBlockStorage.append({nodereplicas[0]})
+        for nodeid in nodereplicas[1:]:
+            ExpBlockStorage[blockID - beginID].add(nodeid)
+    #expsqrt
+    if assigntype&0b10:
+        replicates = calReplicas_expsqrt(blocklevel, piece)
+        if nodesum < replicates:
+            replicates = nodesum
+        nodereplicas = random.sample(range(0, nodesum), replicates)
+        ExpSqrtBlockStorage.append({nodereplicas[0]})
+        for nodeid in nodereplicas[1:]:
+            ExpSqrtBlockStorage[blockID - beginID].add(nodeid)
     #level
-    if assigntype==0b11 or assigntype==0b111:
-        LevelBlockStorage.append({blocklevel%nodesum})
-        if rl>nodesum:
-            rl=nodesum
-        rl-=1
-        while rl:
-            nextnode=(blocklevel+rl)%nodesum
-            LevelBlockStorage[blockID-beginID].add(nextnode)
-            rl-=1
-    if assigntype==0b111 or assigntype == 0b1111:
-        #random
-        randnode = random.randint(0, nodesum-1)
-        RandomBlockStorage.append({randnode})
-        if r>nodesum:
-            r=nodesum
-        r-=1
-        while r:
-            randnode = random.randint(0, nodesum-1)
-            if randnode not in RandomBlockStorage[blockID-beginID]:
-                RandomBlockStorage[blockID-beginID].add(randnode)
-                r-=1
+    if assigntype&0b100:
+        replicates = calReplicas_level(blocklevel, piece)
+        if nodesum < replicates:
+            replicates = nodesum
+        nodereplicas = random.sample(range(0, nodesum), replicates)
+        LevelBlockStorage.append({nodereplicas[0]})
+        for nodeid in nodereplicas[1:]:
+            LevelBlockStorage[blockID - beginID].add(nodeid)
+    if assigntype&0b1000:
+        replicates = calReplicas_levelsqrt(blocklevel, piece)
+        if nodesum < replicates:
+            replicates = nodesum
+        nodereplicas = random.sample(range(0, nodesum), replicates)
+        LevelSqrtBlockStorage.append({nodereplicas[0]})
+        for nodeid in nodereplicas[1:]:
+            LevelSqrtBlockStorage[blockID - beginID].add(nodeid)
     return
 
 def printAssignRes(beginID,endID,piece):
-    filename = './initialAssign-' + str(beginID) + '-' + str(endID) + '.txt'
+    filename = './DifferentinitialAssign-' + str(beginID) + '-' + str(endID) + '.txt'
     fileoutput = open(filename, 'w')
     for blockID in range(beginID,endID):
-        print('blockID:',blockID,' , level:',BlockLists[blockID-beginID][0],', replicanums:', calReplicas(BlockLists[blockID-beginID][0],piece),',replicaactually:',len(BlockStoragePlaces[blockID-beginID]), ',replicas:',BlockStoragePlaces[blockID-beginID],file=fileoutput)
+        print('blockID:',blockID,' , level:',BlockLists[blockID-beginID][0],', replicanums-exp\expsqrt\level\levelsqrt:', calReplicas_exp(BlockLists[blockID-beginID][0],piece),',', calReplicas_expsqrt(BlockLists[blockID-beginID][0],piece),
+              ',', calReplicas_level(BlockLists[blockID-beginID][0],piece),',', calReplicas_levelsqrt(BlockLists[blockID-beginID][0],piece),
+              ',replicaactually:',len(ExpBlockStorage[blockID-beginID]),',',len(ExpSqrtBlockStorage[blockID-beginID]),',',len(LevelBlockStorage[blockID-beginID]),',',len(LevelSqrtBlockStorage[blockID-beginID]),
+              file=fileoutput)
     fileoutput.close()
 
-def init(beginID,endID,nodesums,assigntype,piece):#assigntype=001=只有新方法，011=level+新方法，111=random+level+新方法
+def init(beginID,endID,nodesums,assigntype,piece):
     loadData(beginID,endID)
     maxlevel = buildBlockList(beginID, endID)
     generateCommunicationCost_1(nodesums)
@@ -572,10 +580,10 @@ def Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,mynodeid,assignt
         return 0
     ReturnTimeCost=[]
     Chosen = scanBlockList_noRepeat(m, beginID, endIDsince, maxlevel)
-    if assigntype == 0b1 or assigntype == 0b11 or assigntype == 0b111:
+    if assigntype&0b1:
         AllTimeCost=[0]*nodesum
         for blockID in Chosen:
-            storageNodes=BlockStoragePlaces[blockID-beginID]
+            storageNodes=ExpBlockStorage[blockID-beginID]
             first=storageNodes.pop()
             minCommunicate=CommunicationCost[mynodeid][first]
             minNode=first
@@ -588,15 +596,18 @@ def Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,mynodeid,assignt
             TimeCost=minCommunicate*BlockSizes[blockID-beginID]
             AllTimeCost[minNode]+=TimeCost
             # print("new:minnode",minNode)
-        if len(Chosen) != 0:
-            timemax = max(AllTimeCost)
-        else:
-            timemax = 0
+        # if len(Chosen) != 0:
+        #     timemax = max(AllTimeCost)
+        # else:
+        #     timemax = 0
+        timemax=0
+        for i in AllTimeCost:
+            timemax=timemax+i
         ReturnTimeCost.append(timemax)
-    if assigntype==0b11 or assigntype==0b111:
+    if assigntype&0b10:
         LevelAllTimeCost=[0]*nodesum
         for blockID in Chosen:
-            storageNodes = LevelBlockStorage[blockID - beginID]
+            storageNodes = ExpSqrtBlockStorage[blockID - beginID]
             first = storageNodes.pop()
             minCommunicate = CommunicationCost[mynodeid][first]
             minNode = first
@@ -610,15 +621,18 @@ def Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,mynodeid,assignt
             TimeCost = minCommunicate * BlockSizes[blockID - beginID]
             LevelAllTimeCost[minNode]+=(TimeCost)
             # print("level:minnode", minNode)
-        if len(Chosen)!=0:
-            timemax=max(LevelAllTimeCost)
-        else:
-            timemax=0
+        # if len(Chosen)!=0:
+        #     timemax=max(LevelAllTimeCost)
+        # else:
+        #     timemax=0
+        timemax = 0
+        for i in LevelAllTimeCost:
+            timemax = timemax + i
         ReturnTimeCost.append(timemax)
-    if assigntype==0b111 or assigntype==0b1111:
+    if assigntype&0b100:
         RandomAllTimeCost=[0]*nodesum
         for blockID in Chosen:
-            storageNodes = RandomBlockStorage[blockID - beginID]
+            storageNodes = LevelBlockStorage[blockID - beginID]
             first = storageNodes.pop()
             minCommunicate = CommunicationCost[mynodeid][first]
             minNode = first
@@ -632,11 +646,40 @@ def Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,mynodeid,assignt
             TimeCost = minCommunicate * BlockSizes[blockID - beginID]
             RandomAllTimeCost[minNode]+=(TimeCost)
             #print("random:minnode", minNode)
-        if len(Chosen)!=0:
-            timemax=max(RandomAllTimeCost)
-        else:
-            timemax=0
+        # if len(Chosen)!=0:
+        #     timemax=max(RandomAllTimeCost)
+        # else:
+        #     timemax=0
+        timemax = 0
+        for i in RandomAllTimeCost:
+            timemax = timemax + i
         ReturnTimeCost.append(timemax)
+    if assigntype&0b1000:
+        Random1AllTimeCost=[0]*nodesum
+        for blockID in Chosen:
+            storageNodes = LevelSqrtBlockStorage[blockID - beginID]
+            first = storageNodes.pop()
+            minCommunicate = CommunicationCost[mynodeid][first]
+            minNode = first
+            storageNodes.add(first)
+            for nodes in storageNodes:
+                #print(mynodeid,',,,',nodes)
+                commuicate = CommunicationCost[mynodeid][nodes]
+                if commuicate < minCommunicate:
+                    minCommunicate = commuicate
+                    minNode = nodes
+            TimeCost = minCommunicate * BlockSizes[blockID - beginID]
+            Random1AllTimeCost[minNode]+=(TimeCost)
+            #print("random:minnode", minNode)
+        # if len(Chosen)!=0:
+        #     timemax=max(RandomAllTimeCost)
+        # else:
+        #     timemax=0
+        timemax = 0
+        for i in Random1AllTimeCost:
+            timemax = timemax + i
+        ReturnTimeCost.append(timemax)
+    # print(ReturnTimeCost)
     return ReturnTimeCost
 
 def endIDAverageTime(m,beginID,endIDsince,maxlevel,nodesum,assigntype):
@@ -645,23 +688,25 @@ def endIDAverageTime(m,beginID,endIDsince,maxlevel,nodesum,assigntype):
         print("ERROR")
         exit(1)
         return 0
-    if assigntype == 0b1 or assigntype == 0b11 or assigntype == 0b111:
+    if assigntype &0b1:
         AllTimeMax.append([])
-    if assigntype==0b11 or assigntype==0b111:
+    if assigntype&0b10:
         AllTimeMax.append([])
-    if assigntype==0b111 or assigntype==0b1111:
+    if assigntype&0b100:
+        AllTimeMax.append([])
+    if assigntype&0b1000:
         AllTimeMax.append([])
     #随机选择一个
-    nodeme=random.randint(0,nodesum-1)
-    timemax=Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,nodeme,assigntype,nodesum)
-    for i in range(len(timemax)):
-        AllTimeMax[i].append(timemax[i])
+    # nodeme=random.randint(0,nodesum-1)
+    # timemax=Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,nodeme,assigntype,nodesum)
+    # for i in range(len(timemax)):
+    #     AllTimeMax[i].append(timemax[i])
     #全选求平均
-    # for nodeid in range(nodesum):
-    #     timemax=Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,nodeid,assigntype,nodesum)
-    #     #print(timemax)
-    #     for i in range(len(timemax)):
-    #         AllTimeMax[i].append(timemax[i])
+    for nodeid in range(nodesum):
+        timemax=Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,nodeid,assigntype,nodesum)
+        #print(timemax)
+        for i in range(len(timemax)):
+            AllTimeMax[i].append(timemax[i])
     return np.mean(AllTimeMax,axis=1)
 
 if __name__=='__main__':
@@ -670,18 +715,25 @@ if __name__=='__main__':
     endID=2016*2+400
     nodesum=10
     m=3
+    #低位为1：正比2^n
+    #第二位是1：正比2^(n/2)
+    #第三位是1：正比level
+    #第四位是1：正比\sqrt{level}
     assigntype=0b1111#0b1111=只有ranndom
     piece=1
     maxlevel=init(beginID,endID,nodesum,assigntype,piece)
     assignBlcoksStatically(beginID,endID,nodesum,assigntype,piece)
     AvgTime=[]
-    step=1
+    step=50
     totaltimes=10
+    MBEGIN=m*15
     for runtimes in range(0, totaltimes):
         AvgTime.append([])
-        for endIDSince in range(beginID+m,endID,step):
+        for endIDSince in range(beginID+MBEGIN,endID,step):
             avgtime=endIDAverageTime(m,beginID,endIDSince,maxlevel,nodesum,assigntype)
-            AvgTime[runtimes].append(avgtime)
+            avgtime=np.array(avgtime)
+            avgtime=avgtime.flatten()
+            AvgTime[runtimes].append(avgtime)#[1,2,3,4]
     AvgTime=np.array(AvgTime)
     ResContainer = AvgTime[0]
     for runtimes in range(1, totaltimes):
@@ -689,22 +741,22 @@ if __name__=='__main__':
     ResContainer = ResContainer / totaltimes
     filename='./testData-' + str(assigntype)+'-'+str(beginID) + '-' + str(endID)+'-'+str(step)+'-'+str(m)+'-'+str(nodesum)+'-'+str(piece) + '.txt'
     fileoutput=open(filename,'w')
-    if assigntype==0b1 or assigntype==0b11 or assigntype==0b111:
-        plt.plot(range(beginID+m,endID,step),ResContainer[:,0],color='r',label='new method')
-        print(range(beginID+m,endID,step),file=fileoutput)
-        print('new-method',file=fileoutput)
+    if assigntype&0b1:
+        plt.plot(range(beginID+MBEGIN,endID,step),ResContainer[:,0],color='r',label='exp')
+        print(range(beginID+MBEGIN,endID,step),file=fileoutput)
+        print('exp',file=fileoutput)
         print(ResContainer[:,0],file=fileoutput)
-    if assigntype==0b11 or assigntype==0b111:
-        plt.plot(range(beginID + m, endID,step), ResContainer[:, 1], color='g',label='level assign with r replicate')
-        print('level', file=fileoutput)
+    if assigntype&0b10:
+        plt.plot(range(beginID + MBEGIN, endID,step), ResContainer[:, 1], color='g',label='expsqrt')
+        print('expsqrt', file=fileoutput)
         print(ResContainer[:, 1], file=fileoutput)
-    if assigntype==0b111:
-        plt.plot(range(beginID + m, endID,step), ResContainer[:, 2], color='b',label='random replicate with r replicate')
-        print('random', file=fileoutput)
+    if assigntype&0b100:
+        plt.plot(range(beginID + MBEGIN, endID,step), ResContainer[:, 2], color='b',label='level')
+        print('level', file=fileoutput)
         print(ResContainer[:, 2], file=fileoutput)
-    if assigntype==0b1111:
-        plt.plot(range(beginID + m, endID,step), ResContainer[:, 0], color='b',label='random replicate with r replicate')
-        print('random', file=fileoutput)
+    if assigntype&0b1000:
+        plt.plot(range(beginID + MBEGIN, endID,step), ResContainer[:, 3], color='y',label='levelsqrt')
+        print('levelsqrt', file=fileoutput)
         print(ResContainer[:, 0], file=fileoutput)
     fileoutput.close()
     plt.legend()
