@@ -114,7 +114,7 @@ def load_blockbits_and_targets(beginID,endID):
         # append bits of blocks 0-2015 first
         block_bit=('1d00ffff')
         # append target of blocks 0-2015 first
-        targets.append(block_bit)
+        targets.append(cal_target(block_bit))
         # remove the first line cause it has already been read
         bits_file.readline()
         for bits_line in bits_file:
