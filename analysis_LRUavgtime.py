@@ -49,8 +49,8 @@ def plotAvg():
     if b12!=b_12 or e12!=e_12 or s12!=s_12:
         exit(-1)
     colors = ['blue', 'red', 'green', 'skyblue', 'pink', 'yellow', 'purple', 'black', 'cyan', 'orange']
-    # plt.plot(range(b01, e01, s01), Avgtime01, color=colors[0], label='01')
-    # plt.plot(range(b01, e01, s01), Avgtime02, color=colors[1], label='02')
+    plt.plot(range(b01, e01, s01), Avgtime01, color=colors[0], label='01')
+    plt.plot(range(b01, e01, s01), Avgtime02, color=colors[1], label='02')
     plt.plot(range(b01, e01, s01), Avgtime12, color=colors[2], label='12')
     # plt.plot(range(b01, e01, s01), Avgtime22, color=colors[3], label='22')
     # plt.plot(range(b01, e01, s01), Avgtime_12, color=colors[4], label='-12')
@@ -59,7 +59,7 @@ def plotAvg():
     # plt.plot(range(b01, e01, s01), Avgtime21, color=colors[7], label='21')
     plt.plot(range(b01, e01, s01), Avgtime10, color=colors[8], label='1-1')
     # plt.plot(range(b01, e01, s01), Avgtime20, color=colors[9], label='2-1')
-    plt.plot(range(b01,e01,s01),Avgtime_10All,color='grey',label='-10')
+    # plt.plot(range(b01,e01,s01),Avgtime_10All,color='grey',label='-10')
     plt.legend()
     plt.xlabel('blocks')
     plt.ylabel('avg time')
