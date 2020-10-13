@@ -264,7 +264,7 @@ def get_needed_blocks(beginID,endID,blocklist,distribution_type):
                 percentage_k_step_forward-=neg_small
             probabllity[i]=ln_delta*(math.log1p(-percentage_k_step_forward)-math.log1p(-percentage_k))
     else:
-        print("INVALID DISTRIBUTION TYPE! default('uniform') is set.")
+        print("INVALID CHOSEN DISTRIBUTION TYPE! default('uniform') is set.")
         for i in range(len(probabllity)):
             probabllity[i]=1/(endID-beginID)
     
@@ -272,6 +272,7 @@ def get_needed_blocks(beginID,endID,blocklist,distribution_type):
     chosen_blocks=np.random.choice(range(beginID,endID),size=chosen_block_nums,replace=False,p=probabllity)
     #return
     return chosen_blocks
+
 
 def generalized_harmonic_number(N,s):
     """(float,float) -> float

@@ -131,6 +131,7 @@ def cal_time_lived(block_level,period,curve_type):
 def static_assign_blocks(piece,curve_type_replica,period,curve_type_expel):
     """(int,str) - list of dict:(int, int), list of dict:(int,int), list of int
 
+    Init nodes_storage_used and nodes_stored_blocks_popularity
     Statically assign blocks from beginID to beginID+static_blocks.
     Select storage node randomly, select replica numbers using cal_replica_num function.
 
@@ -139,7 +140,16 @@ def static_assign_blocks(piece,curve_type_replica,period,curve_type_expel):
     Get the initial popularity of each block in each node. a list, whose index is nodeID adn value is a dict.
         the dict's key is blockID and value is popularity.
     Get the storage of each nodes. a list, whose index is nodeID and value is the node's storage used.
+
+    Must be called.
     """
+    # init node_storage_used
+    global nodes_storage_used
+    nodes_storage_used=[0]*nodes_num
+
+    #init nodes_stored_blocks_popularity
+    for i in range(nodes_num):
+        nodes_stored_blocks_popularity.append({})
 
     # statically assign each blocks one by one
     for blockID in range(beginID,beginID+static_blocks):
@@ -367,7 +377,7 @@ def get_blockID_from_which(nodeID,blockID):
     # return min_node and time cost   
     return min_node, time_cost
 
-def init_all_settings(blklist,blksizes,communication_cst):
+def init_all_settings(blklist,blksizes,communication_cst,beginid=2016,endid=2016+400,static_blks=200,nodes_n=10):
     """(list of list of int,list of int,list of list of float)
 
     Must be called primarily to init global variables.
@@ -376,11 +386,19 @@ def init_all_settings(blklist,blksizes,communication_cst):
     global blocksizes
     global communication_cost
     global nodes_storage_used
+    global beginID
+    global nodes_num
+    global endID
+    global static_blocks
 
     blocklist=blklist
     blocksizes=blksizes
     communication_cost=communication_cst
-    node_storage_used=[0]*nodes_num
+
+    beginID=beginid
+    endID=endid
+    static_blocks=static_blks
+    nodes_num=nodes_n
     
 
 
