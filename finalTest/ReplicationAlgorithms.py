@@ -1,0 +1,226 @@
+### YaYi 2020.10.12
+
+import numpy as np
+import sys
+import math
+import random
+
+"""
+multiple replica algorithms which can be embed into replication process.
+1. replica numbers determining function
+2. static replica algorithm: each blocks have piece*2^level replicas, distributed among all nodes.
+3. initial replica algorithm: a new block have piece*2^level replicas, distributed among all nodes, before dynamic replication.
+4. dynaminc algorithms
+    1. passive: 
+        - random: when requester obtains x blocks reqtesed from other nodes, 
+            it stores int(x/node_num) random blocks locally
+        - popularity based: when requester obtains x blocks requested from other nodes,
+            it stores int(x/node_num) most popular blocks locally. 
+            Requester gets popularity of blocks from the node from which it get the block.
+        - load based: when requester obtains x blocks requested from other nodes,
+            it stores int(x/node_num) highest-communication-cost blocks. 
+    2. active:
+        - random: every x epoch, nodes offload 3 most popular blocks to a random neighbour.
+        - selective: every x epoch, nodes offload 3 most popular blocks to a select node, 
+            which can maximize improvement of average communication cost.
+5. blocks' lifeperiod determining function.
+6. expel policy: expel blocks that havn't been accessed for life_period long.
+7. init all global variables. These variables must be initialized.
+"""
+
+# blocklist is a skip list of all blocks, which is constructed by blocks' preleading 0s.
+blocklist=[]
+
+# blocksizes is the size of all blocks
+blocksizes=[]
+
+# communication_cost is the communication cost between each 2 nodes.
+communication_cost=[]
+
+# nodes_num is the total node number
+nodes_num=10
+
+# beginID is the starting block and endID is the ending block
+beginID=2016
+endID=2016+400
+# static_blocks is the number of blocks that shall be assigned statically
+# assert(static_blocks<=endID-beginID)
+static_blocks=200
+
+# which nodes a block is stored and the corresponding lifetime left.
+# a list of dictionary, whose index is blockID-beginID, value is a dict.
+# dict's key is nodeIDs of nodes in which index block is stored, and value is the block's live time left.
+blocks_in_which_nodes_and_timelived=[]
+
+# blocks' popularity of nodes stored.
+# a list of dictionary, whose index is nodeID, value is a dict.
+# dict's key is blockIDs of blocks which is stored in the index node, and value is the block's popularity.
+nodes_stored_blocks_popularity=[]
+
+# nodes storage used at present
+# a list of int, whose index is nodeID, and value is storage the index node have used.
+nodes_storage_used=[]
+
+
+### open
+def cal_replica_num(block_level,piece,curve_type):
+    """(int,int,str) -> int
+
+    Return replica number of a certain block based on its level, piece, and curve_type.
+
+    piece is a coef of curve.
+    curve_type: '2^n', 'sqrt2^n', 'level', 'sqrtlevel', '1'
+    replicanums= piece* curvetype
+
+    >>> cal_replica_num(4,1,'2^n')
+    8
+    >>> cal_replica_num(4,2, 'sqrt2^n')
+    4
+    >>> cal_replica_num(1,1,'level')
+    1
+    >>> cal_replica_num(8,2,'sqrtlevel')
+    4
+    >>> cal_replica_num(10,2,'1')
+    2
+    """
+
+    try:
+        if curve_type=='2^n':
+            return pow(2,block_level-1)*piece
+        elif curve_type=='sqrt2^n':
+            return pow(2,(int)((block_level-1)/2))*piece
+        elif curve_type=='level':
+            return piece*block_level
+        elif curve_type=='sqrtlevel':
+            return piece*((int)(math.sqrt(block_level)))
+        elif curve_type=='1':
+            return piece
+        else:
+            sys.exit(-3)
+    except:
+        print("INVALID CURVE TYPE! must be one of '2^n', 'sqrt2^n', 'level', 'sqrtlevel', '1'. '2^n' is set.")
+        return pow(2,block_level-1)*piece
+
+def cal_time_lived(block_level,period,curve_type):
+    """(int,int,str) -> int
+
+    Return replica number of a certain block based on its level, piece, and curve_type.
+
+    piece is a coef of curve.
+    curve_type: '2^n', 'sqrt2^n', 'level', 'sqrtlevel', '1'
+    time_lived= period* curvetype
+
+    as this has the same logic of cal_replica_num, we just use that function.
+
+    >>> cal_time_lived(4,1,'2^n')
+    8
+    >>> cal_time_lived(4,2, 'sqrt2^n')
+    4
+    >>> cal_time_lived(1,1,'level')
+    1
+    >>> cal_time_lived(8,2,'sqrtlevel')
+    4
+    >>> cal_time_lived(10,2,'1')
+    2
+    """
+    
+    return cal_replica_num(block_level,period,curve_type)
+    
+
+def static_assign_blocks(piece,curve_type_replica,period,curve_type_expel):
+    """(int,str) - list of dict:(int, int), list of dict:(int,int), list of int
+
+    Statically assign blocks from beginID to beginID+static_blocks.
+    Select storage node randomly, select replica numbers using cal_replica_num function.
+
+    Get the static assign result. a list , whose index is blockID-beginID and value is a dict. 
+        the dict's key is nodeID and value is timelived.
+    Get the initial popularity of each block in each node. a list, whose index is nodeID adn value is a dict.
+        the dict's key is blockID and value is popularity.
+    Get the storage of each nodes. a list, whose index is nodeID and value is the node's storage used.
+    """
+
+    # statically assign each blocks one by one
+    for blockID in range(beginID,beginID+static_blocks):
+        assign_one_block(blockID,piece,curve_type_replica,period,curve_type_expel)
+    
+    # nothing to return
+    return
+
+def assign_one_block(blockID,piece,curve_type_replica,period,curve_type_expel):
+    """(int,int,str,int,str) - list of dict:(int, int), list of dict:(int,int), list of int
+
+    Select storage node randomly, select replica numbers using cal_replica_num function.
+
+    Get the one block assign result. a list, whose index is blockID-beginID and value is a dict.
+        the dict's key is nodeID and value is timelived.
+    Get the initial popularity of each block in each node. a list, whose index is nodeID adn value is a dict.
+        the dict's key is blockID and value is popularity.
+    Get the storage of each nodes. a list, whose index is nodeID and value is the node's storage used.
+    """
+    
+    # bring block_level from blocklist
+    block_level=blocklist[blockID-beginID][0]
+    # get replica numbers
+    replica_numbers=cal_replica_num(block_level,piece,curve_type_replica)
+    if replica_numbers>nodes_num:
+        replica_numbers=nodes_num
+    # get time lived
+    time_lived=cal_time_lived(block_level,period,curve_type_expel)
+    # sample random nodes
+    nodes_store_replicas=random.sample(range(0,nodes_num),replica_numbers)
+    # append one list value for the new block
+    blocks_in_which_nodes_and_timelived.append({})
+    # update blocks_in_which_nodes_and_timelived, update nodes_storage_used, update nodes_stored_blocks_popularity
+    for node_replica in nodes_store_replicas:
+        if node_replica not in blocks_in_which_nodes_and_timelived[blockID-beginID]:
+            nodes_storage_used[node_replica]+=blocksizes[blockID-beginID]
+        blocks_in_which_nodes_and_timelived[blockID-beginID][node_replica]=time_lived
+        nodes_stored_blocks_popularity[node_replica][blockID]=0
+    # nothing tpo return
+    return
+
+def initial_assign_block(blockID,piece,curve_type_replica,period,curve_type_expel):
+    """(int,int,str,int,str) - list of dict:(int, int), list of dict:(int,int), list of int
+
+    Assign the new coming block to random one or several nodes.
+    """
+    assign_one_block(blockID,piece,curve_type_replica,period,curve_type_expel)
+
+def passive_dynamic_replication(blockID,chosen_blocks,nodeID,passive_type,sort_value_dict,period,curve_type_expel):
+    """(int,list of int,int,str,dict,int,str) - list of dict:(int, int), list of dict:(int,int), list of int
+
+    passive algorithms to replicate.
+    3 type of passive_type are allowed:'random','popularity','load'.default is'random'.
+    when passive_type=='random', sort_value_dict can be empty.
+    when passive_type=='popularity', sort_value_dict must be the block provider's popularity of chosen blocks.
+    when passive_type=='load', sort_value_dict must be the block requester's communication cost of chosen blocks.
+
+    len(chosen)/nodes_num blocks are stored locally at nodeID. Stored blocks are chosen based on passive_type.
+    """
+    # blocksID that will be stored locally
+    all_blocks_replicated=[]
+    blocks_replicated_num=int(len(chosen_blocks)/nodes_num)
+
+    if passive_type=='random':
+        all_blocks_replicated=random.sample(range(0,len(chosen_blocks)),blocks_replicated_num)
+    elif passive_type=='load' or passive_dynamic_replication=='popularity':
+        # sort the dict by value value. reversed sort.
+        kvs=sorted(sort_value_dict.items(),key=lambda x:x[1],reverse=True)
+        # get the top blocks_replicated_num
+        kvs=kvs[:blocks_replicated_num]
+        for blockID in kvs:
+            all_blocks_replicated.append(blockID[0])
+    else:
+        print("invalid passive_type. default('random') is set.")
+        all_blocks_replicated=random.sample(range(0,len(chosen_blocks)),blocks_replicated_num)
+
+    # assign and update the 3 big list
+    for blockID in all_blocks_replicated:
+        block_level=blocklist[blockID-beginID][0]
+        time_lived=cal_time_lived(block_level,period,curve_type_expel)
+        blocks_in_which_nodes_and_timelived[blockID-beginID][nodeID]=time_lived
+
+
+
+    

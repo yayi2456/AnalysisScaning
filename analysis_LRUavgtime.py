@@ -57,7 +57,7 @@ def plotAvg():
     # plt.plot(range(b01, e01, s01), Avgtime_11, color=colors[5], label='-11')
     plt.plot(range(b01,e01,s01),Avgtime11,color=colors[6],label='11')
     # plt.plot(range(b01, e01, s01), Avgtime21, color=colors[7], label='21')
-    plt.plot(range(b01, e01, s01), Avgtime10, color=colors[8], label='1-1')
+    # plt.plot(range(b01, e01, s01), Avgtime10, color=colors[8], label='1-1')
     # plt.plot(range(b01, e01, s01), Avgtime20, color=colors[9], label='2-1')
     # plt.plot(range(b01,e01,s01),Avgtime_10All,color='grey',label='-10')
     plt.legend()

@@ -49,11 +49,10 @@ def build_block_list(beginID,endID):
         else:
             block_level=cal_level(blockhashes[blockID-beginID], blocktargets[int(blockID/2016)])
         # error detect
-        try:
-            if block_level==0:
-                sys.exit(-1)
-        except:
+        if block_level==0:
             print('error occured at blockID=',blockID)
+            exit(-1)
+            
         # maxlevel update
         if block_level>max_level and blockID!=beginID:
             max_level=block_level
@@ -244,7 +243,7 @@ def load_blocksizes(beginID,endID):
 
 ### open
 def generate_communication_cost(nodes_num, distribution_type):
-    """(int) -> list of list of float
+    """(int,str) -> list of list of float
 
     Return communication cost between every 2 nodes generated randomly in normal distribution.
     """
@@ -265,8 +264,8 @@ def generate_communication_cost(nodes_num, distribution_type):
         else:
             sys.exit(-2)
     except:
-        print('invalid distribution type. must be \'normal\' or \'1\'.')
-    
+        print('INVALID DISTRIBUTION TYPE! must be \'normal\' or \'1\'. distribution_type=\'1\' set.')
+        communication_cost=np.absolute(np.random.normal(1,1,[nodes_num,nodes_num]))
     # nodes have no communication cost with itself
     for i in range(nodes_num):
         communication_cost[i][i]=0
