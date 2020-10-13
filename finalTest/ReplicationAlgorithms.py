@@ -84,7 +84,7 @@ def cal_replica_num(block_level,piece,curve_type):
     >>> cal_replica_num(10,2,'1')
     2
     """
-
+    
     try:
         if curve_type=='2^n':
             return pow(2,block_level-1)*piece
@@ -375,7 +375,7 @@ def init_all_settings(blklist,blksizes,communication_cst):
     global blocklist
     global blocksizes
     global communication_cost
-    global node_storage_used
+    global nodes_storage_used
 
     blocklist=blklist
     blocksizes=blksizes
