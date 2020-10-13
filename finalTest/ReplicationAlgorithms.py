@@ -367,17 +367,17 @@ def get_blockID_from_which(nodeID,blockID):
     # return min_node and time cost   
     return min_node, time_cost
 
-def init_all_settings(blklists,blksizes,communication_cst):
+def init_all_settings(blklist,blksizes,communication_cst):
     """(list of list of int,list of int,list of list of float)
 
     Must be called primarily to init global variables.
     """
-    global blocklists
+    global blocklist
     global blocksizes
     global communication_cost
     global node_storage_used
 
-    blocklists=blklists
+    blocklist=blklist
     blocksizes=blksizes
     communication_cost=communication_cst
     node_storage_used=[0]*nodes_num
