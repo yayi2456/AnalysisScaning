@@ -3,6 +3,8 @@
 import numpy as np
 import sys
 import re
+import random
+import math
 
 """
 build environment for replica algorithms.
@@ -208,6 +210,78 @@ def scan_blocklist_no_repeat(m,beginID,endID,blocklist,max_level):
         this_blockID=beginID
     
     return chosen_blocks
+
+def get_needed_blocks(beginID,endID,blocklist,distribution_type):
+    """(int,int,list of list of int,str) -> list of int
+
+    Return blocks chosen by one node to complete some certin mission.
+
+    3 types of distribution_type are allowed:
+    'zipf': zipf distribution
+    'uniform': uniform distribution
+    'flyclient': flyclient distribution
+    """
+    
+    chosen_blocks=[]
+
+    # we choose log_2(block_nums) blocks each time
+    chosen_block_nums=int(math.log2(endID-beginID))
+
+    # probability of each node to be chosen.
+    probabllity=[0]*(endID-beginID)
+    # sum()=1
+
+    #s is a parameter used in zipf distribution
+    s=1
+
+    # c and k are 2 params of flyclient, c\in (0,1],k\in N
+    # delta=c^k
+    c=0.5
+    k=10
+    neg_small=pow(c,k)
+
+    # get the distribution probability
+    if distribution_type=='uniform':
+        for i in range(len(probabllity)):
+            probabllity[i]=1/(endID-beginID)
+    elif distribution_type=='zipf':
+        #zipf PMF=F(K=k)=1/ghn(N,s)*k^s. k is the rank, N is the total number, 
+        # s is a parameter to describe zipf curve
+        for i in range(len(probabllity)):
+            probabllity[i]=1/(generalized_harmonic_number(endID-beginID,s)*pow(i+1,s))
+    elif distribution_type=='flyclient':
+        #PDF of flyclient is g(x)=1/((x-1)*ln(δ)), δ is c^k. c\in (0,1],k\in N
+        # in their test, δ=2^{-10}
+        # flyclient use difficult percentage.
+        # here we consider unchanged target only.
+        # P(x=k)=F_{k+1/N}-F{k}=(1/ln(δ))*(ln|k+1/N-1|-ln|k-1|)
+        ### math.log1p(x), Return the natural logarithm of 1+x (base e). 
+        ln_delta=1/math.log1p(pow(c,k)-1)
+        for i in range(len(probabllity)):
+            percentage_k=i/(endID-beginID)
+            percentage_k_step_forward=percentage_k+1/(endID-beginID)
+            if i==len(probabllity)-1:
+                percentage_k_step_forward-=neg_small
+            probabllity[i]=ln_delta*(math.log1p(-percentage_k_step_forward)-math.log1p(-percentage_k))
+    else:
+        print("INVALID DISTRIBUTION TYPE! default('uniform') is set.")
+        for i in range(len(probabllity)):
+            probabllity[i]=1/(endID-beginID)
+    
+    # choose chosen_block_nums
+    chosen_blocks=np.random.choice(range(beginID,endID),size=chosen_block_nums,replace=False,p=probabllity)
+    #return
+    return chosen_blocks
+
+def generalized_harmonic_number(N,s):
+    """(float,float) -> float
+
+    used in zipf PMF.which F(K=k)=1/ghn(N,s)*k^s
+    """
+    sum_up=0
+    for i in range(1,N+1):
+        sum_up+=pow(1/i,s)
+    return sum_up
 
 
 ### open
