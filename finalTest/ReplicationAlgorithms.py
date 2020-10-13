@@ -26,6 +26,7 @@ multiple replica algorithms which can be embed into replication process.
 5. blocks' lifeperiod determining function.
 6. expel policy: expel blocks that havn't been accessed for life_period long.
 7. init all global variables. These variables must be initialized.
+8. which node does the nodeA choose to get a certain block B, and the time cost.
 """
 
 # blocklist is a skip list of all blocks, which is constructed by blocks' preleading 0s.
@@ -187,10 +188,10 @@ def initial_assign_block(blockID,piece,curve_type_replica,period,curve_type_expe
     """
     assign_one_block(blockID,piece,curve_type_replica,period,curve_type_expel)
 
-def passive_dynamic_replication(blockID,chosen_blocks,nodeID,passive_type,sort_value_dict,period,curve_type_expel):
+def passive_dynamic_replication_one_node(blockID,chosen_blocks,nodeID,passive_type,sort_value_dict,period,curve_type_expel):
     """(int,list of int,int,str,dict,int,str) - list of dict:(int, int), list of dict:(int,int), list of int
 
-    passive algorithms to replicate.
+    passive algorithms to replicate for 1 node.
     3 type of passive_type are allowed:'random','popularity','load'.default is'random'.
     when passive_type=='random', sort_value_dict can be empty.
     when passive_type=='popularity', sort_value_dict must be the block provider's popularity of chosen blocks.
@@ -204,7 +205,7 @@ def passive_dynamic_replication(blockID,chosen_blocks,nodeID,passive_type,sort_v
 
     if passive_type=='random':
         all_blocks_replicated=random.sample(range(0,len(chosen_blocks)),blocks_replicated_num)
-    elif passive_type=='load' or passive_dynamic_replication=='popularity':
+    elif passive_type=='load' or passive_type=='popularity':
         # sort the dict by value value. reversed sort.
         kvs=sorted(sort_value_dict.items(),key=lambda x:x[1],reverse=True)
         # get the top blocks_replicated_num
@@ -217,10 +218,170 @@ def passive_dynamic_replication(blockID,chosen_blocks,nodeID,passive_type,sort_v
 
     # assign and update the 3 big list
     for blockID in all_blocks_replicated:
-        block_level=blocklist[blockID-beginID][0]
-        time_lived=cal_time_lived(block_level,period,curve_type_expel)
-        blocks_in_which_nodes_and_timelived[blockID-beginID][nodeID]=time_lived
+        store_block_to_node(blockID,nodeID,period,curve_type_expel)
+    
+    # nothing to return
+    return
 
+def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,period,curve_type_expel):
+    """(int,int,,str) - list of dict:(int, int), list of dict:(int,int), list of int
+    
+    Active algorithms to replicate.
+    . 
+
+    2 type of active_type are allowed.
+    'random': randomly offload top_num_to_offload most popular blocks to 1 node
+    'calculate': choose the best nodes which can maxmize the reduction of communication cost
+    'random' is default.
+    """
+
+    # node to be offload
+    node_to_be_offload=nodeID
+    # blocks to be offload
+    blocks_to_be_offload=[]
+
+    # get the top_num_to_offload most popular blocks
+    kvs=sorted(nodes_stored_blocks_popularity[nodeID].items(),key=lambda x:x[1],reverse=True)
+    kvs=kvs[:top_num_to_offload]
+    blocks_to_be_offload=[blockID[0] for blockID in kvs]
+
+    # get the target node_to_be_offload
+    if active_type=='random':
+        node_to_be_offload=random.randint(0,nodes_num-1)
+        for blockID in blocks_to_be_offload:
+            store_block_to_node(blockID,nodeID,period,curve_type_expel)
+    elif active_type=='calculate':
+        for blockID in blocks_to_be_offload:
+            # largest improvement is brought by which nodes_test
+            max_prove=0
+            max_prove_node=nodeID
+            # which node shall I store blockID
+            for nodes_test in range(nodes_num):
+                # improvement brought by storing blockID in nodes_test
+                total_saved_in_node_test =0
+                # caculate total improvement by adding each node's improvement if I store node into nodes_test
+                for each_node_in_system in range(nodes_num):
+                    # node each_node_in_system's improvement brought by storing blockID in nodes_test
+                    this_node_saved_in_node_test=0
+                    storage_nodes_of_blockID=blocks_in_which_nodes_and_timelived[blockID-beginID].keys()
+                    min_communicate_before_store=np.inf
+                    # current min_communication.
+                    # if communication_cost[nodes_test][each_node_in_system]<min_communication currently,
+                    # there is a improvemnt >0
+                    for nodes_store in storage_nodes_of_blockID:
+                        this_communication_cost=communication_cost[each_node_in_system][nodes_store]
+                        if this_communication_cost<min_communicate_before_store:
+                            min_communicate_before_store=this_communication_cost
+                    # if blockID is stored in node_test, node each_node_in_system can improve by 
+                    # (min_communicate_before_store-communication_cost[each_node_in_system][nodes_test])*blockIDsize
+                    if min_communicate_before_store>communication_cost[each_node_in_system][nodes_test]:
+                        this_node_saved_in_node_test+=blocksizes[blockID-beginID]*(min_communicate_before_store>communication_cost[each_node_in_system][nodes_test])
+                        total_saved_in_node_test+=this_node_saved_in_node_test
+                if total_saved_in_node_test>max_prove:
+                    max_improve=total_saved_in_node_test
+                    max_improve_node=nodes_test
+            # got the best position for blockID to store
+            store_block_to_node(blockID,max_improve_node,period,curve_type_expel)
+    else:
+        print("invalid active type! default('random') is set.")
+        node_to_be_offload=random.randint(0,nodes_num-1)
+        for blockID in blocks_to_be_offload:
+            store_block_to_node(blockID,nodeID,period,curve_type_expel)
+    # nothing else to return 
+    return
+
+    
+def store_block_to_node(blockID,nodeID,period,curve_type_expel):
+    """(int,int,int,str) - list of dict:(int, int), list of dict:(int,int), list of int
+
+    store 1 block to 1 node.
+    update the 3 big lists.
+    """
+    # get blocklevel and lifetime
+    block_level=blocklist[blockID-beginID][0]
+    time_lived=cal_time_lived(block_level,period,curve_type_expel)
+    # update the storage used
+    if nodeID not in blocks_in_which_nodes_and_timelived[blockID-beginID]:
+        nodes_storage_used[nodeID]+=blocksizes[blockID-beginID]
+    # update lifetime
+    blocks_in_which_nodes_and_timelived[blockID-beginID][nodeID]=time_lived
+    # update popularity
+    if blockID not in nodes_stored_blocks_popularity[nodeID]:
+        nodes_stored_blocks_popularity[nodeID][blockID]=0
+
+def update_livetime_and_expel(end_since,epochs):
+    """(int,int) - list of dict,key is int,value is int
+
+    update live time of blocks and expel expired blocks.
+    this is called every 'epochs' epochs.
+    """
+
+    # blocks in which node to be expeled
+    # a list of list of int
+    dead_blocks=[]
+
+    # update livetime and find dead blocks
+    for blockID in range(beginID,end_since):
+        dead_blocks.append([])
+        for kv in blocks_in_which_nodes_and_timelived[blockID-beginID].items():
+            if kv[1]<=epochs:
+                dead_blocks[blockID-beginID].append(kv[0])
+            blocks_in_which_nodes_and_timelived[blockID-beginID][kv[0]]-=epochs
+    # expel dead blocks
+    for blockID in range(beginID,end_since):
+        for nodeID in dead_blocks[blockID-beginID]:
+            if len(blocks_in_which_nodes_and_timelived[blockID-beginID])>1:
+                # update popularity
+                nodes_stored_blocks_popularity[nodeID].pop(blockID)
+                # update storage_used
+                if nodeID in blocks_in_which_nodes_and_timelived[blockID-beginID]:
+                    nodes_storage_used[nodeID]-=blocksizes[blockID-beginID]
+                # update time_lived
+                blocks_in_which_nodes_and_timelived[blockID-beginID].pop(nodeID)
+    # nothing to return
+    return
+
+def get_blockID_from_which(nodeID,blockID):
+    """(int,int) -> (int,float)
+
+    nodeID will choose the node with smallest communication cost to get block blockID.
+    Return the node chosen and communication cost * blocksize
+    """
+    # storage nodes of blockID
+    storage_nodes_of_blockID=blocks_in_which_nodes_and_timelived[blockID-beginID].keys()
+
+    # current min_communication.
+    min_communication=np.inf
+    min_node=-1
+    
+    for nodes_store in storage_nodes_of_blockID:
+        this_communication=communication_cost[nodeID][nodes_store]
+        if this_communication<min_communication:
+            min_communication=this_communication
+            min_node=nodes_store
+    if min_communication ==np.inf:
+        print("no block stored now!")
+        exit(-1)
+    # get time cost
+    time_cost=min_communication*blocksizes[beginID-beginID]
+    # return min_node and time cost   
+    return min_node, time_cost
+
+def init_all_settings(blklists,blksizes,communication_cst):
+    """(list of list of int,list of int,list of list of float)
+
+    Must be called primarily to init global variables.
+    """
+    global blocklists
+    global blocksizes
+    global communication_cost
+    global node_storage_used
+
+    blocklists=blklists
+    blocksizes=blksizes
+    communication_cost=communication_cst
+    node_storage_used=[0]*nodes_num
+    
 
 
     
