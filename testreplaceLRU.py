@@ -808,8 +808,8 @@ if __name__=='__main__':
             AvgTime[runtimes].append(avgtime)
             updateLiveTimeandExpel(beginID, endIDSince, nodesum, assigntype,step)
             for allblocks in range(step):
-                initialNewComingBlock_All(beginID,endIDSince+allblocks,nodesum,assigntype,piece)
-                # initialNewComingBlock_2_n(beginID, endIDSince+allblocks, nodesum,assigntype, piece)#(beginID,blockID,nodesum,assigntype,piece):
+                # initialNewComingBlock_All(beginID,endIDSince+allblocks,nodesum,assigntype,piece)
+                initialNewComingBlock_2_n(beginID, endIDSince+allblocks, nodesum,assigntype, piece)#(beginID,blockID,nodesum,assigntype,piece):
             if activeReplicaType==1:
                 activeDynamicRep(nodesum,beginID,assigntype,0,3,1)
             elif activeReplicaType==2:

@@ -158,7 +158,7 @@ def cal_level(block_hash, block_target):
     level=1
     while blockhash_value<(block_target/pow(2,level)):
         level+=1
-    print('blockhash=', blockhash_value, 'target=', block_target, 'level=',level)
+    # print('blockhash=', blockhash_value, 'target=', block_target, 'level=',level)
     return level
 
 

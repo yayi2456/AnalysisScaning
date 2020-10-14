@@ -59,7 +59,7 @@ blocks_in_which_nodes_and_timelived=[]
 nodes_stored_blocks_popularity=[]
 
 # nodes storage used at present
-# a list of int, whose index is nodeID, and value is storage the index node have used.
+# a list of float, whose index is nodeID, and value is storage the index node have used.
 nodes_storage_used=[]
 
 
