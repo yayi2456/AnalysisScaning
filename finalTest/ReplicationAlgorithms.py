@@ -198,7 +198,7 @@ def initial_assign_block(blockID,piece,curve_type_replica,period,curve_type_expe
     """
     assign_one_block(blockID,piece,curve_type_replica,period,curve_type_expel)
 
-def passive_dynamic_replication_one_node(blockID,chosen_blocks,nodeID,passive_type,sort_value_dict,period,curve_type_expel):
+def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_value_dict,period,curve_type_expel):
     """(int,list of int,int,str,dict,int,str) - list of dict:(int, int), list of dict:(int,int), list of int
 
     passive algorithms to replicate for 1 node.
