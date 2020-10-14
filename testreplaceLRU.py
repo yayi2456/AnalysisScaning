@@ -769,7 +769,7 @@ def preAssign(beginID,endID,endIDpreassign,nodesums,assigntype,piece):
 
 if __name__=='__main__':
     # 随链长度变化
-    beginID = 2016 * 2
+    beginID = 2016
     tailnodes = 200
     beginnodes = 200
     endID = beginnodes + beginID + tailnodes
@@ -786,7 +786,7 @@ if __name__=='__main__':
     maxlevel = init(beginID, endID, beginID + beginnodes, nodesum, assigntype, piece)#(beginID,endID,nodesums,assigntype,piece):
     AvgTime = []
     step = 1
-    totaltimes = 100  # 减小所得点的波动
+    totaltimes = 1  # 减小所得点的波动
     for runtimes in range(0, totaltimes):
         logging.info(('runtime %d begin...'),runtimes)
         AvgTime.append([])

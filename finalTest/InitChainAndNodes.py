@@ -122,6 +122,7 @@ def load_blockbits_and_targets(beginID,endID):
             # split all data
             bits_line=bits_line.replace('\n','')
             bits_line_item=bits_line.split(',')
+            bits_line_item=bits_line_item[0:5:4]
             # get bits and remove '0x'
             block_bit=bits_line_item[1][2:]
             # get calculated targets
@@ -157,7 +158,7 @@ def cal_level(block_hash, block_target):
     level=1
     while blockhash_value<(block_target/pow(2,level)):
         level+=1
-    
+    print('blockhash=', blockhash_value, 'target=', block_target, 'level=',level)
     return level
 
 

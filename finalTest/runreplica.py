@@ -11,10 +11,10 @@ the main program.
 """
 
 def init_environment():
-    """ () -> int
+    """ () -> (int, float)
     
     Init global variables in ReplicationAlgorithms.i.e. get the running environment ready.
-    Return max_level
+    Return max_level,return all storage of one copy of all blocks.
     """
     begin_id=2016
     static_blks=200
@@ -23,7 +23,7 @@ def init_environment():
     communication_distribution_type='1'
 
     blk_list,max_level=InitChainAndNodes.build_block_list(begin_id,end_id)
-    blk_size=InitChainAndNodes.load_blocksizes(begin_id,end_id)
+    blk_size,all_storage=InitChainAndNodes.load_blocksizes(begin_id,end_id)
     communication_cst=InitChainAndNodes.generate_communication_cost(nodes_n,communication_distribution_type)
     
     ReplicationAlgorithms.init_all_settings(blk_list,blk_size,communication_cst,begin_id,end_id,static_blks,nodes_n)
@@ -31,7 +31,7 @@ def init_environment():
     # all params needed can be accessed from ReplicationAlgorithms.param
 
     # return max_level
-    return max_level
+    return max_level,all_storage
 
 def get_average_time_cost(max_level):
     """ () -> (list of int)
@@ -71,7 +71,7 @@ def get_average_time_cost(max_level):
     top_num_to_offload=3
 
     # filename to store average_time_cost statistical data
-    file_average_time='./averageTime-'+chosen_block_distribution+'-'+passive_replicate_type+'.'+str(passive_on)+'-'+active_replicate_type+','+str(active_on)+'-'+str(period)+'-'+str(lambdai)+'-'+str(top_num_to_offload)+'.txt'
+    file_average_time='./finalTest/averageTime-'+chosen_block_distribution+'-'+passive_replicate_type+'.'+str(passive_on)+'-'+active_replicate_type+'.'+str(active_on)+'-'+str(period)+'-'+str(lambdai)+'-'+str(top_num_to_offload)+'.txt'
 
     for run_times in range(total_times):
         # store all avg_time in each runtime
@@ -82,7 +82,7 @@ def get_average_time_cost(max_level):
         # statically assign
         ReplicationAlgorithms.static_assign_blocks(piece,curve_type_replica,period,curve_type_expel)
         # dynamic assign
-        for end_since in range(ReplicationAlgorithms.begin_id+ReplicationAlgorithms.static_blocks,step):
+        for end_since in range(ReplicationAlgorithms.beginID+ReplicationAlgorithms.static_blocks,ReplicationAlgorithms.endID,step):
             average_time_i=.0
             # choose lambdai nodes randomly
             # replace = true
@@ -104,7 +104,7 @@ def get_average_time_cost(max_level):
     # got all average_time, which is a list of list of float
     # store them
     with open(file_average_time,'w') as file_write:
-        print(ReplicationAlgorithms.begin_id+ReplicationAlgorithms.static_blocks,' ',ReplicationAlgorithms.end_id,' ',step,file=file_write)
+        print(ReplicationAlgorithms.beginID+ReplicationAlgorithms.static_blocks,' ',ReplicationAlgorithms.endID,' ',step,file=file_write)
         for run_times in range(len(avg_time)):
             print(json.dumps(avg_time[run_times]),file=file_write)
 
@@ -132,9 +132,9 @@ def get_one_total_time_and_replicate(nodeID,end_since,max_level,passive_replicat
 
     # get log2(len(blocks)) blocks based on chosen_block_distribution
     if chosen_block_distribution=='nipopows':
-        chosen_blocks=InitChainAndNodes.scan_blocklist_no_repeat(m,ReplicationAlgorithms.begin_id,end_since,ReplicationAlgorithms.blocklist,max_level)
+        chosen_blocks=InitChainAndNodes.scan_blocklist_no_repeat(m,ReplicationAlgorithms.beginID,end_since,ReplicationAlgorithms.blocklist,max_level)
     else:
-        chosen_blocks=InitChainAndNodes.get_needed_blocks(ReplicationAlgorithms.begin_id,end_since,ReplicationAlgorithms.blocklist,chosen_block_distribution)
+        chosen_blocks=InitChainAndNodes.get_needed_blocks(ReplicationAlgorithms.beginID,end_since,ReplicationAlgorithms.blocklist,chosen_block_distribution)
     # calculate time
     for blockID in chosen_blocks:
         min_node,time_cost=ReplicationAlgorithms.get_blockID_from_which(nodeID,blockID)
@@ -163,6 +163,8 @@ def get_one_total_time_and_replicate(nodeID,end_since,max_level,passive_replicat
 
 
 
-if __name__=='__main__':
-    max_level=init_environment()
-    get_average_time_cost(max_level)
+# if __name__=='__main__':
+#     max_level,all_storage_cost=init_environment()
+#     get_average_time_cost(max_level)
+
+#     print('running done')

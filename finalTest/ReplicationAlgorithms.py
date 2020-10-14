@@ -185,6 +185,8 @@ def assign_one_block(blockID,piece,curve_type_replica,period,curve_type_expel):
     # update blocks_in_which_nodes_and_timelived, update nodes_storage_used, update nodes_stored_blocks_popularity
     for node_replica in nodes_store_replicas:
         if node_replica not in blocks_in_which_nodes_and_timelived[blockID-beginID]:
+            # print("size=",blocksizes[blockID-beginID])
+            # print(blockID,'\n',beginID)
             nodes_storage_used[node_replica]+=blocksizes[blockID-beginID]
         blocks_in_which_nodes_and_timelived[blockID-beginID][node_replica]=time_lived
         nodes_stored_blocks_popularity[node_replica][blockID]=0
@@ -263,8 +265,8 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
     elif active_type=='calculate':
         for blockID in blocks_to_be_offload:
             # largest improvement is brought by which nodes_test
-            max_prove=0
-            max_prove_node=nodeID
+            max_improve=0
+            max_improve_node=nodeID
             # which node shall I store blockID
             for nodes_test in range(nodes_num):
                 # improvement brought by storing blockID in nodes_test
@@ -287,7 +289,7 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
                     if min_communicate_before_store>communication_cost[each_node_in_system][nodes_test]:
                         this_node_saved_in_node_test+=blocksizes[blockID-beginID]*(min_communicate_before_store>communication_cost[each_node_in_system][nodes_test])
                         total_saved_in_node_test+=this_node_saved_in_node_test
-                if total_saved_in_node_test>max_prove:
+                if total_saved_in_node_test>max_improve:
                     max_improve=total_saved_in_node_test
                     max_improve_node=nodes_test
             # got the best position for blockID to store
