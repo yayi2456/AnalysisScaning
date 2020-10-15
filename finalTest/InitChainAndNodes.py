@@ -249,7 +249,7 @@ def get_needed_blocks(beginID,endID,blocklist,distribution_type):
         #zipf PMF=F(K=k)=1/ghn(N,s)*k^s. k is the rank, N is the total number, 
         # s is a parameter to describe zipf curve
         for i in range(len(probabllity)):
-            probabllity[i]=1/(generalized_harmonic_number(endID-beginID,s)*pow(i+1,s))
+            probabllity[len(probabllity)-1-i]=1/(generalized_harmonic_number(endID-beginID,s)*pow(i+1,s))
     elif distribution_type=='flyclient':
         #PDF of flyclient is g(x)=1/((x-1)*ln(δ)), δ is c^k. c\in (0,1],k\in N
         # in their test, δ=2^{-10}

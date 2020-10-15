@@ -30,10 +30,12 @@ def plot_avg():
     period=6
     lambdai=4
     top_num_to_offload=3
-
-    Avgtime01, b01, e01, s01 = load_avg_times(chosen_block_distribution,passive_replicate_type,passive_on,active_replicate_type,active_on,period,lambdai,top_num_to_offload)
+    avg_time=[]
+    for i in [0,1,3,4,5,6,7]:
+        avgtime, b01, e01, s01 = load_avg_times(chosen_block_distribution,passive_replicate_type,passive_on,active_replicate_type,active_on,i,lambdai,top_num_to_offload)
+        avg_time.append(avgtime)
     
-    Avgtime02, b02, e02, s02 = load_avg_times('flyclient',passive_replicate_type,passive_on,active_replicate_type,active_on,period,lambdai,top_num_to_offload)
+    # Avgtime02, b02, e02, s02 = load_avg_times('flyclient',passive_replicate_type,passive_on,active_replicate_type,active_on,period,lambdai,top_num_to_offload)
     # Avgtime12, b12, e12, s12 = loadavgtimes(1, 2, 100)
     # Avgtime22, b22, e22, s22 = loadavgtimes(2, 2, 100)
     # Avgtime_12,b_12,e_12,s_12=loadavgtimes(-1,2,100)
@@ -52,8 +54,10 @@ def plot_avg():
     # if b12!=b_12 or e12!=e_12 or s12!=s_12:
     #     exit(-1)
     colors = ['blue', 'red', 'green', 'skyblue', 'pink', 'yellow', 'purple', 'black', 'cyan', 'orange']
-    plt.plot(range(b01, e01, s01), Avgtime01, color=colors[0], label='nipopows')
-    plt.plot(range(b01, e01, s01), Avgtime02, color=colors[1], label='flyclient')
+    for i in range(len([0,1,3,4,5,6,7])):
+        plt.plot(range(b01, e01, s01), avg_time[i], color=colors[i], label=str(i))
+    # plt.plot(range(b01, e01, s01), Avgtime01, color=colors[0], label='nipopows')
+    # plt.plot(range(b01, e01, s01), Avgtime02, color=colors[1], label='flyclient')
     # plt.plot(range(b01, e01, s01), Avgtime12, color=colors[2], label='12')
     # plt.plot(range(b01, e01, s01), Avgtime22, color=colors[3], label='22')
     # plt.plot(range(b01, e01, s01), Avgtime_12, color=colors[4], label='-12')
@@ -165,7 +169,7 @@ def load_use_ratio(chosen_block_distribution,passive_replicate_type,passive_on,a
 def plot_use_ratio():
     """
     """
-    chosen_block_distribution = 'nipopows'
+    chosen_block_distribution = 'uniform'
     passive_replicate_type='popularity'
     active_replicate_type='calculate'
     passive_on=True
@@ -173,25 +177,39 @@ def plot_use_ratio():
     period=6
     lambdai=4
     top_num_to_offload=3
+    begin_static=200
     
     use_ratio01,b01,e01,s01=load_use_ratio(chosen_block_distribution,passive_replicate_type,passive_on,active_replicate_type,active_on,period,lambdai,top_num_to_offload)
     #debug
-    print(np.max(use_ratio01))
-    lengthof=len([1 for i in range(b01,e01,s01)])
-    print(np.argmax(use_ratio01)/lengthof)
-    print(np.argmax(use_ratio01)%lengthof)
+    # print(np.max(use_ratio01))
+    # lengthof=len([1 for i in range(b01,e01,s01)])
+    # print(np.argmax(use_ratio01)/lengthof)
+    # print(np.argmax(use_ratio01)%lengthof)
+    # modify
+    # for i in range(len(use_ratio01)):
+    #     for j in range(len(use_ratio01[i])):
+    #         if use_ratio01[i][j]>=1:
+    #             use_ratio01[i][j]=1
 
     fig = plt.figure()
-    ax = Axes3D(fig)
-    for i in range(len(use_ratio01)-150):
-        ax.scatter([i+b01 for j in range(b01,e01,s01)], [j for j in range(b01,e01,s01)], use_ratio01[i],color='b')
+    ax3=plt.axes(projection='3d')
+    # ax = Axes3D(fig)
+    # for i in range(len(use_ratio01)):
+    #     ax.scatter([i+b01-begin_static for j in range(b01,e01,s01)], [j for j in range(b01,e01,s01)], use_ratio01[i])
+    x=range(b01-begin_static,e01)
+    y=range(b01,e01,s01)
+    X,Y=np.meshgrid(y,x)
+    # print(np.shape(X),',',np.shape(Y),',',np.shape(use_ratio01))
+    ax3.plot_surface(X,Y,np.array(use_ratio01),cmap='rainbow')
+    plt.xlabel('epoches')
+    plt.ylabel('blocks')
     plt.show()
 
 
 
 
 if __name__=='__main__':
-    plot_use_ratio()
+    plot_avg()
     # plt.plot(range(begin+beginblock,end),RR[beginblock:],color='r',marker='.',label='needed-actual')
     # plt.bar(range(begin+beginblock,end),LL[beginblock:],color='grey',label='levels')
     # plt.plot(range(begin+beginblock,end),RN[beginblock:],label='needed',color='g')

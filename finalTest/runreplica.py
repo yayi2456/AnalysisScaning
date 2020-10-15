@@ -53,7 +53,7 @@ def replication_run(max_level,get_average_time=True,get_storage_used=False,get_r
     # params of NIPoPoWs
     m=3
     # chosen block type :nipopows
-    chosen_block_distribution='nipopows'#'nipopows'
+    chosen_block_distribution='nipopows'#'uniform'#'zipf'#'nipopows'#'flyclient'
     # passive alg type
     passive_replicate_type='popularity'
     # active alg type
@@ -63,7 +63,7 @@ def replication_run(max_level,get_average_time=True,get_storage_used=False,get_r
     # epoch gap 
     step=1
     # total runing times
-    total_times=1
+    total_times=100
     # average time, a list of list of float
     avg_time=[]
     # blocks size stored by nodes, a list of list of float. key=nodeID,value=blocksize
@@ -77,7 +77,7 @@ def replication_run(max_level,get_average_time=True,get_storage_used=False,get_r
     # statically assign params
     piece=1
     curve_type_replica='2^n'
-    period=6
+    period=np.inf
     curve_type_expel='2^n'
 
     #switch on/off replicate
@@ -215,8 +215,8 @@ def get_one_total_time_and_replicate(nodeID,end_since,max_level,passive_replicat
     else:
         chosen_blocks=InitChainAndNodes.get_needed_blocks(ReplicationAlgorithms.beginID,end_since,ReplicationAlgorithms.blocklist,chosen_block_distribution)
     #debug
-    num_of_blocks=len(chosen_blocks)
-    print(num_of_blocks,',',int(math.log2(end_since-ReplicationAlgorithms.beginID)))
+    # num_of_blocks=len(chosen_blocks)
+    # print(num_of_blocks,',',int(math.log2(end_since-ReplicationAlgorithms.beginID)))
     # update access times of chosen blocks and
     # calculate time
     for blockID in chosen_blocks:
@@ -288,18 +288,32 @@ def get_ratio_from_access_times(access_times_dict):
             use_ratio[i]/=replica_nums_of_blocks[i]
     #debug
     # for i in range(len(use_ratio)):
-    #     if use_ratio[i]>=100:
-    #         print(replica_nums_of_blocks[i])
+    #     if use_ratio[i]!=0:
     #         print(access_times_dict[i+begin_id])
+    #         print(replica_nums_of_blocks[i])
     #         print('---')    
     
     # return use ratio
     return use_ratio
 
+def get_storage_place():
+    """
+
+    get current block distribution, and save them into file_store_distribution
+    """
+
+    file_store_distibution='./finalTest/storeDistribution.txt'
+    with open(file_store_distibution,'w') as store_file:
+        for i in range(len(ReplicationAlgorithms.blocks_in_which_nodes_and_timelived)):
+            block_id=i+ReplicationAlgorithms.beginID
+            level=ReplicationAlgorithms.blocklist[i][0]
+            actual=len(ReplicationAlgorithms.blocks_in_which_nodes_and_timelived[i])
+            stored_nodes=[kvs[0] for kvs in  ReplicationAlgorithms.blocks_in_which_nodes_and_timelived[i].items()]
+            print('block:',block_id,',level=',level,',actual=',actual,'stored nodes=',stored_nodes,file=store_file)
 
 
 if __name__=='__main__':
     max_level,all_storage_cost=init_environment()
-    replication_run(max_level,True,False,True)
-
+    replication_run(max_level,True,True,True)
+    get_storage_place()
     print('running done')

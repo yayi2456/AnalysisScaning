@@ -213,7 +213,7 @@ def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_
     """
     # blocksID that will be stored locally
     all_blocks_replicated=[]
-    blocks_replicated_num=int(len(chosen_blocks)/nodes_num)
+    blocks_replicated_num=math.ceil(len(chosen_blocks)/nodes_num)
 
     if passive_type=='random':
         all_blocks_replicated=random.sample(range(0,len(chosen_blocks)),blocks_replicated_num)
@@ -227,7 +227,9 @@ def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_
     else:
         print("invalid passive_type. default('random') is set.")
         all_blocks_replicated=random.sample(range(0,len(chosen_blocks)),blocks_replicated_num)
-
+    #debug
+    # print('passive blocks stored=',len(all_blocks_replicated))
+    #debug end
     # assign and update the 3 big list
     for blockID in all_blocks_replicated:
         store_block_to_node(blockID,nodeID,period,curve_type_expel)

@@ -22,7 +22,7 @@ LevelBlockStorage=[]
 # LevelBlockLiveTime=[]
 LevelSqrtBlockStorage=[]
 # LevelSqrtBlockLiveTime=[]
-PERIOD=np.inf
+PERIOD=0
 #热度统计
 ExpNodesBlocksPopularity=[]
 #最大存储使用量
@@ -459,6 +459,7 @@ def activedynamic_calculate(nodesum,beginID,assigntype,times,topnumbers):
             maximprove=0
             maxiprovenode=nodeid
             blockID = blocks[0]
+            print(blockID)
             for nodes in range(nodesum):
                 allsavedcost=0
                 for allnodesaved in range(nodesum):
@@ -778,15 +779,15 @@ if __name__=='__main__':
     assigntype = 0b1
     piece = 1
     lambdai = 4
-    replicatype=-1
-    activeReplicaType=0#1A2AC0关闭
+    replicatype=1
+    activeReplicaType=2#1A2AC0关闭
     ##
     logfilename = './LRU' +str(beginID)+'-'+str(beginnodes)+'-'+str(tailnodes)+'-'+str(nodesum)+'-'+str(piece)+'-'+str(lambdai)+'-'+str(PERIOD)+ '.log'
     logging.basicConfig(filename=logfilename, level=logging.INFO,filemode='w')
     maxlevel = init(beginID, endID, beginID + beginnodes, nodesum, assigntype, piece)#(beginID,endID,nodesums,assigntype,piece):
     AvgTime = []
     step = 1
-    totaltimes = 1  # 减小所得点的波动
+    totaltimes = 100  # 减小所得点的波动
     for runtimes in range(0, totaltimes):
         logging.info(('runtime %d begin...'),runtimes)
         AvgTime.append([])
