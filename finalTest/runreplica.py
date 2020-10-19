@@ -53,17 +53,19 @@ def replication_run(max_level,get_average_time=True,get_storage_used=False,get_r
     # params of NIPoPoWs
     m=3
     # chosen block type :nipopows
-    chosen_block_distribution='nipopows'#'uniform'#'zipf'#'nipopows'#'flyclient'
+    chosen_block_distribution='flyclient'#'uniform'#'zipf'#'nipopows'#'flyclient'
     # passive alg type
-    passive_replicate_type='popularity'
+    passive_replicate_type='popularity'#'popularity'
     # active alg type
-    active_replicate_type='calculate'
+    active_replicate_type='random'#'calculate'
     # how many requests in step epoch
     lambdai=4
     # epoch gap 
     step=1
     # total runing times
     total_times=100
+    if total_times!=1:
+        get_replica_use_ratio=False
     # average time, a list of list of float
     avg_time=[]
     # blocks size stored by nodes, a list of list of float. key=nodeID,value=blocksize
@@ -76,9 +78,9 @@ def replication_run(max_level,get_average_time=True,get_storage_used=False,get_r
     
     # statically assign params
     piece=1
-    curve_type_replica='2^n'
-    period=np.inf
-    curve_type_expel='2^n'
+    curve_type_replica='flyclient'#'2^n'
+    period=6#np.inf
+    curve_type_expel='flyclient'#'2^n'
 
     #switch on/off replicate
     passive_on=True
@@ -314,6 +316,6 @@ def get_storage_place():
 
 if __name__=='__main__':
     max_level,all_storage_cost=init_environment()
-    replication_run(max_level,True,True,True)
+    replication_run(max_level,True,False,False)
     get_storage_place()
     print('running done')

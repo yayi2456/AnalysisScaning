@@ -22,7 +22,7 @@ def load_avg_times(chosen_block_distribution,passive_replicate_type,passive_on,a
     return avg_time,begin,ends,step
 
 def plot_avg():
-    chosen_block_distribution = 'nipopows'
+    chosen_block_distribution = 'flyclient'
     passive_replicate_type='popularity'
     active_replicate_type='calculate'
     passive_on=True
@@ -31,12 +31,15 @@ def plot_avg():
     lambdai=4
     top_num_to_offload=3
     avg_time=[]
-    for i in [0,1,3,4,5,6,7]:
-        avgtime, b01, e01, s01 = load_avg_times(chosen_block_distribution,passive_replicate_type,passive_on,active_replicate_type,active_on,i,lambdai,top_num_to_offload)
-        avg_time.append(avgtime)
-    
-    # Avgtime02, b02, e02, s02 = load_avg_times('flyclient',passive_replicate_type,passive_on,active_replicate_type,active_on,period,lambdai,top_num_to_offload)
-    # Avgtime12, b12, e12, s12 = loadavgtimes(1, 2, 100)
+    # period_s=[0,1,2,3,4,5,6,7,np.inf]
+    # for i in period_s:
+    #     avgtime, b01, e01, s01 = load_avg_times(chosen_block_distribution,passive_replicate_type,passive_on,active_replicate_type,active_on,i,lambdai,top_num_to_offload)
+    #     avg_time.append(avgtime)
+    # avgtime,_,_,_=load_avg_times(chosen_block_distribution,passive_replicate_type,passive_on,active_replicate_type,active_on,np.inf,lambdai,top_num_to_offload)
+    # avg_time.append(avgtime)
+    Avgtime02, b02, e02, s02 = load_avg_times('flyclient',passive_replicate_type,passive_on,active_replicate_type,active_on,period,lambdai,top_num_to_offload)
+    Avgtime12, b12, e12, s12 = load_avg_times('flyclient','random',passive_on,'random',active_on,period,lambdai,top_num_to_offload)
+    Avgtime13, b12, e12, s12 = load_avg_times('flyclient','popularity',passive_on,'random',active_on,period,lambdai,top_num_to_offload)
     # Avgtime22, b22, e22, s22 = loadavgtimes(2, 2, 100)
     # Avgtime_12,b_12,e_12,s_12=loadavgtimes(-1,2,100)
     # Avgtime_11,b_11,e_11,s_11=loadavgtimes(-1,1,100)
@@ -54,12 +57,13 @@ def plot_avg():
     # if b12!=b_12 or e12!=e_12 or s12!=s_12:
     #     exit(-1)
     colors = ['blue', 'red', 'green', 'skyblue', 'pink', 'yellow', 'purple', 'black', 'cyan', 'orange']
-    for i in range(len([0,1,3,4,5,6,7])):
-        plt.plot(range(b01, e01, s01), avg_time[i], color=colors[i], label=str(i))
+    
+    # for i in range(len(period_s)):
+    #     plt.plot(range(b01, e01, s01), avg_time[i], color=colors[i], label=str(period_s[i]))
     # plt.plot(range(b01, e01, s01), Avgtime01, color=colors[0], label='nipopows')
-    # plt.plot(range(b01, e01, s01), Avgtime02, color=colors[1], label='flyclient')
-    # plt.plot(range(b01, e01, s01), Avgtime12, color=colors[2], label='12')
-    # plt.plot(range(b01, e01, s01), Avgtime22, color=colors[3], label='22')
+    plt.plot(range(b02, e02, s02), Avgtime02, color=colors[1], label='random-random')
+    plt.plot(range(b02, e02, s02), Avgtime12, color=colors[2], label='popularity-calculate')
+    plt.plot(range(b02, e02, s02), Avgtime13, color=colors[3], label='popularity-random')
     # plt.plot(range(b01, e01, s01), Avgtime_12, color=colors[4], label='-12')
     # plt.plot(range(b01, e01, s01), Avgtime_11, color=colors[5], label='-11')
     # plt.plot(range(b01,e01,s01),Avgtime11,color=colors[6],label='11')
@@ -169,7 +173,7 @@ def load_use_ratio(chosen_block_distribution,passive_replicate_type,passive_on,a
 def plot_use_ratio():
     """
     """
-    chosen_block_distribution = 'uniform'
+    chosen_block_distribution = 'nipopows'
     passive_replicate_type='popularity'
     active_replicate_type='calculate'
     passive_on=True
@@ -199,8 +203,9 @@ def plot_use_ratio():
     x=range(b01-begin_static,e01)
     y=range(b01,e01,s01)
     X,Y=np.meshgrid(y,x)
-    # print(np.shape(X),',',np.shape(Y),',',np.shape(use_ratio01))
+    print(np.shape(X),',',np.shape(Y),',',np.shape(use_ratio01))
     ax3.plot_surface(X,Y,np.array(use_ratio01),cmap='rainbow')
+    # plt.plot(range(b01,e01,s01),use_ratio01[2225-b01])
     plt.xlabel('epoches')
     plt.ylabel('blocks')
     plt.show()

@@ -22,7 +22,7 @@ LevelBlockStorage=[]
 # LevelBlockLiveTime=[]
 LevelSqrtBlockStorage=[]
 # LevelSqrtBlockLiveTime=[]
-PERIOD=0
+PERIOD=3
 #热度统计
 ExpNodesBlocksPopularity=[]
 #最大存储使用量
@@ -278,8 +278,8 @@ def initialAssignOneBlock(beginID,endID,blockID,nodesum,assigntype,piece):
     if assigntype==0b0 or assigntype>0b1111:
         print("ERROR")
         exit(1)
-    for i in range(nodesum):
-        ExpNodesBlocksPopularity.append({})
+    # for i in range(nodesum):
+    #     ExpNodesBlocksPopularity.append({})
     #exp
     nodeid=blockID%nodesum
     blocklevel=BlockLists[blockID-beginID][0]
@@ -294,6 +294,8 @@ def initialAssignOneBlock(beginID,endID,blockID,nodesum,assigntype,piece):
             ExpBlockStorage[blockID - beginID][nodeid]=timelived
             if nodeid in ExpBlockStorage[blockID - beginID]:
                 ExpNodeStorageUsed[nodeid]+=BlockSizes[blockID-beginID]
+            # print(len(ExpNodesBlocksPopularity))
+            # print("nodeid=",nodeid)
             ExpNodesBlocksPopularity[nodeid][blockID]=0
     #expsqrt
     if assigntype&0b10:
@@ -352,8 +354,8 @@ def initialNewComingBlock_All(beginID,blockID,nodesum,assigntype,piece):
     if assigntype==0b0 or assigntype>0b1111:
         print("ERROR")
         exit(1)
-    for i in range(nodesum):
-        ExpNodesBlocksPopularity.append({})
+    # for i in range(nodesum):
+    #     ExpNodesBlocksPopularity.append({})
     #all
     nodeid=blockID%nodesum
     blocklevel=BlockLists[blockID-beginID][0]
@@ -459,11 +461,13 @@ def activedynamic_calculate(nodesum,beginID,assigntype,times,topnumbers):
             maximprove=0
             maxiprovenode=nodeid
             blockID = blocks[0]
-            print(blockID)
+            # print(blockID)
             for nodes in range(nodesum):
                 allsavedcost=0
                 for allnodesaved in range(nodesum):
                     nodesavedcost=0
+                    # print(blockID)
+                    # print(len(ExpBlockStorage))
                     storageNodes = ExpBlockStorage[blockID - beginID].keys()
                     minCommunicate = 100
                     minNode = -1
@@ -586,10 +590,10 @@ def init(beginID,endID,endIDpreassign,nodesums,assigntype,piece):
     ExpNodeStorageUsed=[0]*nodesum
     return maxlevel
 
-def assignBlcoksStatically(beginID,endID,nodesums,assigntype,piece):
-    for blockID in range(beginID,endID):
-        initialAssignOneBlock(beginID,endID,blockID,nodesums,assigntype,piece)
-    printAssignRes(beginID,endID,assigntype,piece)
+# def assignBlcoksStatically(beginID,endID,nodesums,assigntype,piece):
+#     for blockID in range(beginID,endID):
+#         initialAssignOneBlock(beginID,endID,blockID,nodesums,assigntype,piece)
+#     printAssignRes(beginID,endID,assigntype,piece)
 
 def Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,mynodeid,assigntype,nodesum,replicatype):
     if assigntype not in [0b1,0b11,0b111,0b1111]:
@@ -617,8 +621,10 @@ def Time_togetBlocksNeededtoProve(m,beginID,endIDsince,maxlevel,mynodeid,assignt
             AllTimeCost[minNode]+=TimeCost
             #更新存储空间记录
             if minNode!=mynodeid:
+                # print(len(ExpNodesBlocksPopularity))
                 ExpNodesBlocksPopularity[minNode][blockID]+=1
             #记录popularity
+            # print(len(ExpChosenPopularity))
             ExpChosenPopularity[blockID]=ExpNodesBlocksPopularity[minNode][blockID]
             #记录cost
             ExpChosenCost[blockID]=TimeCost
@@ -765,6 +771,7 @@ def endIDAverageTime(m,beginID,endIDsince,maxlevel,nodesum,assigntype,lambdai,re
     return AllTimeMax#np.mean(AllTimeMax,axis=1)###
 
 def preAssign(beginID,endID,endIDpreassign,nodesums,assigntype,piece):
+    # print('preassign:',len(ExpNodesBlocksPopularity))
     for blockID in range(beginID,endIDpreassign):
         initialAssignOneBlock(beginID,endID,blockID,nodesums,assigntype,piece)
 
@@ -788,6 +795,8 @@ if __name__=='__main__':
     AvgTime = []
     step = 1
     totaltimes = 100  # 减小所得点的波动
+    for i in range(nodesum):
+        ExpNodesBlocksPopularity.append({})
     for runtimes in range(0, totaltimes):
         logging.info(('runtime %d begin...'),runtimes)
         AvgTime.append([])
@@ -795,6 +804,8 @@ if __name__=='__main__':
         ExpSqrtBlockStorage.clear()
         LevelBlockStorage.clear()
         LevelSqrtBlockStorage.clear()
+        
+
         preAssign(beginID, endID, beginID + beginnodes, nodesum, assigntype, piece)
         logging.info('preAssign done. blcok %d to %d have been assigned.',beginID,beginID+beginnodes)
         EachNodeStorageChange=[]
@@ -814,11 +825,14 @@ if __name__=='__main__':
             if activeReplicaType==1:
                 activeDynamicRep(nodesum,beginID,assigntype,0,3,1)
             elif activeReplicaType==2:
+                # print(len(ExpNodesBlocksPopularity))
                 activedynamic_calculate(nodesum,beginID,assigntype,0,3)
-            #清空
-            for nodes in range(nodesum):
-                for key in ExpNodesBlocksPopularity[nodes].keys():
-                    ExpNodesBlocksPopularity[nodes][key]=0
+        #清空
+        for i in range(len(ExpNodesBlocksPopularity)):
+            ExpNodesBlocksPopularity[i].clear()
+            # for nodes in range(nodesum):
+            #     for key in ExpNodesBlocksPopularity[nodes].keys():
+            #         ExpNodesBlocksPopularity[nodes][key]=0
             ######storage record
     #         print('blockID=',endIDSince,':',BlockSizes[endIDSince-beginID],':',ExpNodeStorageUsed,file=foutput)
     #         nodesshow=10

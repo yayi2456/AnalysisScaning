@@ -70,7 +70,7 @@ def cal_replica_num(block_level,piece,curve_type):
     Return replica number of a certain block based on its level, piece, and curve_type.
 
     piece is a coef of curve.
-    curve_type: '2^n', 'sqrt2^n', 'level', 'sqrtlevel', '1'
+    curve_type: '2^n', 'sqrt2^n', 'level', 'sqrtlevel', '1','flyclient','uniform','zipf'
     replicanums= piece* curvetype
 
     >>> cal_replica_num(4,1,'2^n')
@@ -96,10 +96,12 @@ def cal_replica_num(block_level,piece,curve_type):
             return piece*((int)(math.sqrt(block_level)))
         elif curve_type=='1':
             return piece
+        elif curve_type=='flyclient':
+            return piece
         else:
             sys.exit(-3)
     except:
-        print("INVALID CURVE TYPE! must be one of '2^n', 'sqrt2^n', 'level', 'sqrtlevel', '1'. '2^n' is set.")
+        print("INVALID CURVE TYPE! must be one of '2^n', 'sqrt2^n', 'level', 'sqrtlevel', '1', 'flyclient','uniform','zipf'. '2^n' is set.")
         return pow(2,block_level-1)*piece
 
 def cal_time_lived(block_level,period,curve_type):
@@ -108,21 +110,10 @@ def cal_time_lived(block_level,period,curve_type):
     Return replica number of a certain block based on its level, piece, and curve_type.
 
     piece is a coef of curve.
-    curve_type: '2^n', 'sqrt2^n', 'level', 'sqrtlevel', '1'
+    curve_type: '2^n', 'sqrt2^n', 'level', 'sqrtlevel', '1','flyclient','uniform','zipf'
     time_lived= period* curvetype
 
     as this has the same logic of cal_replica_num, we just use that function.
-
-    >>> cal_time_lived(4,1,'2^n')
-    8
-    >>> cal_time_lived(4,2, 'sqrt2^n')
-    4
-    >>> cal_time_lived(1,1,'level')
-    1
-    >>> cal_time_lived(8,2,'sqrtlevel')
-    4
-    >>> cal_time_lived(10,2,'1')
-    2
     """
     
     return cal_replica_num(block_level,period,curve_type)
@@ -214,9 +205,11 @@ def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_
     # blocksID that will be stored locally
     all_blocks_replicated=[]
     blocks_replicated_num=math.ceil(len(chosen_blocks)/nodes_num)
-
+    if blocks_replicated_num>len(chosen_blocks):
+        blocks_replicated_num=len(chosen_blocks)
     if passive_type=='random':
-        all_blocks_replicated=random.sample(range(0,len(chosen_blocks)),blocks_replicated_num)
+        all_blocks_num=random.sample(range(0,len(chosen_blocks)),blocks_replicated_num)
+        all_blocks_replicated=[chosen_blocks[i] for i in all_blocks_num]
     elif passive_type=='load' or passive_type=='popularity':
         # sort the dict by value value. reversed sort.
         kvs=sorted(sort_value_dict.items(),key=lambda x:x[1],reverse=True)
@@ -226,7 +219,8 @@ def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_
             all_blocks_replicated.append(blockID[0])
     else:
         print("invalid passive_type. default('random') is set.")
-        all_blocks_replicated=random.sample(range(0,len(chosen_blocks)),blocks_replicated_num)
+        all_blocks_num=random.sample(range(0,len(chosen_blocks)),blocks_replicated_num)
+        all_blocks_replicated=[chosen_blocks[i] for i in all_blocks_num]
     #debug
     # print('passive blocks stored=',len(all_blocks_replicated))
     #debug end
@@ -261,8 +255,8 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
 
     # get the target node_to_be_offload
     if active_type=='random':
-        node_to_be_offload=random.randint(0,nodes_num-1)
         for blockID in blocks_to_be_offload:
+            node_to_be_offload=random.randint(0,nodes_num-1)
             store_block_to_node(blockID,nodeID,period,curve_type_expel)
     elif active_type=='calculate':
         for blockID in blocks_to_be_offload:
