@@ -109,7 +109,7 @@ def cal_time_lived(block_level,period,curve_type):
 
     Return replica number of a certain block based on its level, piece, and curve_type.
 
-    piece is a coef of curve.
+    period is a coef of curve.
     curve_type: '2^n', 'sqrt2^n', 'level', 'sqrtlevel', '1','flyclient','uniform','zipf'
     time_lived= period* curvetype
 
@@ -257,7 +257,7 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
     if active_type=='random':
         for blockID in blocks_to_be_offload:
             node_to_be_offload=random.randint(0,nodes_num-1)
-            store_block_to_node(blockID,nodeID,period,curve_type_expel)
+            store_block_to_node(blockID,node_to_be_offload,period,curve_type_expel)
     elif active_type=='calculate':
         for blockID in blocks_to_be_offload:
             # largest improvement is brought by which nodes_test
@@ -294,7 +294,7 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
         print("invalid active type! default('random') is set.")
         node_to_be_offload=random.randint(0,nodes_num-1)
         for blockID in blocks_to_be_offload:
-            store_block_to_node(blockID,nodeID,period,curve_type_expel)
+            store_block_to_node(blockID,node_to_be_offload,period,curve_type_expel)
     # nothing else to return 
     return
 
@@ -348,6 +348,50 @@ def update_livetime_and_expel(end_since,epochs):
                 blocks_in_which_nodes_and_timelived[blockID-beginID].pop(nodeID)
     # nothing to return
     return
+
+def expel_blocks_LLU(last_num_to_expel):
+    '''
+    expel blocks whose popularity is the last nums in nodes_stored_blocks_popularity
+    '''
+    
+    # expel blocks in every node
+    for nodeID in range(nodes_num):
+        # find dead blocks: whose popularity is the least
+        kvs=sorted(nodes_stored_blocks_popularity[nodeID].items(),key=lambda x:x[1],reverse=False)
+        kvs=kvs[:last_num_to_expel]
+        # dead blocks that going to be expelled
+        dead_blocks=[blockID[0] for blockID in kvs]
+        # expel these blocks except there are only one left
+        for blockID in dead_blocks:
+            if len(blocks_in_which_nodes_and_timelived[blockID-beginID])>1:
+                # update popularity
+                nodes_stored_blocks_popularity[nodeID].pop(blockID)
+                # update storage used
+                if nodeID in blocks_in_which_nodes_and_timelived[blockID-beginID]:
+                    nodes_storage_used[nodeID]-=blocksizes[blockID-beginID]
+                # update time_lived
+                blocks_in_which_nodes_and_timelived[blockID-beginID].pop(nodeID)
+    # nothing to return
+    return
+
+def expel_blocks(expel_type,end_since=beginID,epochs=1,last_num_to_expel=3):
+    '''
+    expel blocks.
+
+    expel_type: 'curve' or 'llu'.
+    'curve': end_since and epoch must be given
+    'llu': last_num_to_expel must be given<default>
+    '''
+    if expel_type =='curve':
+        if end_since==beginID and epochs ==1:
+            print("[expel_blocks]: initial settings!")
+        update_livetime_and_expel(end_since,epochs)
+    elif expel_type=='llu':
+        expel_blocks_LLU(last_num_to_expel)
+    else:
+        print("expel_type invalid. llu is set")
+    return
+
 
 def get_blockID_from_which(nodeID,blockID):
     """(int,int) -> (int,float)

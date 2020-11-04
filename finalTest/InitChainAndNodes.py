@@ -161,6 +161,7 @@ def cal_level(block_hash, block_target):
     # print('blockhash=', blockhash_value, 'target=', block_target, 'level=',level)
     return level
 
+Scan_blocklist_no_repeat={}
 
 ### open
 def scan_blocklist_no_repeat(m,beginID,endID,blocklist,max_level):
@@ -168,6 +169,8 @@ def scan_blocklist_no_repeat(m,beginID,endID,blocklist,max_level):
 
     Return a list of blockIDs that are used to construct a proof at endID.
     """
+    if endID in Scan_blocklist_no_repeat:
+        return Scan_blocklist_no_repeat[endID]
 
     chosen_blocks=[]
 
@@ -209,6 +212,9 @@ def scan_blocklist_no_repeat(m,beginID,endID,blocklist,max_level):
         this_level-=1
         # reset the first block
         this_blockID=beginID
+    
+    # add in global Scan
+    Scan_blocklist_no_repeat[endID]=chosen_blocks
     
     return chosen_blocks
 
@@ -275,14 +281,19 @@ def get_needed_blocks(beginID,endID,blocklist,distribution_type):
     return chosen_blocks
 
 
+Generalized_harmonic_number={}
+
 def generalized_harmonic_number(N,s):
     """(float,float) -> float
 
     used in zipf PMF.which F(K=k)=1/ghn(N,s)*k^s
     """
+    if N in Generalized_harmonic_number:
+        return Generalized_harmonic_number[N]
     sum_up=0
     for i in range(1,N+1):
         sum_up+=pow(1/i,s)
+    Generalized_harmonic_number[N]=sum_up
     return sum_up
 
 

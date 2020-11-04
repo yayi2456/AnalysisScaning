@@ -3,8 +3,10 @@ from mpl_toolkits.mplot3d import Axes3D
 import json
 import numpy as np
 
-def load_avg_times(chosen_block_distribution,passive_replicate_type,passive_on,active_replicate_type,active_on,period,lambdai,top_num_to_offload):
-    file_average_time='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\averageTime-'+chosen_block_distribution+'-'+passive_replicate_type+'.'+str(passive_on)+'-'+active_replicate_type+'.'+str(active_on)+'-'+str(period)+'-'+str(lambdai)+'-'+str(top_num_to_offload)+'.txt'
+def load_avg_times(chosen_block_distribution,curve_type_replica,piece,passive_type,lambdai,active_type,top_num_to_offload,expel_p_type,period,last_num_to_expel,total_times):
+    # file_average_time='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\averageTime-'+chosen_block_distribution+'-'+passive_replicate_type+'.'+str(passive_on)+'-'+active_replicate_type+'.'+str(active_on)+'-'+str(period)+'-'+str(lambdai)+'-'+str(top_num_to_offload)+'.txt'
+    file_average_time='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\A-'+chosen_block_distribution+'-'+curve_type_replica+'-'+str(piece)+'-'+passive_type+str(lambdai)+'-'+active_type+str(top_num_to_offload)+'-'+expel_p_type+'-'+str(period)+'-'+str(last_num_to_expel)+'-'+str(total_times)+'.txt'
+    
     avg_time=[]
     with open(file_average_time, 'r') as datafile:
         i=0
@@ -22,24 +24,24 @@ def load_avg_times(chosen_block_distribution,passive_replicate_type,passive_on,a
     return avg_time,begin,ends,step
 
 def plot_avg():
-    chosen_block_distribution = 'flyclient'
-    passive_replicate_type='popularity'
-    active_replicate_type='calculate'
-    passive_on=True
-    active_on=True
-    period=6
-    lambdai=4
-    top_num_to_offload=3
-    avg_time=[]
+    avg_time=[] 
     # period_s=[0,1,2,3,4,5,6,7,np.inf]
     # for i in period_s:
     #     avgtime, b01, e01, s01 = load_avg_times(chosen_block_distribution,passive_replicate_type,passive_on,active_replicate_type,active_on,i,lambdai,top_num_to_offload)
     #     avg_time.append(avgtime)
     # avgtime,_,_,_=load_avg_times(chosen_block_distribution,passive_replicate_type,passive_on,active_replicate_type,active_on,np.inf,lambdai,top_num_to_offload)
     # avg_time.append(avgtime)
-    Avgtime02, b02, e02, s02 = load_avg_times('flyclient',passive_replicate_type,passive_on,active_replicate_type,active_on,period,lambdai,top_num_to_offload)
-    Avgtime12, b12, e12, s12 = load_avg_times('flyclient','random',passive_on,'random',active_on,period,lambdai,top_num_to_offload)
-    Avgtime13, b12, e12, s12 = load_avg_times('flyclient','popularity',passive_on,'random',active_on,period,lambdai,top_num_to_offload)
+    Avgtime02, b02, e02, s02 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'llu',3,3,100)
+    Avgtime12, b12, e12, s12 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'1',2,3,100)
+    Avgtime13, b12, e12, s12 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'1',3,3,100)
+    Avgtime14, b14, e14, s14 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'1',5,3,100)
+    Avgtime15, b14, e14, s14 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'1',8,3,100)
+    Avgtime16, b14, e14, s14 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'1',15,3,100)
+    Avgtime17, b14, e14, s14 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'1',30,3,100)
+    Avgtime18, b14, e14, s14 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'1',50,3,100)
+    Avgtime19, b14, e14, s14 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'1',1,3,100)
+    
+    # Avgtime1inf, b14, e14, s14 = load_avg_times('nipopows','2^n','1','popularity',4,'calculate',3,'no',1,3,100)
     # Avgtime22, b22, e22, s22 = loadavgtimes(2, 2, 100)
     # Avgtime_12,b_12,e_12,s_12=loadavgtimes(-1,2,100)
     # Avgtime_11,b_11,e_11,s_11=loadavgtimes(-1,1,100)
@@ -61,9 +63,16 @@ def plot_avg():
     # for i in range(len(period_s)):
     #     plt.plot(range(b01, e01, s01), avg_time[i], color=colors[i], label=str(period_s[i]))
     # plt.plot(range(b01, e01, s01), Avgtime01, color=colors[0], label='nipopows')
-    plt.plot(range(b02, e02, s02), Avgtime02, color=colors[1], label='random-random')
-    plt.plot(range(b02, e02, s02), Avgtime12, color=colors[2], label='popularity-calculate')
-    plt.plot(range(b02, e02, s02), Avgtime13, color=colors[3], label='popularity-random')
+    plt.plot(range(b02, e02, s02), Avgtime02, color=colors[1], label='llu')
+    plt.plot(range(b02, e02, s02), Avgtime12, color=colors[2], label='2')
+    plt.plot(range(b02, e02, s02), Avgtime13, color=colors[3], label='3')
+    plt.plot(range(b02, e02, s02), Avgtime14, color=colors[4], label='5')
+    plt.plot(range(b02, e02, s02), Avgtime15, color=colors[5], label='8')
+    plt.plot(range(b02, e02, s02), Avgtime16, color=colors[6], label='15')
+    plt.plot(range(b02, e02, s02), Avgtime17, color=colors[7], label='30')
+    plt.plot(range(b02, e02, s02), Avgtime18, color=colors[8], label='50')
+    plt.plot(range(b02, e02, s02), Avgtime19, color=colors[9], label='1')
+    # plt.plot(range(b02, e02, s02), Avgtime1inf, color=colors[8], label='no')
     # plt.plot(range(b01, e01, s01), Avgtime_12, color=colors[4], label='-12')
     # plt.plot(range(b01, e01, s01), Avgtime_11, color=colors[5], label='-11')
     # plt.plot(range(b01,e01,s01),Avgtime11,color=colors[6],label='11')

@@ -11,7 +11,7 @@ import InitChainAndNodes
 import ReplicationAlgorithms
 
 """
-the main program.
+record blocksnumbers and its corresponding nodes, for js running.
 
 """
 
@@ -27,7 +27,7 @@ def init_environment():
     begin_id=2016
     static_blks=200
     end_id=begin_id+400
-    nodes_n=10
+    nodes_n=1
     communication_distribution_type='1'
 
     blk_list,max_level=InitChainAndNodes.build_block_list(begin_id,end_id)
@@ -86,7 +86,7 @@ def replication_run(max_level,get_average_time=True,get_storage_used=False,get_r
     # epoch gap 
     step=1
     # total runing times
-    total_times=100
+    total_times=10
     if total_times!=1:
         get_replica_use_ratio=False
 
