@@ -1,76 +1,50 @@
-::argvs= chosen_block_distribution; passive_replicate_type; active_replicate_type; passive_on; active_on; period; curve_type_expel; expel_type; piece; curve_type_replica
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows popularity calculate 1 1 0 "2^n"
-@REM ::
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows popularity calculate 1 1 1 1
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows popularity calculate 1 1 2 1
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows popularity calculate 1 1 3 1
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows popularity calculate 1 1 5 1
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows popularity calculate 1 1 8 1
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows popularity calculate 1 1 15 1
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows popularity calculate 1 1 30 1
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows popularity calculate 1 1 15 1 curve 1 "2^n"
-@REM ::
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows popularity calculate 1 0 3 "2^n"
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows load calculate 1 0 3 "2^n"
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows load calculate 1 1 3 "2^n"
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows popularity calculate 1 1 3 "2^n"
-@REM ::
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows popularity calculate 0 0 3 "2^n"
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows popularity calculate 1 0 3 "2^n"
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows popularity calculate 0 1 3 "2^n"
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows popularity calculate 1 1 3 "2^n"
-@REM ::
+@REM: test :
+@REM: 初始分配:zipf
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 1 nopassive noactive noexpel 100
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 2 nopassive noactive noexpel 100
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 nopassive noactive noexpel 100
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 4 nopassive noactive noexpel 100
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 5 nopassive noactive noexpel 100
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 6 nopassive noactive noexpel 100
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 7 nopassive noactive noexpel 100
+@REM: 初始分配:zipfr
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipfr 1 nopassive noactive noexpel 100
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipfr 2 nopassive noactive noexpel 100
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipfr 3 nopassive noactive noexpel 100
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipfr 4 nopassive noactive noexpel 100
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipfr 5 nopassive noactive noexpel 100
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipfr 6 nopassive noactive noexpel 100
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipfr 7 nopassive noactive noexpel 100
+@REM: above : done
 
-::重跑部分错误实验
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows random random 0 1 3 "2^n" curve 1 "2^n"
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows random random 1 0 3 "2^n" curve 1 "2^n"
+@REM: 驱逐策略：period的选择
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 curve 1 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 curve 2 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 curve 3 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 curve 4 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 curve 5 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 curve 6 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 curve 7 1
+@REM: 驱逐策略 LLU: 5个，保证的是，llu驱逐个数与lifetime驱逐个数基本相同；period选3
+@REM: LLU的空间使用探寻：run_times=1即可，需要去打开Storage文件的开关，这个开关在不做说明的时候，都处于关闭状态。
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 llu 2 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 llu 3 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 llu 4 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 llu 5 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 llu 6 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 curve 1 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 curve 2 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 curve 3 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 curve 4 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 curve 5 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 curve 6 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 curve 7 1
+@REM: LLU在zipf/zipfr下的表现
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 llu 5 100
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipfr 3 load 4 calculate 3 llu 5 100
 
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows random random 1 1 3 "2^n" curve 1 "2^n"
-
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows random calculate 1 1 3 "2^n" curve 1 "2^n"
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py nipopows popularity random 1 1 3 "2^n" curve 1 "2^n"
-:: zipf uniform
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 0 0 1 1 no 1 1
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 0 0 1 1 no 2 1
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 0 0 1 1 no 3 1
-
-:: new experimnet
-
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 0 0 3 1 no 1 "1"
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 0 0 3 1 no 2 "1"
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 0 0 3 1 no 3 "1"
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 0 0 3 1 no 4 "1"
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 0 0 3 1 no 5 "1"
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 0 0 3 1 no 6 "1"
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 0 0 3 1 no 7 "1"
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 0 0 3 1 no 8 "1"
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 0 0 3 1 no 9 "1"
-
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 1 1 1 1 curve 3 1
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 1 1 2 1 curve 3 1
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 1 1 3 1 curve 3 1
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 1 1 5 1 curve 3 1
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 1 1 8 1 curve 3 1
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 1 1 15 1 curve 3 1
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 1 1 30 1 curve 3 1
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 1 1 50 1 curve 3 1
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 1 1 3 1 llu 3 1
-
-::3 第一个上一个跑过了
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 1 1 3 1 llu 3 1
-E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf load calculate 1 1 3 1 llu 3 1
-E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf popularity calculate 1 0 3 1 llu 3 1
-E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf load calculate 1 0 3 1 llu 3 1
-
-::4
-E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf load calculate 0 0 3 1 llu 3 1
-E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf random random 1 0 3 1 llu 3 1
-E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf random random 0 1 3 1 llu 3 1
-E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf random random 1 1 3 1 llu 3 1
-
-::5\第一个在：：4的最后一个跑过了
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf random random 1 1 3 1 llu 3 1
-E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf random calculate 1 1 3 1 llu 3 1
-E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf load random 1 1 3 1 llu 3 1
-::最后一个在3的第二个测试过了
-@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica.py zipf load calculate 1 1 3 1 llu 3 1
+@REM: 被动比较： popularity与load
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 popularity 4 random 3 llu 5 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 random 3 llu 5 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 popularity 4 calculate 3 llu 5 1
+@REM E:/Program_Files/Python/python.exe d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 4 calculate 3 llu 5 1

@@ -292,7 +292,11 @@ def every2016BlocksPlot(beginID,endID,m,withoutm):
     filename='./every2016plot-'+str(beginID)+'-'+str(endID)+'.txt'
     fileoutput=open(filename,'w')
     stepmove=1#int((endID-beginID)/2016)
-    for times in range(beginID-beginID+1,endID-beginID,stepmove):
+    level_delegate=[]
+    delegate_numbers_each_level=2
+    for i in range(maxlevel):
+        level_delegate.append({})
+    for times in range(beginID-beginID+200,endID-beginID,stepmove):
         ##
         if withoutm:
             Chosen=scanBlockList_noRepeat_withoutm(m,beginID,beginID+times,maxlevel)
@@ -302,18 +306,29 @@ def every2016BlocksPlot(beginID,endID,m,withoutm):
         for x1s in Chosen:
             # print('blockid=',x1s,',level=',BlockLists[x1s-beginID][0],file=fileoutput)
             ReturnChosenTimes[x1s-beginID]+=1
-            if BlockLists[x1s-beginID][0]<levelLine:
-                x.append(x1s)
-                y.append(times+1)
-            if BlockLists[x1s-beginID][0]>=levelLine and BlockLists[x1s-beginID][0]<levelLine1:
-                x1.append(x1s)
-                y1.append(times + 1)
-            if BlockLists[x1s-beginID][0] >= levelLine1 and BlockLists[x1s-beginID][0] < levelLine2:
-                x2.append(x1s)
-                y2.append(times + 1)
-            if BlockLists[x1s-beginID][0]>=levelLine2:
-                x3.append(x1s)
-                y3.append(times + 1)
+            ###接下来是实验中需要使用到的【对每一个level选择代表块】展示生存期
+            if x1s<=200+beginID:
+                continue
+            this_block_level=BlockLists[x1s-beginID][0]-1
+            if x1s==beginID:
+                this_block_level=maxlevel-1
+            if x1s in level_delegate[this_block_level]:
+                level_delegate[this_block_level][x1s].append(times)
+            elif len(level_delegate[this_block_level])<delegate_numbers_each_level:
+                level_delegate[this_block_level][x1s]=[times]
+
+            # if BlockLists[x1s-beginID][0]<levelLine:
+            #     x.append(x1s)
+            #     y.append(times+1)
+            # if BlockLists[x1s-beginID][0]>=levelLine and BlockLists[x1s-beginID][0]<levelLine1:
+            #     x1.append(x1s)
+            #     y1.append(times + 1)
+            # if BlockLists[x1s-beginID][0] >= levelLine1 and BlockLists[x1s-beginID][0] < levelLine2:
+            #     x2.append(x1s)
+            #     y2.append(times + 1)
+            # if BlockLists[x1s-beginID][0]>=levelLine2:
+            #     x3.append(x1s)
+            #     y3.append(times + 1)
     # plt.scatter(x,y,c='r',s=0.5,label='level:[1,4]')
     # plt.scatter(x1,y1,c='g',s=0.5,label='level:[5,6]')
     # plt.scatter(x2, y2, c='y', s=0.5, label='level:[7,8]')
@@ -322,26 +337,34 @@ def every2016BlocksPlot(beginID,endID,m,withoutm):
     # plt.ylabel('scantime')
     # plt.legend()
     # plt.show()
+    #处理得到的特征点
+    fname='./finalTest/finalRes/exist-epoches.txt'
+    with open(fname,'w') as foutput:
+        for i in range(maxlevel):
+            print('level:',i+1,file=foutput)
+            for keys in level_delegate[i]:
+                print("node-id:",keys,file=foutput)
+                print(level_delegate[i][keys],file=foutput)
 
     #接下来对数据进行分析
     #该层级节点平均被选中的次数
-    LevelAveBlockChosenTimes=[0]*maxlevel
-    LevelFangCha=[0]*maxlevel
-    LevelChosenBlocks=[0]*maxlevel
-    for thisblkID in range(beginID,endID):
-        hislevel=BlockLists[thisblkID-beginID][0]
-        if thisblkID==beginID:
-            hislevel=maxlevel
-        LevelChosenBlocks[hislevel-1]+=1
-        LevelAveBlockChosenTimes[hislevel-1]+=(ReturnChosenTimes[thisblkID-beginID])
-    print(LevelAveBlockChosenTimes)
-    print(LevelChosenBlocks)
-    for i in range(maxlevel):
-        if LevelChosenBlocks[i]==0:
-            LevelAveBlockChosenTimes[i]=0
-            continue
-        LevelAveBlockChosenTimes[i]=LevelAveBlockChosenTimes[i]/LevelChosenBlocks[i]
-    #作图：
+    # LevelAveBlockChosenTimes=[0]*maxlevel
+    # LevelFangCha=[0]*maxlevel
+    # LevelChosenBlocks=[0]*maxlevel
+    # for thisblkID in range(beginID,endID):
+    #     hislevel=BlockLists[thisblkID-beginID][0]
+    #     if thisblkID==beginID:
+    #         hislevel=maxlevel
+    #     LevelChosenBlocks[hislevel-1]+=1
+    #     LevelAveBlockChosenTimes[hislevel-1]+=(ReturnChosenTimes[thisblkID-beginID])
+    # print(LevelAveBlockChosenTimes)
+    # print(LevelChosenBlocks)
+    # for i in range(maxlevel):
+    #     if LevelChosenBlocks[i]==0:
+    #         LevelAveBlockChosenTimes[i]=0
+    #         continue
+    #     LevelAveBlockChosenTimes[i]=LevelAveBlockChosenTimes[i]/LevelChosenBlocks[i]
+    # #作图：
     # xlevel=range(1,maxlevel+1)
     # PlotXLevel=[]
     # PlotLevelAveBlockChosenTimes=[]
@@ -358,31 +381,31 @@ def every2016BlocksPlot(beginID,endID,m,withoutm):
     # plt.title('beginID=%d,endID=%d'%(beginID,endID))
     # plt.show()
     #方差计算
-    for thisblkID in range(beginID, endID):
-        hislevel = BlockLists[thisblkID - beginID][0]
-        if thisblkID == beginID:
-            hislevel = maxlevel
-        chazhi=ReturnChosenTimes[thisblkID - beginID]-LevelAveBlockChosenTimes[hislevel-1]
-        LevelFangCha[hislevel - 1] += chazhi*chazhi
-    for i in range(maxlevel):
-        if LevelChosenBlocks[i]==0:
-            LevelFangCha[i]=0
-            continue
-        LevelFangCha[i]=(math.sqrt(LevelFangCha[i]/LevelChosenBlocks[i]))
-    print(LevelFangCha)
+    # for thisblkID in range(beginID, endID):
+    #     hislevel = BlockLists[thisblkID - beginID][0]
+    #     if thisblkID == beginID:
+    #         hislevel = maxlevel
+    #     chazhi=ReturnChosenTimes[thisblkID - beginID]-LevelAveBlockChosenTimes[hislevel-1]
+    #     LevelFangCha[hislevel - 1] += chazhi*chazhi
+    # for i in range(maxlevel):
+    #     if LevelChosenBlocks[i]==0:
+    #         LevelFangCha[i]=0
+    #         continue
+    #     LevelFangCha[i]=(math.sqrt(LevelFangCha[i]/LevelChosenBlocks[i]))
+    # print(LevelFangCha)
     #接下来是每一层的单独分析
     #因为level大的话节点很少，因此只统计[1,9]
-    SortedLevelTimes=[]
-    for i in range(9):
-        SortedLevelTimes.append([])
-    for blockID in range(beginID,endID):
-        hislevel=BlockLists[blockID-beginID][0]
-        if hislevel<=9:
-            SortedLevelTimes[hislevel-1].append(ReturnChosenTimes[blockID-beginID])
-            print('level=',hislevel,', blockid=',blockID,', times=',ReturnChosenTimes[blockID-beginID],file=fileoutput)
-    #若需要有序，把下面取消注释
-    for i in range(9):
-        SortedLevelTimes[i]=np.sort(SortedLevelTimes[i])
+    # SortedLevelTimes=[]
+    # for i in range(9):
+    #     SortedLevelTimes.append([])
+    # for blockID in range(beginID,endID):
+    #     hislevel=BlockLists[blockID-beginID][0]
+    #     if hislevel<=9:
+    #         SortedLevelTimes[hislevel-1].append(ReturnChosenTimes[blockID-beginID])
+    #         print('level=',hislevel,', blockid=',blockID,', times=',ReturnChosenTimes[blockID-beginID],file=fileoutput)
+    # #若需要有序，把下面取消注释
+    # for i in range(9):
+    #     SortedLevelTimes[i]=np.sort(SortedLevelTimes[i])
     #多图
     # fig = plt.figure()
     # for i in range(9):
@@ -403,24 +426,24 @@ def every2016BlocksPlot(beginID,endID,m,withoutm):
     #
     # plt.show()
     #下面针对前9层计算扫描次数在x的块数
-    BlocksByScanTimes =[]
-    for i in range(9):
-        BlocksByScanTimes.append([])
-        begintimes=SortedLevelTimes[i][0]
-        endtimes=SortedLevelTimes[i][len(SortedLevelTimes[i])-1]+1
-        BlocksByScanTimes[i]=[0]*(endtimes-begintimes)
-        for times in SortedLevelTimes[i]:
-            BlocksByScanTimes[i][times-begintimes]+=1
-    fig1=plt.figure()
-    for i in range(9):
-        xplot=330+i+1
-        ax=fig1.add_subplot(xplot)
-        ax.set_title('level=%d,avg=%.2f,s=%.2f' % (i + 1,LevelAveBlockChosenTimes[i],LevelFangCha[i]))
-        ax.bar(range(SortedLevelTimes[i][0],SortedLevelTimes[i][len(SortedLevelTimes[i])-1]+1),BlocksByScanTimes[i],color='gray')
-        ax.axvline(x=int(LevelAveBlockChosenTimes[i]),color='r')
-        ax.axvline(x=int(LevelFangCha[i] + LevelAveBlockChosenTimes[i])+1, color='g')
-        ax.axvline(x=int(-LevelFangCha[i] + LevelAveBlockChosenTimes[i]), color='g')
-    plt.show()
+    # BlocksByScanTimes =[]
+    # for i in range(9):
+    #     BlocksByScanTimes.append([])
+    #     begintimes=SortedLevelTimes[i][0]
+    #     endtimes=SortedLevelTimes[i][len(SortedLevelTimes[i])-1]+1
+    #     BlocksByScanTimes[i]=[0]*(endtimes-begintimes)
+    #     for times in SortedLevelTimes[i]:
+    #         BlocksByScanTimes[i][times-begintimes]+=1
+    # fig1=plt.figure()
+    # for i in range(9):
+    #     xplot=330+i+1
+    #     ax=fig1.add_subplot(xplot)
+    #     ax.set_title('level=%d,avg=%.2f,s=%.2f' % (i + 1,LevelAveBlockChosenTimes[i],LevelFangCha[i]))
+    #     ax.bar(range(SortedLevelTimes[i][0],SortedLevelTimes[i][len(SortedLevelTimes[i])-1]+1),BlocksByScanTimes[i],color='gray')
+    #     ax.axvline(x=int(LevelAveBlockChosenTimes[i]),color='r')
+    #     ax.axvline(x=int(LevelFangCha[i] + LevelAveBlockChosenTimes[i])+1, color='g')
+    #     ax.axvline(x=int(-LevelFangCha[i] + LevelAveBlockChosenTimes[i]), color='g')
+    # plt.show()
     fileoutput.close()
     return ReturnChosenTimes
 
@@ -432,7 +455,7 @@ def runonce(beginID,endID,m):
 
 if __name__=='__main__':
     x=0#12
-    step=10
+    step=1
     withoutmlimit=0
     every2016BlocksPlot(2016*x,2016*(x+step),3,withoutmlimit)
 

@@ -3,9 +3,9 @@ from mpl_toolkits.mplot3d import Axes3D
 import json
 import numpy as np
 
-def load_avg_times(chosen_block_distribution,curve_type_replica,piece,passive_type,lambdai,active_type,top_num_to_offload,expel_p_type,period,last_num_to_expel,total_times):
+def load_avg_times(chosen_block_distribution,piece,passive_item,active_item,expel_item,total_times):
     # file_average_time='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\averageTime-'+chosen_block_distribution+'-'+passive_replicate_type+'.'+str(passive_on)+'-'+active_replicate_type+'.'+str(active_on)+'-'+str(period)+'-'+str(lambdai)+'-'+str(top_num_to_offload)+'.txt'
-    file_average_time='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\A-'+chosen_block_distribution+'-'+curve_type_replica+'-'+str(piece)+'-'+passive_type+str(lambdai)+'-'+active_type+str(top_num_to_offload)+'-'+expel_p_type+'-'+str(period)+'-'+str(last_num_to_expel)+'-'+str(total_times)+'.txt'
+    file_average_time='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\A-'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
     
     avg_time=[]
     with open(file_average_time, 'r') as datafile:
@@ -31,15 +31,28 @@ def plot_avg():
     #     avg_time.append(avgtime)
     # avgtime,_,_,_=load_avg_times(chosen_block_distribution,passive_replicate_type,passive_on,active_replicate_type,active_on,np.inf,lambdai,top_num_to_offload)
     # avg_time.append(avgtime)
-    Avgtime02, b02, e02, s02 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'llu',3,3,100)
-    Avgtime12, b12, e12, s12 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'1',2,3,100)
-    Avgtime13, b12, e12, s12 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'1',3,3,100)
-    Avgtime14, b14, e14, s14 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'1',5,3,100)
-    Avgtime15, b14, e14, s14 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'1',8,3,100)
-    Avgtime16, b14, e14, s14 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'1',15,3,100)
-    Avgtime17, b14, e14, s14 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'1',30,3,100)
-    Avgtime18, b14, e14, s14 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'1',50,3,100)
-    Avgtime19, b14, e14, s14 = load_avg_times('zipf','1','3','popularity',4,'calculate',3,'1',1,3,100)
+    distribution='zipf'
+    replica_sum=3
+    passive_item='load4'
+    active_item='calculate3'
+    expel_item='llu5'
+    run_times=1
+    Avgtime01, b02, e02, s02 = load_avg_times(distribution,replica_sum,passive_item,active_item,'llu2',run_times)
+    Avgtime02, b02, e02, s02 = load_avg_times(distribution,replica_sum,passive_item,active_item,'llu3',run_times)
+    Avgtime03, b02, e02, s02 = load_avg_times(distribution,replica_sum,passive_item,active_item,'llu4',run_times)
+    Avgtime04, b02, e02, s02 = load_avg_times(distribution,replica_sum,passive_item,active_item,'llu5',run_times)
+    Avgtime05, b02, e02, s02 = load_avg_times(distribution,replica_sum,passive_item,active_item,'llu6',run_times)
+
+    Avgtime011, b02, e02, s02 = load_avg_times(distribution,replica_sum,passive_item,active_item,'curve1',run_times)
+    Avgtime022, b02, e02, s02 = load_avg_times(distribution,replica_sum,passive_item,active_item,'curve2',run_times)
+    Avgtime033, b02, e02, s02 = load_avg_times(distribution,replica_sum,passive_item,active_item,'curve3',run_times)
+    Avgtime044, b02, e02, s02 = load_avg_times(distribution,replica_sum,passive_item,active_item,'curve4',run_times)
+    Avgtime055, b02, e02, s02 = load_avg_times(distribution,replica_sum,passive_item,active_item,'curve5',run_times)
+    Avgtime066, b02, e02, s02 = load_avg_times(distribution,replica_sum,passive_item,active_item,'curve6',run_times)
+    Avgtime077, b02, e02, s02 = load_avg_times(distribution,replica_sum,passive_item,active_item,'curve7',run_times)
+    # Avgtime05, b02, e02, s02 = load_avg_times(distribution,5,'nopassive','noactive','noexpel',run_times)
+    # Avgtime06, b02, e02, s02 = load_avg_times(distribution,6,'nopassive','noactive','noexpel',run_times)
+    # Avgtime07, b02, e02, s02 = load_avg_times(distribution,7,'nopassive','noactive','noexpel',run_times)
     
     # Avgtime1inf, b14, e14, s14 = load_avg_times('nipopows','2^n','1','popularity',4,'calculate',3,'no',1,3,100)
     # Avgtime22, b22, e22, s22 = loadavgtimes(2, 2, 100)
@@ -63,33 +76,29 @@ def plot_avg():
     # for i in range(len(period_s)):
     #     plt.plot(range(b01, e01, s01), avg_time[i], color=colors[i], label=str(period_s[i]))
     # plt.plot(range(b01, e01, s01), Avgtime01, color=colors[0], label='nipopows')
-    plt.plot(range(b02, e02, s02), Avgtime02, color=colors[1], label='llu')
-    plt.plot(range(b02, e02, s02), Avgtime12, color=colors[2], label='2')
-    plt.plot(range(b02, e02, s02), Avgtime13, color=colors[3], label='3')
-    plt.plot(range(b02, e02, s02), Avgtime14, color=colors[4], label='5')
-    plt.plot(range(b02, e02, s02), Avgtime15, color=colors[5], label='8')
-    plt.plot(range(b02, e02, s02), Avgtime16, color=colors[6], label='15')
-    plt.plot(range(b02, e02, s02), Avgtime17, color=colors[7], label='30')
-    plt.plot(range(b02, e02, s02), Avgtime18, color=colors[8], label='50')
-    plt.plot(range(b02, e02, s02), Avgtime19, color=colors[9], label='1')
-    # plt.plot(range(b02, e02, s02), Avgtime1inf, color=colors[8], label='no')
-    # plt.plot(range(b01, e01, s01), Avgtime_12, color=colors[4], label='-12')
-    # plt.plot(range(b01, e01, s01), Avgtime_11, color=colors[5], label='-11')
-    # plt.plot(range(b01,e01,s01),Avgtime11,color=colors[6],label='11')
-    # plt.plot(range(b01, e01, s01), Avgtime21, color=colors[7], label='21')
-    # plt.plot(range(b01, e01, s01), Avgtime10, color=colors[8], label='1-1')
-    # plt.plot(range(b01, e01, s01), Avgtime20, color=colors[9], label='2-1')
-    # plt.plot(range(b01,e01,s01),Avgtime_10All,color='grey',label='-10')
+    # plt.plot(range(b02, e02, s02), Avgtime01, color=colors[0], label='2')
+    # plt.plot(range(b02, e02, s02), Avgtime02, color=colors[1], label='3')
+    # plt.plot(range(b02, e02, s02), Avgtime03, color=colors[2], label='4')
+    # plt.plot(range(b02, e02, s02), Avgtime04, color=colors[3], label='5')
+    # plt.plot(range(b02, e02, s02), Avgtime05, color=colors[4], label='6')
+
+    # plt.plot(range(b02, e02, s02), Avgtime011, color=colors[5], label='11')
+    # plt.plot(range(b02, e02, s02), Avgtime022, color=colors[6], label='22')
+    # plt.plot(range(b02, e02, s02), Avgtime033, color=colors[7], label='33')
+    # plt.plot(range(b02, e02, s02), Avgtime044, color=colors[8], label='44')
+    # plt.plot(range(b02, e02, s02), Avgtime055, color=colors[9], label='55')
+    # plt.plot(range(b02, e02, s02), Avgtime066, color=colors[1], label='66')
+    # plt.plot(range(b02, e02, s02), Avgtime077, color=colors[2], label='77')
+    
     plt.legend()
     plt.xlabel('blocks')
     plt.ylabel('avg time')
     # plt.ylim(ymin=0,ymax=5)
     plt.show()
 
-def load_storage(chosen_block_distribution,passive_replicate_type,passive_on,active_replicate_type,active_on,period,lambdai,top_num_to_offload):
-    totalblocksdynamic=200
-    file_storage_used='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\storageUsed-'+chosen_block_distribution+'-'+passive_replicate_type+'.'+str(passive_on)+'-'+active_replicate_type+'.'+str(active_on)+'-'+str(period)+'-'+str(lambdai)+'-'+str(top_num_to_offload)+'.txt'
-    NodesSizeAll = np.array([.0]*totalblocksdynamic)
+def load_storage(chosen_block_distribution,piece,passive_item,active_item,expel_item,total_times):
+    file_storage_used='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\S-'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
+    NodesSizeAll =[] 
     BlockSize=[]
     with open(file_storage_used, 'r') as datafile:
         i = 0
@@ -101,28 +110,40 @@ def load_storage(chosen_block_distribution,passive_replicate_type,passive_on,act
                 step = int(datalineitem[2])
             elif i ==1:
                 BlockSize=json.loads(dataline)
+                NodesSizeAll=np.array([.0]*len(BlockSize))
             elif i>=2:
                 NodesSize=np.array(json.loads(dataline))
                 NodesSizeAll+=NodesSize
             i += 1
-        print('filename=', file_storage_used, '-------')
-        print(NodesSizeAll)
+        # print('filename=', file_storage_used, '-------')
+        # print(NodesSizeAll)
         NodesSizeAll=NodesSizeAll/10
-        print('filename=',file_storage_used,'-------')
-        print(NodesSizeAll)
+        # print('filename=',file_storage_used,'-------')
+        # print(NodesSizeAll)
     return BlockSize,NodesSizeAll, begin, ends, step
 
 def plot_storage():
-    chosen_block_distribution = 'nipopows'
-    passive_replicate_type='popularity'
-    active_replicate_type='calculate'
-    passive_on=True
-    active_on=True
-    period=6
-    lambdai=4
-    top_num_to_offload=3
+    distribution='zipf'
+    replica_sum=3
+    passive_item='load4'
+    active_item='calculate3'
+    expel_item='llu5'
+    run_times=1
     
-    Blocksize01,NodeSize01, b01, e01, s01 = load_storage(chosen_block_distribution,passive_replicate_type,passive_on,active_replicate_type,active_on,period,lambdai,top_num_to_offload)
+    Blocksize01,NodeSize02, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'llu2',run_times)
+    Blocksize01,NodeSize03, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'llu3',run_times)
+    Blocksize01,NodeSize04, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'llu4',run_times)
+    Blocksize01,NodeSize05, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'llu5',run_times)
+    Blocksize01,NodeSize06, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'llu6',run_times)
+
+    Blocksize01,NodeSize011, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'curve1',run_times)
+    Blocksize01,NodeSize022, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'curve2',run_times)
+    Blocksize01,NodeSize033, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'curve3',run_times)
+    Blocksize01,NodeSize044, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'curve4',run_times)
+    Blocksize01,NodeSize055, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'curve5',run_times)
+    Blocksize01,NodeSize066, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'curve6',run_times)
+    Blocksize01,NodeSize077, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'curve7',run_times)
+
     # Blocksize02,NodeSize02, b02, e02, s02 = loadstorage(0, 2)
     # Blocksize12,NodeSize12, b12, e12, s12 = loadstorage(1, 2)
     # Blocksize22,NodeSize22, b22, e22, s22 = loadstorage(2, 2)
@@ -140,13 +161,25 @@ def plot_storage():
     #     exit(-1)
     # if b01 != b12 or e01 != e12 or s01 != s12:
     #     exit(-1)
-    colors = ['blue', 'red', 'green', 'skyblue', 'pink', 'yellow', 'purple', 'black', 'cyan', 'orange']
-    plt.plot(range(b01, e01, s01),np.array(NodeSize01)/np.array(Blocksize01),color='gold')#,label='total')
+    colors = ['blue', 'red', 'green', 'skyblue', 'pink', 'yellow', 'purple', 'black', 'cyan', 'orange','gold']
+    # plt.plot(range(b01, e01, s01),np.array(NodeSize02)/np.array(Blocksize01),color=colors[0],label='llu-2')
+    # plt.plot(range(b01, e01, s01),np.array(NodeSize03)/np.array(Blocksize01),color=colors[1],label='llu-3')
+    plt.plot(range(b01, e01, s01),np.array(NodeSize04)/np.array(Blocksize01),color=colors[2],label='4')
+    plt.plot(range(b01, e01, s01),np.array(NodeSize05)/np.array(Blocksize01),color=colors[3],label='5')
+    plt.plot(range(b01, e01, s01),np.array(NodeSize06)/np.array(Blocksize01),color=colors[4],label='6')
+
+    plt.plot(range(b01, e01, s01),np.array(NodeSize011)/np.array(Blocksize01),color=colors[5],label='curve-11')
+    plt.plot(range(b01, e01, s01),np.array(NodeSize022)/np.array(Blocksize01),color=colors[6],label='22')
+    plt.plot(range(b01, e01, s01),np.array(NodeSize033)/np.array(Blocksize01),color=colors[7],label='33')
+    plt.plot(range(b01, e01, s01),np.array(NodeSize044)/np.array(Blocksize01),color=colors[8],label='44')
+    plt.plot(range(b01, e01, s01),np.array(NodeSize055)/np.array(Blocksize01),color=colors[9],label='55')
+    plt.plot(range(b01, e01, s01),np.array(NodeSize066)/np.array(Blocksize01),color=colors[1],label='66')
+    plt.plot(range(b01, e01, s01),np.array(NodeSize077)/np.array(Blocksize01),color=colors[0],label='77')
     # plt.plot(range(b01, e01, s01), NodeSize01, color=colors[0], label='01')
     # plt.plot(range(b01, e01, s01), NodeSize02, color=colors[1], label='02')
     # plt.plot(range(b01, e01, s01), NodeSize12, color=colors[2], label='12')
     # plt.plot(range(b01, e01, s01), NodeSize22, color=colors[3], label='22')
-    # plt.legend()
+    plt.legend()
     # plt.ylim(ymin=0.2,ymax=.5)
     plt.xlabel('blocks')
     plt.ylabel('per node storage size/total size')
@@ -223,7 +256,8 @@ def plot_use_ratio():
 
 
 if __name__=='__main__':
-    plot_avg()
+    # plot_avg()
+    plot_storage()
     # plt.plot(range(begin+beginblock,end),RR[beginblock:],color='r',marker='.',label='needed-actual')
     # plt.bar(range(begin+beginblock,end),LL[beginblock:],color='grey',label='levels')
     # plt.plot(range(begin+beginblock,end),RN[beginblock:],label='needed',color='g')
