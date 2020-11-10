@@ -135,7 +135,7 @@ def initial_assign_block(blockID,piece,period):
     """
     assign_one_block(blockID,piece,period)
 
-def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_value_dict,period):
+def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_value_dict,period,popularity_passing):
     """(int,list of int,int,str,dict,int,str) - list of dict:(int, int), list of dict:(int,int), list of int
 
     passive algorithms to replicate for 1 node.
@@ -148,12 +148,14 @@ def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_
     """
     # blocksID that will be stored locally
     all_blocks_replicated=[]
+    popularity_value=[]
     blocks_replicated_num=math.ceil(len(chosen_blocks)/nodes_num)
     if blocks_replicated_num>len(chosen_blocks):
         blocks_replicated_num=len(chosen_blocks)
     if passive_type=='random':
         all_blocks_num=random.sample(range(0,len(chosen_blocks)),blocks_replicated_num)
         all_blocks_replicated=[chosen_blocks[i] for i in all_blocks_num]
+        popularity_value=[popularity_passing[i] for i in all_blocks_num]
     elif passive_type=='load' or passive_type=='popularity':
         # sort the dict by value value. reversed sort.
         kvs=sorted(sort_value_dict.items(),key=lambda x:x[1],reverse=True)
@@ -170,7 +172,7 @@ def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_
     #debug end
     # assign and update the 3 big list
     for blockID in all_blocks_replicated:
-        store_block_to_node(blockID,nodeID,period)
+        store_block_to_node(blockID,nodeID,period,popularity_value)
     
     # nothing to return
     return
@@ -298,7 +300,10 @@ def expel_blocks_LLU(last_num_to_expel):
     '''
     
     # expel blocks in every node
-    for nodeID in range(nodes_num):
+    random_node=list(range(nodes_num))
+    # randomly shuffle
+    random.shuffle(random_node)
+    for nodeID in random_node:
         # find dead blocks: whose popularity is the least
         kvs=sorted(nodes_stored_blocks_popularity[nodeID].items(),key=lambda x:x[1],reverse=False)
         kvs=kvs[:last_num_to_expel]

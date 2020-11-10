@@ -25,10 +25,10 @@ def init_environment():
     return all storage of one copy of all blocks.
     """
     begin_id=654000
-    static_blks=20
+    static_blks=10
     end_id=begin_id+400
     nodes_n=10
-    communication_distribution_type='1'
+    communication_distribution_type='normal'#'1'
 
     blk_size,all_storage=InitChainAndNodes_zipf.load_blocksizes(begin_id,end_id)
     communication_cst=InitChainAndNodes_zipf.generate_communication_cost(nodes_n,communication_distribution_type)
@@ -170,6 +170,7 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
         # statically assign
         ReplicationAlgorithms_zipf.static_assign_blocks(piece,period)
         # dynamic assign
+        # active->request->passive->expel
         start_point=ReplicationAlgorithms_zipf.beginID+ReplicationAlgorithms_zipf.static_blocks
         for end_since in range(ReplicationAlgorithms_zipf.beginID+ReplicationAlgorithms_zipf.static_blocks,ReplicationAlgorithms_zipf.endID,step):
             average_time_i=.0
@@ -181,6 +182,8 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
             block_numbers_sum=0
             for nodeID in range(ReplicationAlgorithms_zipf.nodes_num):
                 blocks_numbers=InitChainAndNodes_zipf.get_chosen_blocks_numbers(lambdai)
+                # if blocks_numbers>end_since-ReplicationAlgorithms_zipf.beginID:
+                #     blocks_numbers=end_since-ReplicationAlgorithms_zipf.beginID
                 # print(blocks_numbers)
                 block_numbers_sum+=blocks_numbers
                 average_time_i_tmp,rank_distribution=get_one_total_time_and_replicate(nodeID,end_since,passive_replicate_type,period,blocks_numbers,chosen_block_distribution,True and passive_on,rank_distribution)
@@ -375,6 +378,6 @@ def get_storage_place():
 
 if __name__=='__main__':
     all_storage_cost=init_environment()
-    replication_run(True,False,False)
+    replication_run(True,True,False)
     get_storage_place()
     print('running done')

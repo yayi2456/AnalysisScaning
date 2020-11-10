@@ -73,7 +73,7 @@ def get_needed_blocks(beginID,endID,distribution_type,chosen_block_nums,rank_dis
     # sum()=1
 
     #s is a parameter used in zipf distribution
-    s=1
+    s=1.2
     chain_length=endID-beginID
 
     # get the distribution probability
@@ -85,6 +85,8 @@ def get_needed_blocks(beginID,endID,distribution_type,chosen_block_nums,rank_dis
         # s is a parameter to describe zipf curve
         for i in range(len(probabllity)):
             probabllity[len(probabllity)-1-i]=1/(generalized_harmonic_number(chain_length,s)*pow(i+1,s))
+        
+        print(probabllity)
     elif distribution_type=='zipfr':
         # generate rank_distribution
         if len(rank_distribution)==0:
