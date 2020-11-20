@@ -88,13 +88,16 @@ def static_assign_blocks(piece,period):
 
     # statically assign each blocks one by one
     for blockID in range(beginID,beginID+static_blocks):
-        assign_one_block(blockID,piece,period)
+        assign_one_block(blockID,piece,period,[0,0])
     
     # nothing to return
     return
 
-def assign_one_block(blockID,piece,period):
-    """(int,int,int) - list of dict:(int, int), list of dict:(int,int), list of int
+def assign_one_block(blockID,piece,period,popularity_epoch_list):
+    """(int,int,int,list of float) - list of dict:(int, int), list of dict:(int,int), list of int
+
+    assign block `blockID` to `piece` nodes , whose lifetime is `period` and popularity list is `popularity_epoch_list`.
+    popularity_epoch_list: [.,.]
 
     Select storage node randomly.
     `piece`: how many replicas are stored
@@ -115,6 +118,9 @@ def assign_one_block(blockID,piece,period):
     time_lived=period
     # sample random nodes
     nodes_store_replicas=random.sample(range(0,nodes_num),replica_numbers)
+    ###debug
+    # print('blockID=',blockID,', replica nodes=',nodes_store_replicas)
+    ###
     # append one list value for the new block
     blocks_in_which_nodes_and_timelived.append({})
     # update blocks_in_which_nodes_and_timelived, update nodes_storage_used, update nodes_stored_blocks_popularity
@@ -124,18 +130,19 @@ def assign_one_block(blockID,piece,period):
             # print(blockID,'\n',beginID)
             nodes_storage_used[node_replica]+=blocksizes[blockID-beginID]
         blocks_in_which_nodes_and_timelived[blockID-beginID][node_replica]=time_lived
-        nodes_stored_blocks_popularity[node_replica][blockID]=0
+        nodes_stored_blocks_popularity[node_replica][blockID]=popularity_epoch_list
     # nothing tpo return
     return
 
 def initial_assign_block(blockID,piece,period):
     """(int,int,int) - list of dict:(int, int), list of dict:(int,int), list of int
 
-    Assign the new coming block to random one or several nodes.
+    Assign the new coming block `blockID` to random `piece` nodes, whose lifetime is `period`.
+    we assign the popularity_epoch_list to [0,0].
     """
-    assign_one_block(blockID,piece,period)
+    assign_one_block(blockID,piece,period,[0,0])
 
-def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_value_dict,period,popularity_passing):
+def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_value_dict,period,popularity_passing_dict):
     """(int,list of int,int,str,dict,int,str) - list of dict:(int, int), list of dict:(int,int), list of int
 
     passive algorithms to replicate for 1 node.
@@ -148,31 +155,59 @@ def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_
     """
     # blocksID that will be stored locally
     all_blocks_replicated=[]
+    # inherent value of popularity correspond to all_blocks_replicated
     popularity_value=[]
+    # print(popularity_passing_dict)
+    # amounts of blocks we want to replicate
     blocks_replicated_num=math.ceil(len(chosen_blocks)/nodes_num)
     if blocks_replicated_num>len(chosen_blocks):
         blocks_replicated_num=len(chosen_blocks)
+
     if passive_type=='random':
-        all_blocks_num=random.sample(range(0,len(chosen_blocks)),blocks_replicated_num)
+        all_blocks_num=[]
+        for blockID in range(blocks_replicated_num):
+            block_to_store=random.randint(0,len(chosen_blocks)-1)
+            # if all blocks stored?
+            all_stored=True
+            for i in range(len(chosen_blocks)):
+                if nodeID in blocks_in_which_nodes_and_timelived[chosen_blocks[i]-beginID]:
+                    all_stored=all_stored and True
+                else:
+                    all_stored=all_stored and False
+            while (not all_stored) and (block_to_store in all_blocks_num) and nodeID in blocks_in_which_nodes_and_timelived[chosen_blocks[block_to_store]-beginID]:
+                block_to_store=random.randint(0,len(chosen_blocks)-1)
+            all_blocks_num.append(block_to_store)
+                
         all_blocks_replicated=[chosen_blocks[i] for i in all_blocks_num]
-        popularity_value=[popularity_passing[i] for i in all_blocks_num]
+        popularity_value=[popularity_passing_dict[chosen_blocks[i]] for i in all_blocks_num]
     elif passive_type=='load' or passive_type=='popularity':
         # sort the dict by value value. reversed sort.
         kvs=sorted(sort_value_dict.items(),key=lambda x:x[1],reverse=True)
+        chosen_kvs=[]
+        i=0
+        for kv in kvs:
+            if i>=blocks_replicated_num:
+                break
+            if nodeID not in blocks_in_which_nodes_and_timelived[kv[0]-beginID]:
+                all_blocks_replicated.append(kv[0])
         # get the top blocks_replicated_num
-        kvs=kvs[:blocks_replicated_num]
-        for blockID in kvs:
-            all_blocks_replicated.append(blockID[0])
+        for blockID in all_blocks_replicated:
+            popularity_value.append(popularity_passing_dict[blockID])
+        # get the top blocks_replicated_num
+        for blockID in all_blocks_replicated:
+            popularity_value.append(popularity_passing_dict[blockID])
     else:
         print("invalid passive_type. default('random') is set.")
+        exit(-1)
         all_blocks_num=random.sample(range(0,len(chosen_blocks)),blocks_replicated_num)
         all_blocks_replicated=[chosen_blocks[i] for i in all_blocks_num]
+        popularity_value=[popularity_passing_dict[chosen_blocks[i]] for i in all_blocks_num]
     #debug
     # print('passive blocks stored=',len(all_blocks_replicated))
     #debug end
     # assign and update the 3 big list
-    for blockID in all_blocks_replicated:
-        store_block_to_node(blockID,nodeID,period,popularity_value)
+    for i in range(len(all_blocks_replicated)):
+        store_block_to_node(all_blocks_replicated[i],nodeID,period,popularity_value[i])
     
     # nothing to return
     return
@@ -193,18 +228,83 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
     node_to_be_offload=nodeID
     # blocks to be offload
     blocks_to_be_offload=[]
-
+    # print(nodes_stored_blocks_popularity[nodeID])
     # get the top_num_to_offload most popular blocks
-    kvs=sorted(nodes_stored_blocks_popularity[nodeID].items(),key=lambda x:x[1],reverse=True)
+    kvs=sorted(nodes_stored_blocks_popularity[nodeID].items(),key=lambda x:x[1][0]+x[1][1],reverse=True)
     kvs=kvs[:top_num_to_offload]
     blocks_to_be_offload=[blockID[0] for blockID in kvs]
-
+    popularity_passing_dict={blockID[0]:[blockID[1][0],blockID[1][1]] for blockID in kvs}
+    ##debug
+    Chosen_nodes_debug={}
+    ###
     # get the target node_to_be_offload
     if active_type=='random':
         for blockID in blocks_to_be_offload:
             node_to_be_offload=random.randint(0,nodes_num-1)
-            store_block_to_node(blockID,node_to_be_offload,period)
+            while len(blocks_in_which_nodes_and_timelived[blockID-beginID])<nodes_num and node_to_be_offload in blocks_in_which_nodes_and_timelived[blockID-beginID]:
+                node_to_be_offload=random.randint(0,nodes_num-1)
+            Chosen_nodes_debug[blockID]=node_to_be_offload
+            store_block_to_node(blockID,node_to_be_offload,period,popularity_passing_dict[blockID])
+    elif active_type=='access':
+        candidate_blocks=[]
+        popularity_passing_dict_new={}
+        for blockIDkv in nodes_stored_blocks_popularity[nodeID].items():
+            if nodes_stored_blocks_popularity[nodeID][blockIDkv[0]]!=0:
+                candidate_blocks.append(blockIDkv[0])
+                popularity_passing_dict_new[blockIDkv[0]]=[blockIDkv[1][0],blockIDkv[1][1]]
+        if len(candidate_blocks)>top_num_to_offload:
+            candidate_blocks=np.random.choice(candidate_blocks,top_num_to_offload)
+        for blockID in candidate_blocks:
+            # largest improvement is brought by which nodes_test
+            max_improve=0
+            max_improve_node=nodeID
+            # which node shall I store blockID
+            for nodes_test in range(nodes_num):
+                # improvement brought by storing blockID in nodes_test
+                total_saved_in_node_test =0
+                # caculate total improvement by adding each node's improvement if I store node into nodes_test
+                for each_node_in_system in range(nodes_num):
+                    # node each_node_in_system's improvement brought by storing blockID in nodes_test
+                    this_node_saved_in_node_test=0
+                    storage_nodes_of_blockID=blocks_in_which_nodes_and_timelived[blockID-beginID].keys()
+                    min_communicate_before_store=np.inf
+                    # current min_communication.
+                    # if communication_cost[nodes_test][each_node_in_system]<min_communication currently,
+                    # there is a improvemnt >0
+                    for nodes_store in storage_nodes_of_blockID:
+                        this_communication_cost=communication_cost[each_node_in_system][nodes_store]
+                        if this_communication_cost<min_communicate_before_store:
+                            min_communicate_before_store=this_communication_cost
+                    # if blockID is stored in node_test, node each_node_in_system can improve by 
+                    # (min_communicate_before_store-communication_cost[each_node_in_system][nodes_test])*blockIDsize
+                    if min_communicate_before_store>communication_cost[each_node_in_system][nodes_test]:
+                        this_node_saved_in_node_test+=blocksizes[blockID-beginID]*(min_communicate_before_store>communication_cost[each_node_in_system][nodes_test])
+                        total_saved_in_node_test+=this_node_saved_in_node_test
+                if total_saved_in_node_test>max_improve:
+                    max_improve=total_saved_in_node_test
+                    max_improve_node=nodes_test
+            # got the best position for blockID to store
+            ##debug
+            Chosen_nodes_debug[blockID]=max_improve_node
+            ##end
+            store_block_to_node(blockID,max_improve_node,period,popularity_passing_dict_new[blockID])
+    elif active_type=='raccess':
+        candidate_blocks=[]
+        popularity_passing_dict_new={}
+        for blockIDkv in nodes_stored_blocks_popularity[nodeID].items():
+            if nodes_stored_blocks_popularity[nodeID][blockIDkv[0]]!=0:
+                candidate_blocks.append(blockIDkv[0])
+                popularity_passing_dict_new[blockIDkv[0]]=[blockIDkv[1][0],blockIDkv[1][1]]
+        if len(candidate_blocks)>top_num_to_offload:
+            candidate_blocks=np.random.choice(candidate_blocks,top_num_to_offload)
+        for blockID in candidate_blocks:
+            node_to_be_offload=random.randint(0,nodes_num-1)
+            while len(blocks_in_which_nodes_and_timelived[blockID-beginID])<nodes_num and node_to_be_offload in blocks_in_which_nodes_and_timelived[blockID-beginID]:
+                node_to_be_offload=random.randint(0,nodes_num-1)
+            Chosen_nodes_debug[blockID]=node_to_be_offload
+            store_block_to_node(blockID,node_to_be_offload,period,popularity_passing_dict_new[blockID])
     elif active_type=='calculate':
+        
         for blockID in blocks_to_be_offload:
             # largest improvement is brought by which nodes_test
             max_improve=0
@@ -235,17 +335,23 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
                     max_improve=total_saved_in_node_test
                     max_improve_node=nodes_test
             # got the best position for blockID to store
-            store_block_to_node(blockID,max_improve_node,period)
+            ##debug
+            Chosen_nodes_debug[blockID]=max_improve_node
+            ##end
+            store_block_to_node(blockID,max_improve_node,period,popularity_passing_dict[blockID])
+        ##debug
+
+        ##end
     else:
         print("invalid active type! default('random') is set.")
         node_to_be_offload=random.randint(0,nodes_num-1)
         for blockID in blocks_to_be_offload:
-            store_block_to_node(blockID,node_to_be_offload,period)
+            store_block_to_node(blockID,node_to_be_offload,period,popularity_passing_dict[blockID])
     # nothing else to return 
-    return
+    return Chosen_nodes_debug
 
     
-def store_block_to_node(blockID,nodeID,period):
+def store_block_to_node(blockID,nodeID,period,popularity_value):
     """(int,int,int,str) - list of dict:(int, int), list of dict:(int,int), list of int
 
     store 1 block to 1 node.
@@ -259,8 +365,9 @@ def store_block_to_node(blockID,nodeID,period):
     # update lifetime
     blocks_in_which_nodes_and_timelived[blockID-beginID][nodeID]=time_lived
     # update popularity
+    # popularity is inherent from giving node
     if blockID not in nodes_stored_blocks_popularity[nodeID]:
-        nodes_stored_blocks_popularity[nodeID][blockID]=0
+        nodes_stored_blocks_popularity[nodeID][blockID]=popularity_value
 
 def update_livetime_and_expel(end_since,epochs):
     """(int,int) - list of dict,key is int,value is int
@@ -273,6 +380,12 @@ def update_livetime_and_expel(end_since,epochs):
     # a list of list of int
     dead_blocks=[]
 
+    ###debug
+    delete_blocks_debug=[]
+    for i in range(nodes_num):
+        delete_blocks_debug.append([])
+    ### end
+
     # update livetime and find dead blocks
     for blockID in range(beginID,end_since):
         dead_blocks.append([])
@@ -283,7 +396,7 @@ def update_livetime_and_expel(end_since,epochs):
     # expel dead blocks
     for blockID in range(beginID,end_since):
         for nodeID in dead_blocks[blockID-beginID]:
-            if len(blocks_in_which_nodes_and_timelived[blockID-beginID])>1:
+            if len(blocks_in_which_nodes_and_timelived[blockID-beginID])>2:
                 # update popularity
                 nodes_stored_blocks_popularity[nodeID].pop(blockID)
                 # update storage_used
@@ -291,8 +404,9 @@ def update_livetime_and_expel(end_since,epochs):
                     nodes_storage_used[nodeID]-=blocksizes[blockID-beginID]
                 # update time_lived
                 blocks_in_which_nodes_and_timelived[blockID-beginID].pop(nodeID)
+                delete_blocks_debug[nodeID].append(blockID)
     # nothing to return
-    return
+    return delete_blocks_debug
 
 def expel_blocks_LLU(last_num_to_expel):
     '''
@@ -303,15 +417,36 @@ def expel_blocks_LLU(last_num_to_expel):
     random_node=list(range(nodes_num))
     # randomly shuffle
     random.shuffle(random_node)
+    ###DEBUG
+
+    # print(random_node)
+    ###end
+    ###debug
+    # expel_last_num=[0]*nodes_num
+    delete_blocks_debug=[]
+    for i in range(nodes_num):
+        delete_blocks_debug.append([])
+    ### end
     for nodeID in random_node:
         # find dead blocks: whose popularity is the least
-        kvs=sorted(nodes_stored_blocks_popularity[nodeID].items(),key=lambda x:x[1],reverse=False)
-        kvs=kvs[:last_num_to_expel]
+        kvs=sorted(nodes_stored_blocks_popularity[nodeID].items(),key=lambda x:x[1][0]+x[1][1],reverse=False)
+        chosen_kvs=[]
+        i=0
+        for kv in kvs:
+            if i>= last_num_to_expel:
+                break
+            if len(blocks_in_which_nodes_and_timelived[kv[0]-beginID])>2:
+                chosen_kvs.append(kv)
+                delete_blocks_debug[nodeID].append(kv[0])
+                i+=1
+        ### debug
+        # expel_last_num[nodeID]=i
+        ### end
         # dead blocks that going to be expelled
-        dead_blocks=[blockID[0] for blockID in kvs]
+        dead_blocks=[blockID[0] for blockID in chosen_kvs]
         # expel these blocks except there are only one left
         for blockID in dead_blocks:
-            if len(blocks_in_which_nodes_and_timelived[blockID-beginID])>1:
+            if len(blocks_in_which_nodes_and_timelived[blockID-beginID])>2:
                 # update popularity
                 nodes_stored_blocks_popularity[nodeID].pop(blockID)
                 # update storage used
@@ -320,7 +455,10 @@ def expel_blocks_LLU(last_num_to_expel):
                 # update time_lived
                 blocks_in_which_nodes_and_timelived[blockID-beginID].pop(nodeID)
     # nothing to return
-    return
+    ##debug
+    # print('expel number:',expel_last_num)
+    ###
+    return delete_blocks_debug
 
 def expel_blocks(expel_type,end_since=beginID,epochs=1,last_num_to_expel=3):
     '''
@@ -330,16 +468,26 @@ def expel_blocks(expel_type,end_since=beginID,epochs=1,last_num_to_expel=3):
     'curve': end_since and epoch must be given
     'llu': last_num_to_expel must be given<default>
     '''
+    delete_blocks_debug=[]
     if expel_type =='curve':
         if end_since==beginID and epochs ==1:
             print("[expel_blocks]: initial settings!")
-        update_livetime_and_expel(end_since,epochs)
+        delete_blocks_debug=update_livetime_and_expel(end_since,epochs)
     elif expel_type=='llu':
-        expel_blocks_LLU(last_num_to_expel)
+        delete_blocks_debug=expel_blocks_LLU(last_num_to_expel)
     else:
         print("expel_type invalid. llu is set")
-    return
+    return delete_blocks_debug
 
+def shift_popularity():
+    '''
+    shift popularity list, which length is 2.
+    this function shall be called just after new issuing block, before active replica, request, passive replica and expel.
+    '''
+    for nodeID in range(nodes_num):
+        nodes_stored_blocks_popularity[nodeID]={x[0]:[x[1][1],0] for x in nodes_stored_blocks_popularity[nodeID].items()}
+    
+    return
 
 def get_blockID_from_which(nodeID,blockID):
     """(int,int) -> (int,float)

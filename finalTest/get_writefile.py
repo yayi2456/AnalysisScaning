@@ -48,7 +48,7 @@ def write_in_file():
         for i in range(begin,ends,step):
             online=str(i)
             for one_list in lists:
-                online=online+' '+str(one_list[i-begin])
+                online=online+','+str(one_list[i-begin])
             # print(online,file=write_file)
             write_file.write(online+'\n')
         
