@@ -123,17 +123,17 @@ def plot_avg():
 
     ### extra comparasion
 
-    Avgtime1,b,e,s=load_avg_times('zipf',replica_sum,'load10','raccess3','curve3',100)
-    Avgtime2,b,e,s=load_avg_times('zipf',replica_sum,'load10','access3','curve3',100)
+    # Avgtime1,b,e,s=load_avg_times('zipf',replica_sum,'load10','calculate3','llu8',100)
+    # Avgtime2,b,e,s=load_avg_times('zipf',replica_sum,'load10','calculate3','curve3',100)
     # Avgtime3,b,e,s=load_avg_times('zipfr',replica_sum,'load10','calculate3','curve3',100)
-    Avgtime11,b,e,s=load_avg_times('zipf',replica_sum,'load10','raccess3','llu8',100)
-    Avgtime21,b,e,s=load_avg_times('zipf',replica_sum,'load10','access3','llu8',100)
+    Avgtime11,b,e,s=load_avg_times('zipf',replica_sum,'load10','access3','llu8',100)
+    Avgtime21,b,e,s=load_avg_times('zipf',replica_sum,'load10','access3','curve3',100)
     # Avgtime31,b,e,s=load_avg_times('zipfr',replica_sum,'load10','calculate3','llu8',100)
-    plt.plot(range(b, e, s), Avgtime1, color=colors[0], label='zipf-lr-c',marker='.')
-    plt.plot(range(b, e, s), Avgtime2, color=colors[1], label='zipf-la-c',marker='.')
+    # plt.plot(range(b, e, s), Avgtime1, color=colors[0], label='zipf-lc-l',marker='.')
+    # plt.plot(range(b, e, s), Avgtime2, color=colors[1], label='zipf-lc-c',marker='.')
     # plt.plot(range(b, e, s), Avgtime3, color=colors[4], label='zipfr-lc-c',marker='.')
-    plt.plot(range(b, e, s), Avgtime11, color=colors[2], label='zipf-lr-l',marker='.')
-    plt.plot(range(b, e, s), Avgtime21, color=colors[3], label='zipf-la-l',marker='.')
+    plt.plot(range(b, e, s), Avgtime11, color=colors[2], label='zipf-la-l',marker='.')
+    plt.plot(range(b, e, s), Avgtime21, color=colors[3], label='zipf-la-c',marker='.')
     # plt.plot(range(b, e, s), Avgtime31, color=colors[5], label='zipfr-lc-l',marker='.')
 
     # Avgtime04rr, b02, e02, s02 = load_avg_times(distribution,replica_sum,'random10','calculate3',expel_item,run_times)
@@ -403,8 +403,8 @@ def plot_storage_end_epoch():
 
 
 if __name__=='__main__':
-    # plot_avg()
-    plot_storage()
+    plot_avg()
+    # plot_storage()
     # plot_storage_end_epoch()
 
     # plt.plot(range(begin+beginblock,end),RR[beginblock:],color='r',marker='.',label='needed-actual')

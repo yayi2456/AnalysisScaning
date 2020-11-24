@@ -18,6 +18,8 @@ the main program.
 # how many times is a block been accessed in step epoches.
 block_access_times_in_each_epoch_step={}
 
+access_times_per_node_per_epoch=[]
+
 def init_environment():
     """ () -> ( float)
     
@@ -130,14 +132,19 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
     block_sizes_stored_by_nodes=[]
     total_storage_one_replica=[0]*(ReplicationAlgorithms_zipf.endID-ReplicationAlgorithms_zipf.beginID-ReplicationAlgorithms_zipf.static_blocks+1)
     total_storage_one_replica[0]=sum(ReplicationAlgorithms_zipf.blocksizes[:ReplicationAlgorithms_zipf.static_blocks])
+    load_by_nodes=[]
+    LOAD_SWITCH=True
     # use ratio of each block is each epoch.
     # a list of list of float. key=blockID, value=use ratio
     block_use_ratio=[]
 
     # rank_distribution , prepared for zipfr
     rank_distribution=[]
-    if total_times!=1:
-        total_times=1
+    # if total_times!=1:
+    #     total_times=1
+    
+    for i in range(ReplicationAlgorithms_zipf.nodes_num):
+        access_times_per_node_per_epoch.append({})
     
     
 
@@ -159,8 +166,11 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
         file_use_ratio_write=open(file_use_ratio,'w')
         print(ReplicationAlgorithms_zipf.beginID+ReplicationAlgorithms_zipf.static_blocks,' ',ReplicationAlgorithms_zipf.endID,' ',step,file=file_use_ratio_write)
     
-    file_single_time='./finalTest/finalRes/Single-'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
+    file_single_time='./finalTest/finalRes/debug/Single-'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.csv'
     f_single_time=open(file_single_time,'w')
+
+    file_load_n='./finalTest/finalRes/debug/load-'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.csv'
+    f_load_n=open(file_load_n,'w')
     
     for run_times in range(total_times):
         # store all avg_time in each runtime
@@ -168,6 +178,7 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
         avg_time.append([])
         block_use_ratio_one_runtime=[]
         block_sizes_stored_by_nodes_tmp=[]
+        load_by_nodes_tmp=[]
 
         ReplicationAlgorithms_zipf.blocks_in_which_nodes_and_timelived.clear()
         ReplicationAlgorithms_zipf.nodes_stored_blocks_popularity.clear()
@@ -224,6 +235,7 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
             # print(ReplicationAlgorithms_zipf.nodes_stored_blocks_popularity)
             #request
             block_numbers_sum=0
+            this_epoch_all_node_request_time=[]
             for nodeID in range(ReplicationAlgorithms_zipf.nodes_num):
                 blocks_numbers=InitChainAndNodes_zipf.get_chosen_blocks_numbers(lambdai)
                 if blocks_numbers>end_since-ReplicationAlgorithms_zipf.beginID:
@@ -233,21 +245,48 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
                 # print(blocks_numbers)
                 block_numbers_sum+=blocks_numbers
                 average_time_i_tmp,rank_distribution,single_request_time,chosen_blocksID=get_one_total_time_and_replicate(nodeID,end_since,passive_replicate_type,period,blocks_numbers,chosen_block_distribution,True and passive_on,rank_distribution)
-                if nodeID==0:
-                    printstring='avg='+str(average_time_i_tmp/len(chosen_blocksID))+', '
-                    i=0
-                    for chosen_block_id in chosen_blocksID:
-                        bid=str(chosen_block_id)
-                        sst=str(single_request_time[i])
-                        sl=str(len(ReplicationAlgorithms_zipf.blocks_in_which_nodes_and_timelived[chosen_block_id-ReplicationAlgorithms_zipf.beginID]))
-                        printstring+=(' ('+bid+' ,'+sl+' ,'+sst+') ')
-                        i+=1
-                    print('epoch=',end_since,': ',printstring,file=f_single_time)
+                this_epoch_all_node_request_time.append(single_request_time)
+                # printstring=str(average_time_i_tmp/len(chosen_blocksID))
+                # i=0
+                # for chosen_block_id in chosen_blocksID:
+                #     bid=str(chosen_block_id)
+                #     sst=str(single_request_time[i])
+                #     sl=str(len(ReplicationAlgorithms_zipf.blocks_in_which_nodes_and_timelived[chosen_block_id-ReplicationAlgorithms_zipf.beginID]))
+                #     printstring+=','+str(sst)
+                #     i+=1
+                # print('epoch=',end_since,': ',printstring,file=f_single_time)
                 average_time_i+=average_time_i_tmp
+            
             # average requesting time per block
             # print('sum:',block_numbers_sum)
             average_time_i/=block_numbers_sum
             avg_time[run_times].append(average_time_i)
+            avg_request_time=average_time_i
+            ##### output these times
+            p_string=''
+            std_v=0
+            max_request_time=0
+            max_request_time_block=0
+            min_request_time=np.inf
+            for _nid in range(len(this_epoch_all_node_request_time)):
+                for _bid in range(len(this_epoch_all_node_request_time[_nid])):
+                    this_request_time=this_epoch_all_node_request_time[_nid][_bid]
+                    p_string+=str(this_request_time)+','
+                    # std_v+=(this_request_time-avg_request_time)*(this_request_time-avg_request_time)
+                    # if this_request_time>max_request_time:
+                    #     max_request_time=this_request_time
+                    #     max_request_time_block=_bid
+                    # if this_request_time<min_request_time:
+                    #     min_request_time=this_request_time
+            # std_v/=(block_numbers_sum)
+            # std_v=math.sqrt(std_v)
+            # p_string+=str(avg_request_time)+','
+            # p_string+=str(std_v)+','+str(max_request_time)+','+str(min_request_time)
+            p_string[1:]
+            if end_since>=ReplicationAlgorithms_zipf.endID-20:
+                print(p_string,file=f_single_time)
+
+            # print('epoch=',end_since,'max_request_time_block:',max_request_time_block)
             # ### !!!DEBUG
             # if run_times==0 and end_since==ReplicationAlgorithms_zipf.endID-1:
             #     print(json.dumps(ReplicationAlgorithms_zipf.blocks_in_which_nodes_and_timelived),file=data_store_in)
@@ -261,6 +300,16 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
             #     # for i in range(ReplicationAlgorithms_zipf.beginID,ReplicationAlgorithms_zipf.endID):
             #     #     print(ReplicationAlgorithms_zipf.blocks_in_which_nodes_and_timelived[i-ReplicationAlgorithms_zipf.beginID],file=datafilein)
             # ### end debug
+
+            ### new load 
+            # storage_tmp=copy.copy(ReplicationAlgorithms_zipf.nodes_storage_used)
+            
+            # s_load_a=json.dumps(load_a)
+            # print(s_load_a,file=f_load_n)
+            # 
+
+
+            ###
             # update lifetime and expel dead blocks
             if expel_type!='noexpel':
                 _=ReplicationAlgorithms_zipf.expel_blocks(expel_type,end_since,step,last_num_to_expel)
@@ -273,9 +322,31 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
                 block_sizes_stored_by_nodes_tmp.append(storage_tmp)
                 # print(block_sizes_stored_by_nodes_tmp[0])
                 total_storage_one_replica[end_since-(start_point)+1]=total_storage_one_replica[end_since-(start_point)]+block_size_add_up
+            if LOAD_SWITCH:
+                # nodes_num_block=[]
+                # for i in range(10):
+                #     nodes_num_block.append(len(ReplicationAlgorithms_zipf.nodes_stored_blocks_popularity[i]))
+                # # s_storage=json.dumps(storage_tmp)
+                # s_access_times=json.dumps(access_times_per_node_per_epoch)
+                # s_nodes_num_block=json.dumps(nodes_num_block)
+                load_a=[0]*10
+                for node_id in range(10):
+                    this_node_load=0
+
+                    for kvs in ReplicationAlgorithms_zipf.nodes_stored_blocks_popularity[node_id].items():
+                        if kvs[0] in access_times_per_node_per_epoch[node_id]:
+                            access_times=access_times_per_node_per_epoch[node_id][kvs[0]]
+                            # print(kvs[0],',',access_times,',',ReplicationAlgorithms_zipf.blocksizes[kvs[0]-ReplicationAlgorithms_zipf.beginID])
+                            this_node_load+=(access_times*ReplicationAlgorithms_zipf.blocksizes[kvs[0]-ReplicationAlgorithms_zipf.beginID])
+                    load_a[node_id]=this_node_load
+                    # print('node=',node_id,',load=',this_node_load)
+                clear_access_times_per_node_per_epoch()
+                load_by_nodes_tmp.append(load_a)
+
             if get_replica_use_ratio:
                 use_ratio_one_epoch=get_ratio_from_access_times(block_access_times_in_each_epoch_step)
                 block_use_ratio_one_runtime.append(use_ratio_one_epoch)
+            ###
         ##!!!DEBUG
         # for i in range(files_index):
         #     datafile_index[i].close()
@@ -295,6 +366,9 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
             # print(block_sizes_stored_by_nodes_tmp)
             block_sizes_stored_by_nodes=[np.sum(block_sizes_stored_by_nodes,axis=0)]
             # print(block_sizes_stored_by_nodes)
+        if LOAD_SWITCH:
+            load_by_nodes.append(load_by_nodes_tmp)
+            load_by_nodes=[np.sum(load_by_nodes,axis=0)]
     f_single_time.close()
     #get mean and store them
     if get_replica_use_ratio:
@@ -312,6 +386,11 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
         for i in range(len(block_sizes_stored_by_nodes)):
             # print(block_sizes_stored_by_nodes[i])
             print(json.dumps(block_sizes_stored_by_nodes[i].tolist()),file=file_storage_used_write)
+    if LOAD_SWITCH:
+        load_by_nodes=np.array(load_by_nodes[0])/total_times
+        load_by_nodes=load_by_nodes.T
+        for i in range(len(load_by_nodes)):
+            print(json.dumps(load_by_nodes[i].tolist()),file=f_load_n)
     # got all average_time, which is a list of list of float
     # store them
     if get_average_time:
@@ -323,8 +402,12 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
         file_storage_used_write.close()
     if get_replica_use_ratio:
         file_use_ratio_write.close()
+    if LOAD_SWITCH:
+        f_load_n.close()
    
-
+def clear_access_times_per_node_per_epoch():
+    for i in range(ReplicationAlgorithms_zipf.nodes_num):
+        access_times_per_node_per_epoch[i]={}
 
 
 def get_one_total_time_and_replicate(nodeID,end_since,passive_replicate_type,period,block_numbers,chosen_block_distribution,valid_replicate,rank_distribution):
@@ -357,10 +440,15 @@ def get_one_total_time_and_replicate(nodeID,end_since,passive_replicate_type,per
     signle_request_time=[]
     for blockID in chosen_blocks:
         min_node,time_cost=ReplicationAlgorithms_zipf.get_blockID_from_which(nodeID,blockID)
+        
         # update this epoch popularity
         # print(ReplicationAlgorithms_zipf.nodes_stored_blocks_popularity[min_node][blockID])
         if valid_replicate and min_node!=nodeID:
             ReplicationAlgorithms_zipf.nodes_stored_blocks_popularity[min_node][blockID][1]+=1
+            if blockID in access_times_per_node_per_epoch[min_node]:
+                access_times_per_node_per_epoch[min_node][blockID]+=1
+            else:
+                access_times_per_node_per_epoch[min_node][blockID]=1
         # record popularity, for choosing blocks and for popularity passing
         popularity_blockID=ReplicationAlgorithms_zipf.nodes_stored_blocks_popularity[min_node][blockID]
         chosen_blocks_popularity[blockID]=popularity_blockID[0]+popularity_blockID[1]
@@ -395,7 +483,7 @@ def get_total_access_time():
     total_access_times={}
 
     # append popularity in each node of each block
-    # popularity is a little lower as self-accesses are excluded
+    # popularity is relatively low as self-accesses are excluded
     for node_blocks in ReplicationAlgorithms_zipf.nodes_stored_blocks_popularity:
         for kvs in node_blocks.items():
             if kvs[0] in total_access_times:
@@ -453,6 +541,6 @@ def get_storage_place():
 
 if __name__=='__main__':
     all_storage_cost=init_environment()
-    replication_run(False,False,False)
+    replication_run(True,False,False)
     get_storage_place()
     print('running done')

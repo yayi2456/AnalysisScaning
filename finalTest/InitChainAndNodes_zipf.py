@@ -115,22 +115,24 @@ def get_needed_blocks(beginID,endID,distribution_type,chosen_block_nums,rank_dis
             probabllity[i]=1/(endID-beginID)
     
     # choose chosen_block_nums
+    # if endID-beginID>=390:
+    #     print('chosen blocks probability:',probabllity)
     chosen_blocks=np.random.choice(range(beginID,endID),size=chosen_block_nums,replace=False,p=probabllity)
     ### deubg
-    if(distribution_type=='zipfr'):
-        top_10_blocks=[]
-        top_10_blocks_p=[]
-        for i in range(len(rank_distribution)):
-            if rank_distribution[i]<=10:
-                top_10_blocks.append(beginID+i)
-                top_10_blocks_p.append(probabllity[i])
-        print('current top 10 probability distribution: ',top_10_blocks_p)
-        print('current top 10 blocknumbers:',top_10_blocks)
-        print('chosen blocknumbers: ',chosen_block_nums)
-        print('chosen blocks: ',chosen_blocks)
-        print('==')
-    if distribution_type=='uniform':
-        print('chosen blocks:',sorted(chosen_blocks))
+    # if(distribution_type=='zipfr'):
+    #     top_10_blocks=[]
+    #     top_10_blocks_p=[]
+    #     for i in range(len(rank_distribution)):
+    #         if rank_distribution[i]<=10:
+    #             top_10_blocks.append(beginID+i)
+    #             top_10_blocks_p.append(probabllity[i])
+    #     print('current top 10 probability distribution: ',top_10_blocks_p)
+    #     print('current top 10 blocknumbers:',top_10_blocks)
+    #     print('chosen blocknumbers: ',chosen_block_nums)
+    #     print('chosen blocks: ',chosen_blocks)
+    #     print('==')
+    # if distribution_type=='uniform':
+    #     print('chosen blocks:',sorted(chosen_blocks))
     ### end debug
     #return
     return chosen_blocks,rank_distribution

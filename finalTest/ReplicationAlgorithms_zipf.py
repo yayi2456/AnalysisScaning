@@ -28,6 +28,8 @@ multiple replica algorithms which can be embed into replication process.
 8. which node the nodeA choose to get a certain block B, and the time cost.
 """
 
+#minium blocks left
+LEFT_BLOCKS=2
 
 # blocksizes is the size of all blocks
 blocksizes=[]
@@ -40,10 +42,10 @@ nodes_num=10
 
 # beginID is the starting block and endID is the ending block
 beginID=654000
-endID=beginID+400
+endID=beginID+1000
 # static_blocks is the number of blocks that shall be assigned statically
 # assert(static_blocks<=endID-beginID)
-static_blocks=20
+static_blocks=600
 
 # which nodes a block is stored and the corresponding lifetime left.
 # a list of dictionary, whose index is blockID-beginID, value is a dict.
@@ -98,6 +100,7 @@ def assign_one_block(blockID,piece,period,popularity_epoch_list):
 
     assign block `blockID` to `piece` nodes , whose lifetime is `period` and popularity list is `popularity_epoch_list`.
     popularity_epoch_list: [.,.]
+    this function is only used in initial assign of new coming block.
 
     Select storage node randomly.
     `piece`: how many replicas are stored
@@ -130,7 +133,8 @@ def assign_one_block(blockID,piece,period,popularity_epoch_list):
             # print(blockID,'\n',beginID)
             nodes_storage_used[node_replica]+=blocksizes[blockID-beginID]
         blocks_in_which_nodes_and_timelived[blockID-beginID][node_replica]=time_lived
-        nodes_stored_blocks_popularity[node_replica][blockID]=popularity_epoch_list
+        # nodes_stored_blocks_popularity[node_replica][blockID]=popularity_epoch_list.copy()
+        nodes_stored_blocks_popularity[node_replica][blockID]=popularity_epoch_list.copy()
     # nothing tpo return
     return
 
@@ -139,6 +143,7 @@ def initial_assign_block(blockID,piece,period):
 
     Assign the new coming block `blockID` to random `piece` nodes, whose lifetime is `period`.
     we assign the popularity_epoch_list to [0,0].
+    This function is used to assign new coming blocks.
     """
     assign_one_block(blockID,piece,period,[0,0])
 
@@ -367,9 +372,9 @@ def store_block_to_node(blockID,nodeID,period,popularity_value):
     # update popularity
     # popularity is inherent from giving node
     if blockID not in nodes_stored_blocks_popularity[nodeID]:
-        nodes_stored_blocks_popularity[nodeID][blockID]=popularity_value
+        nodes_stored_blocks_popularity[nodeID][blockID]=popularity_value.copy()
 
-def update_livetime_and_expel(end_since,epochs):
+def update_livetime_and_expel(end_since,epochs,fp):
     """(int,int) - list of dict,key is int,value is int
 
     update live time of blocks and expel expired blocks.
@@ -396,7 +401,7 @@ def update_livetime_and_expel(end_since,epochs):
     # expel dead blocks
     for blockID in range(beginID,end_since):
         for nodeID in dead_blocks[blockID-beginID]:
-            if len(blocks_in_which_nodes_and_timelived[blockID-beginID])>2:
+            if len(blocks_in_which_nodes_and_timelived[blockID-beginID])>LEFT_BLOCKS:
                 # update popularity
                 nodes_stored_blocks_popularity[nodeID].pop(blockID)
                 # update storage_used
@@ -408,7 +413,7 @@ def update_livetime_and_expel(end_since,epochs):
     # nothing to return
     return delete_blocks_debug
 
-def expel_blocks_LLU(last_num_to_expel):
+def expel_blocks_LLU(last_num_to_expel,end_since,fp):
     '''
     expel blocks whose popularity is the last nums in nodes_stored_blocks_popularity
     '''
@@ -427,6 +432,9 @@ def expel_blocks_LLU(last_num_to_expel):
     for i in range(nodes_num):
         delete_blocks_debug.append([])
     ### end
+    if fp:
+        if end_since>=endID-10:
+            print('\n epoch=',end_since,file=fp)
     for nodeID in random_node:
         # find dead blocks: whose popularity is the least
         kvs=sorted(nodes_stored_blocks_popularity[nodeID].items(),key=lambda x:x[1][0]+x[1][1],reverse=False)
@@ -435,10 +443,17 @@ def expel_blocks_LLU(last_num_to_expel):
         for kv in kvs:
             if i>= last_num_to_expel:
                 break
-            if len(blocks_in_which_nodes_and_timelived[kv[0]-beginID])>2:
+            if len(blocks_in_which_nodes_and_timelived[kv[0]-beginID])>LEFT_BLOCKS:
                 chosen_kvs.append(kv)
                 delete_blocks_debug[nodeID].append(kv[0])
                 i+=1
+        if end_since>=endID-10:
+            new_dict={}
+            for kv in kvs:
+                if len(blocks_in_which_nodes_and_timelived[kv[0]-beginID])>LEFT_BLOCKS:
+                    new_dict[kv[0]]=kv[1]
+            if fp:
+                print('node=',nodeID,',expel blocks sort:',new_dict,file=fp)
         ### debug
         # expel_last_num[nodeID]=i
         ### end
@@ -446,7 +461,7 @@ def expel_blocks_LLU(last_num_to_expel):
         dead_blocks=[blockID[0] for blockID in chosen_kvs]
         # expel these blocks except there are only one left
         for blockID in dead_blocks:
-            if len(blocks_in_which_nodes_and_timelived[blockID-beginID])>2:
+            if len(blocks_in_which_nodes_and_timelived[blockID-beginID])>LEFT_BLOCKS:
                 # update popularity
                 nodes_stored_blocks_popularity[nodeID].pop(blockID)
                 # update storage used
@@ -460,7 +475,7 @@ def expel_blocks_LLU(last_num_to_expel):
     ###
     return delete_blocks_debug
 
-def expel_blocks(expel_type,end_since=beginID,epochs=1,last_num_to_expel=3):
+def expel_blocks(expel_type,end_since,epochs,last_num_to_expel,fp):
     '''
     expel blocks.
 
@@ -472,9 +487,9 @@ def expel_blocks(expel_type,end_since=beginID,epochs=1,last_num_to_expel=3):
     if expel_type =='curve':
         if end_since==beginID and epochs ==1:
             print("[expel_blocks]: initial settings!")
-        delete_blocks_debug=update_livetime_and_expel(end_since,epochs)
+        delete_blocks_debug=update_livetime_and_expel(end_since,epochs,fp)
     elif expel_type=='llu':
-        delete_blocks_debug=expel_blocks_LLU(last_num_to_expel)
+        delete_blocks_debug=expel_blocks_LLU(last_num_to_expel,end_since,fp)
     else:
         print("expel_type invalid. llu is set")
     return delete_blocks_debug
