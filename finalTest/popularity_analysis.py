@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import math
+import time
+import os
 
 node_sum=10
 
@@ -230,9 +232,11 @@ def plot_distribution_replia_nums_v3(epoch):
     epoch=654400
     replica_nums_1=[0]*(epoch-654000)
     for nodeid in range(node_sum):
-        # fname=('D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\debug\\calculate3-llu8-popularity-node'+str(nodeid)+'-100.txt')
-        fname=('D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\debug\\calculate3-curve3-popularity-node'+str(nodeid)+'-100.txt')
+        fname=('D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\debug\\zipfr-calculate3-popularity10-curve3-PL-node'+str(nodeid)+'-100.txt')
+        # fname=('D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\debug\\calculate3-curve3-popularity-node'+str(nodeid)+'-100.txt')
         # popu_dicts.append({})
+        last_time=time.ctime(os.stat(fname).st_mtime)
+        print('file modify time: ',last_time,', file: ',fname)
         with open(fname, 'r') as datafile:
             for dataline in datafile:
                 datalineitem = dataline.split('$')
@@ -243,9 +247,11 @@ def plot_distribution_replia_nums_v3(epoch):
 
     replica_nums_2=[0]*(epoch-654000)
     for nodeid in range(node_sum):
-        fname=('D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\debug\\calculate3-llu8-popularity-node'+str(nodeid)+'-100.txt')
-        # fname=('D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\debug\\access3-llu8-popularity-node'+str(nodeid)+'-100.txt')
+        # fname=('D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\debug\\calculate3-llu8-popularity-node'+str(nodeid)+'-100.txt')
+        fname=('D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\debug\\access3-llu8-popularity-node'+str(nodeid)+'-100.txt')
         # popu_dicts.append({})
+        last_time=time.ctime(os.stat(fname).st_mtime)
+        print('file modify time: ',last_time,', file: ',fname)
         with open(fname, 'r') as datafile:
             for dataline in datafile:
                 datalineitem = dataline.split('$')
@@ -258,44 +264,78 @@ def plot_distribution_replia_nums_v3(epoch):
     for i in range(epoch-654000):
         print('blockid=',i,',A-replicas=',replica_nums_1[i])
     allsum_1=sum(replica_nums_1)
-    replica_ratio_1=np.array(replica_nums_1)/100#(allsum_1)#np.array(replica_nums_1)/100#
+    replica_ratio_1=np.array(replica_nums_1)/(allsum_1)#np.array(replica_nums_1)/100#
 
     for i in range(epoch-654000):
         print('blockid=',i,',C-replicas=',replica_nums_2[i])
     allsum_2=sum(replica_nums_2)
-    replica_ratio_2=np.array(replica_nums_2)/100#(allsum_2)#np.array(replica_nums_2)/100#
+    replica_ratio_2=np.array(replica_nums_2)/(allsum_2)#np.array(replica_nums_2)/100#
+
+    # index is rank
+    # value is block number
+    pzr=[239, 39, 161, 24, 383, 46, 26, 249, 365, 108, 103, 17, 60, 276, 278, 345, 11, 360, 338, 320, 208, 327, 394, 262, 30, 90, 86, 375, 187, 396, 156, 101, 306, 176, 225, 168, 369, 47, 132, 340, 332, 123, 378, 374, 169, 299, 317, 6, 71, 255, 343, 361, 15, 14, 295, 21, 309, 63, 92, 265, 200, 246, 43, 177, 280, 251, 197, 364, 385, 190, 217, 57, 70, 134, 186, 329, 154, 363, 9, 219, 302, 16, 304, 127, 328, 314, 235, 288, 289, 181, 391, 357, 193, 386, 58, 189, 195, 149, 324, 260, 135, 85, 293, 204, 237, 271, 236, 59, 172, 290, 226, 50, 245, 2, 392, 141, 160, 116, 95, 115, 352, 336, 285, 277, 207, 150, 66, 286, 209, 107, 96, 284, 
+        61, 220, 113, 224, 316, 339, 145, 34, 287, 252, 201, 238, 397, 387, 110, 93, 175, 227, 322, 20, 27, 362, 88, 341, 51, 303, 128, 118, 202, 359, 82, 67, 167, 199, 194, 35, 33, 274, 376, 157, 379, 233, 390, 28, 106, 19, 389, 48, 292, 354, 178, 358, 163, 162, 8, 247, 382, 221, 281, 0, 125, 3, 121, 393, 97, 367, 351, 13, 153, 29, 38, 148, 54, 349, 335, 36, 89, 12, 69, 250, 143, 133, 313, 1, 347, 104, 155, 269, 272, 78, 
+        308, 5, 170, 398, 99, 142, 94, 355, 234, 353, 166, 384, 261, 112, 231, 399, 268, 174, 137, 230, 371, 102, 242, 373, 147, 315, 380, 337, 310, 395, 91, 223, 140, 105, 45, 25, 79, 388, 52, 22, 87, 350, 55, 68, 158, 348, 248, 139, 72, 283, 184, 264, 298, 62, 49, 173, 192, 258, 381, 323, 77, 130, 129, 73, 138, 41, 7, 171, 279, 243, 203, 56, 211, 80, 307, 10, 244, 205, 83, 84, 109, 164, 377, 206, 240, 23, 273, 146, 18, 229, 311, 366, 37, 301, 64, 326, 372, 346, 81, 183, 126, 275, 53, 370, 111, 185, 291, 256, 297, 241, 144, 159, 331, 270, 282, 215, 4, 344, 228, 100, 305, 210, 198, 180, 131, 254, 259, 40, 42, 267, 75, 151, 333, 330, 368, 214, 120, 325, 318, 266, 300, 32, 321, 294, 31, 342, 334, 188, 296, 136, 222, 98, 213, 182, 76, 152, 257, 216, 196, 212, 356, 191, 117, 124, 65, 232, 74, 218, 312, 122, 165, 179, 119, 114, 253, 44, 
+        263, 319]
 
     probabllity=[0]*(epoch-654000)
+    probabllity_uni=[0]*(epoch-654000)
+    probabllity_r=[0]*(epoch-654000)
     s=1.2
-
     for i in range(len(probabllity)):
-            probabllity[len(probabllity)-1-i]=1/(generalized_harmonic_number((epoch-654000),s)*pow(i+1,s))
+        probabllity_uni[i]=allsum_1/len(probabllity_uni)
+        probabllity[len(probabllity)-1-i]=1/(generalized_harmonic_number((epoch-654000),s)*pow(i+1,s))
+        probabllity_r[pzr[i]]=1/(generalized_harmonic_number((epoch-654000),s)*pow(i+1,s))
+    probabllity=np.array(probabllity)
+
     
-    sqrt_prob=[]
-    for i in range(len(probabllity)):
-        sqrt_prob.append(math.sqrt(probabllity[i]))
 
-    sqrt_prob_ratio=np.array(sqrt_prob)/sum(sqrt_prob)
+    
+    
+    # sqrt_prob=[]
+    # sqrt_prob_uni=[]
+    # for i in range(len(probabllity)):
+    #     sqrt_prob.append(math.sqrt(probabllity[i]))
+    #     sqrt_prob_uni.append(math.sqrt(probabllity_uni[i]))
+
+    # sqrt_prob_ratio=np.array(sqrt_prob)/sum(sqrt_prob)
+    # sqrt_prob_ratio_uni=np.array(sqrt_prob_uni)/sum(sqrt_prob_uni)
 
     plt.figure()
 
     X=range(epoch-654000)
 
-    TAIL_BLOCKS=5
+    TAIL_BLOCKS=0
     
-    plt.scatter(X,replica_ratio_1,marker='*',color='red',label='CC-replica_ratio_1')
-    plt.scatter(X,replica_ratio_2,marker='.',color='black',label='CL-replica_ratio_2')
+    # replica_ratio_1=[math.log10(i) for i in replica_ratio_1]
+    plt.scatter(X,replica_ratio_1,marker='*',color='red',label='CL-replica_ratio_1')
+    # plt.scatter(X,replica_ratio_2,marker='.',color='black',label='AL-replica_ratio_2')
     # plt.scatter(X[0:len(X)-TAIL_BLOCKS],sqrt_prob_ratio[0:len(X)-TAIL_BLOCKS],marker='+',color='blue',label='sqrt-probability')
+    # probabllity=[math.log10(i) for i in probabllity]
+    # plt.scatter(X[0:len(X)-TAIL_BLOCKS],probabllity[0:len(X)-TAIL_BLOCKS],marker='+',color='green',label='probability')
+    plt.scatter(X[0:len(X)-TAIL_BLOCKS],probabllity_r[0:len(X)-TAIL_BLOCKS],marker='+',color='green',label='probability')
+    # plt.ylim(150,400)
 
     # plt.plot(X,replica_ratio_1,color='red',label='A-replica_ratio_1')
     # plt.plot(X,replica_ratio_2,color='black',label='C-replica_ratio_2')
-    # plt.plot(X,probabllity,color='green',label='probabllity')
+    # plt.plot(X,probabllity_r,color='green',label='probabllity')
     # plt.plot(X[0:len(X)-8],sqrt_prob_ratio[0:len(X)-8],color='blue',label='sqrt_prob_ratio')
     plt.legend()
 
     plt.xlabel('block')
     plt.ylabel('num')
     plt.show()
+
+    # store_file_name_1='./P-list1.txt'
+    # store_file_name_zipf='./P-zipf.txt'
+    # with open(store_file_name_1,'w')as w_f:
+    #     pstring=str(epoch)+' '+str(epoch+400)+' 1'
+    #     print(pstring,file=w_f)
+    #     print(json.dumps(replica_ratio_1.tolist()),file=w_f)
+    # with open(store_file_name_zipf,'w')as w_f:
+    #     pstring=str(epoch)+' '+str(epoch+400)+' 1'
+    #     print(pstring,file=w_f)
+    #     print(json.dumps(probabllity.tolist()),file=w_f)
 
 
 
@@ -397,5 +437,5 @@ if __name__=='__main__':
     begin_epoch=654010
     # plot_popularity(begin_epoch+30)
     # plot_size()
-    # plot_distribution_replia_nums_v3(begin_epoch+390)
-    plot_load()
+    plot_distribution_replia_nums_v3(begin_epoch+390)
+    # plot_load()

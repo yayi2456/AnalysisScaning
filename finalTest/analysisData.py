@@ -2,11 +2,14 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import json
 import numpy as np
+import time
+import os
 
 def load_avg_times(chosen_block_distribution,piece,passive_item,active_item,expel_item,total_times):
     # file_average_time='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\averageTime-'+chosen_block_distribution+'-'+passive_replicate_type+'.'+str(passive_on)+'-'+active_replicate_type+'.'+str(active_on)+'-'+str(period)+'-'+str(lambdai)+'-'+str(top_num_to_offload)+'.txt'
     file_average_time='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\A-'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
-    
+    last_time=time.ctime(os.stat(file_average_time).st_mtime)
+    print('file modify time: ',last_time,', file: ',file_average_time)
     avg_time=[]
     with open(file_average_time, 'r') as datafile:
         i=0
@@ -31,10 +34,10 @@ def plot_avg():
     #     avg_time.append(avgtime)
     # avgtime,_,_,_=load_avg_times(chosen_block_distribution,passive_replicate_type,passive_on,active_replicate_type,active_on,np.inf,lambdai,top_num_to_offload)
     # avg_time.append(avgtime)
-    distribution='zipf'
+    distribution='zipfr'
     replica_sum=3
-    passive_item='load10'
-    active_item='calculate3'
+    passive_item='nopassive'
+    active_item='noactive'
     expel_item='curve3'
     run_times=100
     colors = ['blue', 'red', 'green', 'skyblue', 'pink', 'yellow', 'purple', 'black', 'cyan', 'orange']
@@ -82,17 +85,17 @@ def plot_avg():
     ### 驱逐策略done
 
     ### 被动的比较：修改distribution/curve
-    # Avgtime04pc, b02, e02, s02 = load_avg_times(distribution,replica_sum,'popularity10','calculate3',expel_item,run_times)
-    # Avgtime04lc, b02, e02, s02 = load_avg_times(distribution,replica_sum,'load10','calculate3',expel_item,run_times)
+    # Avgtime04pc, b02, e02, s02 = load_avg_times(distribution,replica_sum,'random10','noactive',expel_item,run_times)
+    # Avgtime04lc, b02, e02, s02 = load_avg_times(distribution,replica_sum,'nopassive','noactive',expel_item,run_times)
     # Avgtime04pn, b01, e01, s01 = load_avg_times(distribution,replica_sum,'popularity10','noactive',expel_item,run_times)
     # Avgtime04ln, b02, e02, s02 = load_avg_times(distribution,replica_sum,'load10','noactive',expel_item,run_times)
-    # Avgtime04pr, b01, e01, s01 = load_avg_times(distribution,replica_sum,'popularity10','random3',expel_item,run_times)
-    # Avgtime04lr, b01, e01, s01 = load_avg_times(distribution,replica_sum,'load10','random3',expel_item,run_times)
+    # # Avgtime04pr, b01, e01, s01 = load_avg_times(distribution,replica_sum,'popularity10','random3',expel_item,run_times)
+    # # Avgtime04lr, b01, e01, s01 = load_avg_times(distribution,replica_sum,'load10','random3',expel_item,run_times)
     # ### 被动的比较plot
-    # plt.plot(range(b02, e02, s02), Avgtime04pc, color=colors[3], label='pc',marker='.')
-    # plt.plot(range(b02, e02, s02), Avgtime04lc, color=colors[2], label='lc',marker='.')
-    # plt.plot(range(b01, e01, s01), Avgtime04pn, color=colors[0], label='pn',marker='.')
-    # plt.plot(range(b01, e01, s01), Avgtime04ln, color=colors[1], label='ln',marker='.')
+    # plt.plot(range(b02, e02, s02), Avgtime04pc, color=colors[3], label='r',marker='.')
+    # plt.plot(range(b02, e02, s02), Avgtime04lc, color=colors[2], label='n',marker='.')
+    # plt.plot(range(b01, e01, s01), Avgtime04pn, color=colors[0], label='p',marker='.')
+    # plt.plot(range(b01, e01, s01), Avgtime04ln, color=colors[1], label='l',marker='.')
     # plt.plot(range(b01, e01, s01), Avgtime04pr, color=colors[4], label='pr',marker='.')
     # plt.plot(range(b01, e01, s01), Avgtime04lr, color=colors[5], label='lr',marker='.')
     ### 被动的比较 done
@@ -110,15 +113,15 @@ def plot_avg():
     ### random的加入done
 
     ### 最终的比较：修改distribution/curve
-    # Avgtime04rr, b02, e02, s02 = load_avg_times(distribution,replica_sum,'random10','random3',expel_item,run_times)
-    # Avgtime04rc, b02, e02, s02 = load_avg_times(distribution,replica_sum,'random10','calculate3',expel_item,run_times)
-    # Avgtime04lr, b01, e01, s01 = load_avg_times(distribution,replica_sum,'load10','random3',expel_item,run_times)
-    # Avgtime04lc, b02, e02, s02 = load_avg_times(distribution,replica_sum,'load10','calculate3',expel_item,run_times)
-    # ### 最终的比较plot
-    # plt.plot(range(b02, e02, s02), Avgtime04rr, color=colors[3], label='rr',marker='.')
-    # plt.plot(range(b02, e02, s02), Avgtime04rc, color=colors[2], label='rc',marker='.')
-    # plt.plot(range(b02, e02, s02), Avgtime04lr, color=colors[0], label='lr',marker='.')
-    # plt.plot(range(b02, e02, s02), Avgtime04lc, color=colors[1], label='lc',marker='.')
+    Avgtime04rr, b02, e02, s02 = load_avg_times(distribution,replica_sum,'random10','random3',expel_item,run_times)
+    Avgtime04rc, b02, e02, s02 = load_avg_times(distribution,replica_sum,'random10','calculate3',expel_item,run_times)
+    Avgtime04lr, b01, e01, s01 = load_avg_times(distribution,replica_sum,'popularity10','random3',expel_item,run_times)
+    Avgtime04lc, b02, e02, s02 = load_avg_times(distribution,replica_sum,'popularity10','calculate3',expel_item,run_times)
+    ### 最终的比较plot
+    plt.plot(range(b02, e02, s02), Avgtime04rr, color=colors[3], label='rr',marker='.')
+    plt.plot(range(b02, e02, s02), Avgtime04rc, color=colors[2], label='rc',marker='.')
+    plt.plot(range(b02, e02, s02), Avgtime04lr, color=colors[0], label='lr',marker='.')
+    plt.plot(range(b02, e02, s02), Avgtime04lc, color=colors[1], label='lc',marker='.')
     ### 最终的比较done
 
     ### extra comparasion
@@ -126,14 +129,14 @@ def plot_avg():
     # Avgtime1,b,e,s=load_avg_times('zipf',replica_sum,'load10','calculate3','llu8',100)
     # Avgtime2,b,e,s=load_avg_times('zipf',replica_sum,'load10','calculate3','curve3',100)
     # Avgtime3,b,e,s=load_avg_times('zipfr',replica_sum,'load10','calculate3','curve3',100)
-    Avgtime11,b,e,s=load_avg_times('zipf',replica_sum,'load10','access3','llu8',100)
-    Avgtime21,b,e,s=load_avg_times('zipf',replica_sum,'load10','access3','curve3',100)
+    # Avgtime11,b,e,s=load_avg_times('zipfr',replica_sum,'load10','calculate3','llu8',100)
+    # Avgtime21,b,e,s=load_avg_times('zipf',replica_sum,'load10','access3','curve3',100)
     # Avgtime31,b,e,s=load_avg_times('zipfr',replica_sum,'load10','calculate3','llu8',100)
     # plt.plot(range(b, e, s), Avgtime1, color=colors[0], label='zipf-lc-l',marker='.')
     # plt.plot(range(b, e, s), Avgtime2, color=colors[1], label='zipf-lc-c',marker='.')
     # plt.plot(range(b, e, s), Avgtime3, color=colors[4], label='zipfr-lc-c',marker='.')
-    plt.plot(range(b, e, s), Avgtime11, color=colors[2], label='zipf-la-l',marker='.')
-    plt.plot(range(b, e, s), Avgtime21, color=colors[3], label='zipf-la-c',marker='.')
+    # plt.plot(range(b, e, s), Avgtime11, color=colors[2], label='zipfr-lc-l',marker='.')
+    # plt.plot(range(b, e, s), Avgtime21, color=colors[3], label='zipf-la-c',marker='.')
     # plt.plot(range(b, e, s), Avgtime31, color=colors[5], label='zipfr-lc-l',marker='.')
 
     # Avgtime04rr, b02, e02, s02 = load_avg_times(distribution,replica_sum,'random10','calculate3',expel_item,run_times)
@@ -195,15 +198,17 @@ def plot_avg():
     plt.legend()
     plt.xlabel('blocks')
     plt.ylabel('avg time')
-    plt.title('extra')
+    plt.title(distribution)
     # plt.ylim(ymin=0,ymax=5)
     plt.show()
 
 def load_storage(chosen_block_distribution,piece,passive_item,active_item,expel_item,total_times):
-    file_storage_used='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\S-'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
+    file_storage_used='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\experimenta\\5-mixed\\zipf\\c3\\S-'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
     NodesSizeAll =[] 
     BlockSize=[]
-    NodeSize_se=[]
+    # NodeSize_se=[]
+    last_time=time.ctime(os.stat(file_storage_used).st_mtime)
+    print('file modify time: ',last_time,', file: ',file_storage_used)
     with open(file_storage_used, 'r') as datafile:
         i = 0
         for dataline in datafile:
@@ -219,15 +224,15 @@ def load_storage(chosen_block_distribution,piece,passive_item,active_item,expel_
                 NodesSize=np.array(json.loads(dataline))
                 # print('nodeid=',i-2,', \n',NodesSize)
                 NodesSizeAll+=NodesSize
-                NodeSize_se.append(NodesSize)
+                # NodeSize_se.append(NodesSize)
             i += 1
         # print('filename=', file_storage_used, '-------')
         # print(NodesSizeAll)
-        NodesSizeAll=NodesSizeAll#/10
+        NodesSizeAll=NodesSizeAll/10
         # print('filename=',file_storage_used,'-------')
         # print(NodesSizeAll)
         # print(BlockSize)
-    return BlockSize,NodesSizeAll, begin, ends, step, NodeSize_se
+    return BlockSize,NodesSizeAll, begin, ends, step#, NodeSize_se
 
 def plot_storage():
     distribution='zipf'
@@ -235,10 +240,10 @@ def plot_storage():
     passive_item='load10'
     active_item='calculate3'
     expel_item='curve3'
-    run_times=1
+    run_times=100
     
     # Blocksize01,NodeSize01, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'llu7',run_times)
-    # Blocksize01,NodeSize02, b01, e01, s01,NodeSizeS02 = load_storage(distribution,replica_sum,passive_item,active_item,'llu8',run_times)
+    # Blocksize01,NodeSize02, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'llu8',run_times)
     # Blocksize01,NodeSize03, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'llu3',run_times)
     # Blocksize01,NodeSize04, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'llu4',run_times)
     # Blocksize01,NodeSize05, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'llu5',run_times)
@@ -247,8 +252,7 @@ def plot_storage():
 
     # Blocksize01,NodeSize011, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'curve1',run_times)
     # Blocksize01,NodeSize022, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'curve2',run_times)
-    Blocksize01,NodeSize033, b01, e01, s01,NodeSizeS033 = load_storage(distribution,replica_sum,passive_item,active_item,expel_item,run_times)
-    # Blocksize01,NodeSize033r, b01, e01, s01 = load_storage('zipfr',replica_sum,passive_item,active_item,'curve3',run_times)
+    # Blocksize01,NodeSize033, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'curve3',run_times)
     # Blocksize01,NodeSize044, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'curve4',run_times)
     # Blocksize01,NodeSize055, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'curve5',run_times)
     # Blocksize01,NodeSize066, b01, e01, s01 = load_storage(distribution,replica_sum,passive_item,active_item,'curve6',run_times)
@@ -273,15 +277,26 @@ def plot_storage():
     # if b01 != b12 or e01 != e12 or s01 != s12:
     #     exit(-1)
     colors = ['blue', 'red', 'green', 'skyblue', 'pink', 'yellow', 'purple', 'black', 'cyan', 'orange','gold','brown','grey','lime']
+    blk1,node1, b02, e02, s02 = load_storage(distribution,replica_sum,'random10','random3',expel_item,run_times)
+    # blk2,node2, b02, e02, s02 = load_storage(distribution,replica_sum,'random10','calculate3',expel_item,run_times)
+    # blk3,node3, b01, e01, s01 = load_storage(distribution,replica_sum,'popularity10','random3',expel_item,run_times)
+    blk4,node4, b02, e02, s02 = load_storage(distribution,replica_sum,'popularity10','calculate3',expel_item,run_times)
+    # blk5,node5, b02, e02, s02 = load_storage(distribution,replica_sum,'load10','calculate3',expel_item,run_times)
+    plt.plot(range(b02, e02, s02), np.array(node1)/np.array(blk1), color=colors[3], label='rr',marker='.')
+    # plt.plot(range(b02, e02, s02), np.array(node2)/np.array(blk2), color=colors[2], label='rc',marker='.')
+    # plt.plot(range(b02, e02, s02), np.array(node3)/np.array(blk3), color=colors[0], label='pr',marker='.')
+    plt.plot(range(b02, e02, s02), np.array(node4)/np.array(blk4), color=colors[1], label='pc',marker='.')
+    # plt.plot(range(b02, e02, s02), np.array(node5)/np.array(blk5), color=colors[4], label='lc',marker='.')
     # plt.plot(range(b01, e01, s01),np.array(NodeSize01)/np.array(Blocksize01),color=colors[13],label='llu7')
-    # plt.plot(range(b01, e01, s01),np.array(NodeSize033),color=colors[10],label='SUM-block')
+    # plt.plot(range(b01, e01, s01),np.array(NodeSize02)/np.array(Blocksize01),color=colors[0],label='llu8')
+    # # plt.plot(range(b01, e01, s01),np.array(NodeSize033),color=colors[10],label='SUM-block')
     # plt.plot(range(b01, e01, s01),np.array(NodeSize03)/np.array(Blocksize01),color=colors[1],label='llu3')
 
-    # plt.plot(range(b01, e01, s01),np.array(NodeSize04),color='gold',label='SUM-block')
-    plt.plot(range(b01, e01, s01),np.array(Blocksize01),color='brown',label='SUM')
+    # # plt.plot(range(b01, e01, s01),np.array(NodeSize04),color='gold',label='SUM-block')
+    # # plt.plot(range(b01, e01, s01),np.array(Blocksize01),color='brown',label='SUM')
     
-    for i in range(10):
-        plt.plot(range(b01, e01, s01),np.array(NodeSizeS033[i]),color=colors[i],label=str(i))
+    # # for i in range(10):
+    # #     plt.plot(range(b01, e01, s01),np.array(NodeSizeS033[i]),color=colors[i],label=str(i))
     # plt.plot(range(b01, e01, s01),np.array(NodeSize04)/np.array(Blocksize01),color=colors[2],label='llu4')
     # plt.plot(range(b01, e01, s01),np.array(NodeSize05)/np.array(Blocksize01),color=colors[3],label='llu5')
     # # # plt.plot(range(b01, e01, s01),np.array(NodeSize05r)/np.array(Blocksize01),color=colors[4],label='5r')
@@ -289,8 +304,8 @@ def plot_storage():
 
     # plt.plot(range(b01, e01, s01),np.array(NodeSize011)/np.array(Blocksize01),color=colors[5],label='curve-11')
     # plt.plot(range(b01, e01, s01),np.array(NodeSize022)/np.array(Blocksize01),color=colors[6],label='22')
-    # plt.plot(range(b01, e01, s01),np.array(NodeSize033)/np.array(Blocksize01),color=colors[7],label='lru8')
-    # plt.plot(range(b01, e01, s01),np.array(NodeSize033r)/np.array(Blocksize01),color=colors[8],label='33r')
+    # plt.plot(range(b01, e01, s01),np.array(NodeSize033)/np.array(Blocksize01),color=colors[7],label='33')
+    # # plt.plot(range(b01, e01, s01),np.array(NodeSize033r)/np.array(Blocksize01),color=colors[8],label='33r')
     # plt.plot(range(b01, e01, s01),np.array(NodeSize044)/np.array(Blocksize01),color=colors[8],label='44')
     # plt.plot(range(b01, e01, s01),np.array(NodeSize055)/np.array(Blocksize01),color=colors[9],label='55')
     # plt.plot(range(b01, e01, s01),np.array(NodeSize066)/np.array(Blocksize01),color=colors[10],label='66')
@@ -303,10 +318,46 @@ def plot_storage():
     plt.legend()
     # plt.ylim(ymin=0.2,ymax=.5)
     plt.xlabel('blocks')
-    plt.ylabel('per node storage size')
-    # plt.title('storage per node/ storage one replica')
+    # plt.ylabel('per node storage size')
+    plt.title('storage per node/ storage one replica')
     # plt.title('s-'+distribution+str(replica_sum)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(run_times))
     plt.show()
+    store_file_name_1='./A-P-rr.txt'
+    store_file_name_zipf='./A-P-pc.txt'
+    with open(store_file_name_1,'w')as w_f:
+        pstring=str(b02)+' '+str(e02)+' '+str(s02)
+        print(pstring,file=w_f)
+        print(json.dumps((np.array(node1)/np.array(blk1)).tolist()),file=w_f)
+    with open(store_file_name_zipf,'w')as w_f:
+        pstring=str(b02)+' '+str(e02)+' '+str(s02)
+        print(pstring,file=w_f)
+        print(json.dumps((np.array(node4)/np.array(blk4)).tolist()),file=w_f)
+
+
+
+
+
+if __name__=='__main__':
+    plot_avg()
+    # plot_storage()
+    # plot_storage_end_epoch()
+
+    # plt.plot(range(begin+beginblock,end),RR[beginblock:],color='r',marker='.',label='needed-actual')
+    # plt.bar(range(begin+beginblock,end),LL[beginblock:],color='grey',label='levels')
+    # plt.plot(range(begin+beginblock,end),RN[beginblock:],label='needed',color='g')
+    # plt.plot(range(begin+beginblock, end), RA[beginblock:], label='actual', color='b')
+    # plt.axhline(y=0, color='grey')
+    # plt.legend()
+    # plt.title("REPLICANUMS: NEEDED-ACTUAL(lambdai="+str(lambdai))
+    # plt.xlabel('numbers')
+    # plt.ylabel('replicas\' amounts differences')
+    # plt.show()
+    # A=
+# get_needed_blocks(0,100,'zipf',10,[])
+    # A=[0.0011049223105278451, 0.0011183288002366133, 0.0011320365577191767, 0.0011460555318899353, 0.0011603961073781482, 0.0011750691284024557, 0.001190085924221757, 0.0012054583362846182, 0.0012211987472102793, 0.0012373201117463367, 0.0012538359898614062, 0.0012707605821456784, 0.0012881087677084028, 0.0013058961447791801, 0.0013241390742396834, 0.0013428547263343263, 0.0013620611308326743, 0.0013817772309433823, 0.0014020229413094648, 0.001422819210448112, 0.001444188088035565, 0.0014661527974791685, 0.0014887378142652689, 0.0015119689506237213, 0.0015358734471082015, 0.0015604800717571102, 0.001585819227573616, 0.001611923069146468, 0.0016388256293268962, 0.001666562956982791, 0.0016951732669711313, 0.001724697103605426, 0.001755177519049127, 0.001786660268241332, 0.001819194022160996, 0.001852830601464057, 0.0018876252327889428, 0.001923636830325165, 0.0019609283055834164, 0.001999566908701227, 0.0020396246050746287, 0.002081178491633946, 0.0021243112576933855, 0.002169111696014439, 0.002215675270550476, 0.002264104748305787, 0.0023145109038731626, 0.0023670133065415233, 0.00242174120142787, 0.0024788344979329883, 0.0025384448810057175, 0.0026007370632970487, 0.0026658901993804832, 0.0027340994869173166, 0.002805577984089776, 0.0028805586779797527, 0.0029592968450478005, 0.003042072752732842, 0.003129194760785788, 0.0032210028927005738, 0.003317872962065533, 0.003420221356536792, 0.003528510604353633, 0.003643255876072963, 0.0037650326090695723, 0.0038944854864093755, 0.004032339057719019, 0.004179410361353551, 0.004336623999511108, 0.004505030237781586, 0.004685826857321405, 0.004880385694428149, 0.005090285076977883, 0.005317349735803605, 0.005563700268617474, 0.005831814918123824, 0.006124607373262158, 0.006445525630279646, 0.006798678835708647, 0.007189001748359949, 0.007622470427227634, 0.008106388653621226, 0.008649773529096825, 0.009263882484784262, 0.009962945708958145, 0.010765203205612047, 0.011694404188780901, 0.01278202669251491, 0.014070652829337903, 0.015619262389463363, 0.017511838481539862, 0.019871961247940842, 0.022888838693609977, 0.026866685708646112, 0.03232587151758965, 0.04023164011343723, 0.05258474271028453, 0.07426535087220147, 0.12080801489849234, 0.27754393596871085]
+    # B=list(range(0,100))
+    # plt.plot(B,A,marker='.')
+    # plt.show()
 
 def load_use_ratio(chosen_block_distribution,passive_replicate_type,passive_on,active_replicate_type,active_on,period,lambdai,top_num_to_offload):
     """
@@ -399,27 +450,3 @@ def plot_storage_end_epoch():
     plt.xlabel('node index')
     plt.ylabel('block index')
     plt.show()
-
-
-
-if __name__=='__main__':
-    plot_avg()
-    # plot_storage()
-    # plot_storage_end_epoch()
-
-    # plt.plot(range(begin+beginblock,end),RR[beginblock:],color='r',marker='.',label='needed-actual')
-    # plt.bar(range(begin+beginblock,end),LL[beginblock:],color='grey',label='levels')
-    # plt.plot(range(begin+beginblock,end),RN[beginblock:],label='needed',color='g')
-    # plt.plot(range(begin+beginblock, end), RA[beginblock:], label='actual', color='b')
-    # plt.axhline(y=0, color='grey')
-    # plt.legend()
-    # plt.title("REPLICANUMS: NEEDED-ACTUAL(lambdai="+str(lambdai))
-    # plt.xlabel('numbers')
-    # plt.ylabel('replicas\' amounts differences')
-    # plt.show()
-    # A=
-# get_needed_blocks(0,100,'zipf',10,[])
-    # A=[0.0011049223105278451, 0.0011183288002366133, 0.0011320365577191767, 0.0011460555318899353, 0.0011603961073781482, 0.0011750691284024557, 0.001190085924221757, 0.0012054583362846182, 0.0012211987472102793, 0.0012373201117463367, 0.0012538359898614062, 0.0012707605821456784, 0.0012881087677084028, 0.0013058961447791801, 0.0013241390742396834, 0.0013428547263343263, 0.0013620611308326743, 0.0013817772309433823, 0.0014020229413094648, 0.001422819210448112, 0.001444188088035565, 0.0014661527974791685, 0.0014887378142652689, 0.0015119689506237213, 0.0015358734471082015, 0.0015604800717571102, 0.001585819227573616, 0.001611923069146468, 0.0016388256293268962, 0.001666562956982791, 0.0016951732669711313, 0.001724697103605426, 0.001755177519049127, 0.001786660268241332, 0.001819194022160996, 0.001852830601464057, 0.0018876252327889428, 0.001923636830325165, 0.0019609283055834164, 0.001999566908701227, 0.0020396246050746287, 0.002081178491633946, 0.0021243112576933855, 0.002169111696014439, 0.002215675270550476, 0.002264104748305787, 0.0023145109038731626, 0.0023670133065415233, 0.00242174120142787, 0.0024788344979329883, 0.0025384448810057175, 0.0026007370632970487, 0.0026658901993804832, 0.0027340994869173166, 0.002805577984089776, 0.0028805586779797527, 0.0029592968450478005, 0.003042072752732842, 0.003129194760785788, 0.0032210028927005738, 0.003317872962065533, 0.003420221356536792, 0.003528510604353633, 0.003643255876072963, 0.0037650326090695723, 0.0038944854864093755, 0.004032339057719019, 0.004179410361353551, 0.004336623999511108, 0.004505030237781586, 0.004685826857321405, 0.004880385694428149, 0.005090285076977883, 0.005317349735803605, 0.005563700268617474, 0.005831814918123824, 0.006124607373262158, 0.006445525630279646, 0.006798678835708647, 0.007189001748359949, 0.007622470427227634, 0.008106388653621226, 0.008649773529096825, 0.009263882484784262, 0.009962945708958145, 0.010765203205612047, 0.011694404188780901, 0.01278202669251491, 0.014070652829337903, 0.015619262389463363, 0.017511838481539862, 0.019871961247940842, 0.022888838693609977, 0.026866685708646112, 0.03232587151758965, 0.04023164011343723, 0.05258474271028453, 0.07426535087220147, 0.12080801489849234, 0.27754393596871085]
-    # B=list(range(0,100))
-    # plt.plot(B,A,marker='.')
-    # plt.show()

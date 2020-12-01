@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import copy
 import math
 import sys
+import time
 
 import InitChainAndNodes_zipf
 import ReplicationAlgorithms_zipf
@@ -137,7 +138,8 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
     # rank_distribution , prepared for zipfr
     rank_distribution=[]
     
-    
+    time_string= '['+time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())+']'
+    print(time_string+': running: ',chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times))
 
     # filename to store average_time_cost statistical data
     # file_average_time='./finalTest/averageTime-'+chosen_block_distribution+'-'+passive_replicate_type+'.'+str(passive_on)+'-'+active_replicate_type+'.'+str(active_on)+'-'+str(period)+'-'+str(lambdai)+'-'+str(top_num_to_offload)+'.txt'
@@ -157,10 +159,10 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
         file_use_ratio_write=open(file_use_ratio,'w')
         print(ReplicationAlgorithms_zipf.beginID+ReplicationAlgorithms_zipf.static_blocks,' ',ReplicationAlgorithms_zipf.endID,' ',step,file=file_use_ratio_write)
     ##debug
-    # files_index=10
-    # datafile_index=[]
-    # for i in range(files_index):
-    #     datafile_index.append(open('./finalTest/finalRes/debug/'+str(active_item+'-'+expel_item)+'-popularity-node'+str(i)+'-'+str(total_times)+'.txt','w'))
+    files_index=10
+    datafile_index=[]
+    for i in range(files_index):
+        datafile_index.append(open('./finalTest/finalRes/debug/'+str(chosen_block_distribution+'-'+active_item+'-'+passive_item+'-'+expel_item)+'-PL-node'+str(i)+'-'+str(total_times)+'.txt','w'))
     ### end debug
     for run_times in range(total_times):
         # store all avg_time in each runtime
@@ -180,9 +182,7 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
         # active->request->passive->expel
         start_point=ReplicationAlgorithms_zipf.beginID+ReplicationAlgorithms_zipf.static_blocks
         ##!!!DEBUG
-        # data_store_in=open('./finalTest/finalRes/debug/store-nodes-runtime.txt','w')
-        files_index=10
-        # datafile_index=[]
+
         # expelfile_index=[]
         # activefile_index=[]
         # for i in range(files_index):
@@ -237,6 +237,7 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
                 #     blocks_numbers=end_since-ReplicationAlgorithms_zipf.beginID
                 # print(blocks_numbers)
                 block_numbers_sum+=blocks_numbers
+                # print('main:',passive_replicate_type)
                 average_time_i_tmp,rank_distribution=get_one_total_time_and_replicate(nodeID,end_since+1,passive_replicate_type,period,blocks_numbers,chosen_block_distribution,True and passive_on,rank_distribution)
                 average_time_i+=average_time_i_tmp
             # average requesting time per block
@@ -244,8 +245,8 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
             average_time_i/=block_numbers_sum
             avg_time[run_times].append(average_time_i)
             # broadcast local popularity
-            for bid in range(ReplicationAlgorithms_zipf.beginID,ReplicationAlgorithms_zipf.endID):
-                ReplicationAlgorithms_zipf.nodes_stored_blocks_popularity[i]
+            #block end_since is included.
+            ReplicationAlgorithms_zipf.broadcast_popularity_and_get_gobal_popularity(end_since)
 
 
             # ### !!!DEBUG
@@ -253,7 +254,7 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
             #     print(json.dumps(ReplicationAlgorithms_zipf.blocks_in_which_nodes_and_timelived),file=data_store_in)
             #     for i in range(ReplicationAlgorithms_zipf.beginID,ReplicationAlgorithms_zipf.endID):
             #         print(ReplicationAlgorithms_zipf.blocks_in_which_nodes_and_timelived[i-ReplicationAlgorithms_zipf.beginID],file=data_store_in)
-            if end_since==ReplicationAlgorithms_zipf.endID:#-1:#run_times==0:# and 
+            if end_since==ReplicationAlgorithms_zipf.endID-1:#run_times==0:# and 
                 for i in range(files_index):
                     Popu_dict_old=ReplicationAlgorithms_zipf.nodes_stored_blocks_popularity[i]
                     Popu_dict={}
@@ -262,12 +263,12 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
                     # Popu_dict=sorted(Popu_dict.items(),key=lambda x:x[1][0]+x[1][1],reverse=True)
                     str_print=json.dumps(Popu_dict)
                     print(run_times,'$',str_print , file=datafile_index[i])
-            #     # for i in range(ReplicationAlgorithms_zipf.beginID,ReplicationAlgorithms_zipf.endID):
-            #     #     print(ReplicationAlgorithms_zipf.blocks_in_which_nodes_and_timelived[i-ReplicationAlgorithms_zipf.beginID],file=datafilein)
+                # for i in range(ReplicationAlgorithms_zipf.beginID,ReplicationAlgorithms_zipf.endID):
+                #     print(ReplicationAlgorithms_zipf.blocks_in_which_nodes_and_timelived[i-ReplicationAlgorithms_zipf.beginID],file=datafilein)
             # ### end debug
             # update lifetime and expel dead blocks
             if expel_type!='noexpel':
-                _=ReplicationAlgorithms_zipf.expel_blocks(expel_type,end_since+1,step,last_num_to_expel)
+                _=ReplicationAlgorithms_zipf.expel_blocks(expel_type,end_since+1,step,last_num_to_expel,None)
                 # if end_since==654055:
                 #     for nodeid in range(10):
                 #         if end_since-1 in ReplicationAlgorithms_zipf.nodes_stored_blocks_popularity[nodeid]:
@@ -357,7 +358,7 @@ def get_one_total_time_and_replicate(nodeID,end_since,passive_replicate_type,per
     chosen_blocks_popularity={}
     chosen_blocks_load={}
     sort_value_dict=[]
-    popularity_passing_dict={}
+    # popularity_passing_dict={}
 
     # get block_numbers blocks based on chosen_block_distribution
     chosen_blocks,rd=InitChainAndNodes_zipf.get_needed_blocks(ReplicationAlgorithms_zipf.beginID,end_since,chosen_block_distribution,block_numbers,rank_distribution)
@@ -387,7 +388,7 @@ def get_one_total_time_and_replicate(nodeID,end_since,passive_replicate_type,per
         # record popularity, for choosing blocks and for popularity passing
         popularity_blockID=ReplicationAlgorithms_zipf.nodes_stored_blocks_popularity[min_node][blockID]
         chosen_blocks_popularity[blockID]=popularity_blockID[0]+popularity_blockID[1]
-        popularity_passing_dict[blockID]=popularity_blockID
+        # popularity_passing_dict[blockID]=popularity_blockID
         # record time cost
         chosen_blocks_load[blockID]=time_cost
         #record access time
@@ -405,7 +406,8 @@ def get_one_total_time_and_replicate(nodeID,end_since,passive_replicate_type,per
             sort_value_dict=chosen_blocks_load
         else:
             sort_value_dict=[]
-        ReplicationAlgorithms_zipf.passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_replicate_type,sort_value_dict,period,popularity_passing_dict)
+        # print(len(sort_value_dict),',',len(chosen_blocks),',',len(chosen_blocks_popularity),print(passive_replicate_type),',',print(passive_replicate_type=='popularity'))
+        ReplicationAlgorithms_zipf.passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_replicate_type,sort_value_dict,period)#,popularity_passing_dict)
     # return total time
     return time_used,rd
     
@@ -475,6 +477,6 @@ def get_storage_place():
 
 if __name__=='__main__':
     all_storage_cost=init_environment()
-    replication_run(True,False,False)
+    replication_run(True,True,False)
     get_storage_place()
     print('running done')

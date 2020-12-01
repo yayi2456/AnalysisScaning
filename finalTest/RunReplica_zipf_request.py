@@ -27,8 +27,8 @@ def init_environment():
     return all storage of one copy of all blocks.
     """
     begin_id=654000
-    static_blks=600
-    end_id=begin_id+1000
+    static_blks=10
+    end_id=begin_id+400
     nodes_n=10
     communication_distribution_type='normal'#'1'
 
@@ -166,9 +166,9 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
     
     # file_single_time='./finalTest/finalRes/debug/Single-'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.csv'
     # f_single_time=open(file_single_time,'w')
-    fn='./finalTest/finalRes/debug/final-expel-a.txt'
+    fn='./finalTest/finalRes/debug/final-expel-a-'+str(active_item)+'.txt'
     fw=open(fn,'w+')
-    fp_name='./finalTest/finalRes/debug/expel-popularity-list.txt'
+    fp_name='./finalTest/finalRes/debug/expel-popularity-list-'+str(active_item)+'.txt'
     fp=open(fp_name,'w')
     for run_times in range(total_times):
         # store all avg_time in each runtime
@@ -286,20 +286,20 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
             # if end_since>=ReplicationAlgorithms_zipf.endID-20:
             #     print(p_string,file=f_single_time)
 
-            if end_since==ReplicationAlgorithms_zipf.endID:
-                pstring=''
+            if end_since==ReplicationAlgorithms_zipf.endID-1:
+                request_lastest_50=[]
                 
                 print('requesting...')
-                for i in range(100):
+                for i in range(1000):
                     average_time_i_tmp,rank_distribution,single_request_time,chosen_blocksID=get_one_total_time_and_replicate(nodeID,end_since,passive_replicate_type,period,blocks_numbers,chosen_block_distribution,False and passive_on,rank_distribution)
                     for i in range(len(single_request_time)):
                         if ReplicationAlgorithms_zipf.endID-chosen_blocksID[i]<50:
                         # total_request_time_output.append(time_r)
-                            pstring+=','+str(single_request_time[i])
+                            request_lastest_50.append(single_request_time[i])
                 ##output:
                 fname_output_100='./finalTest/finalRes/debug/only-request'+str(passive_item)+'-'+str(active_item)+'-'+str(expel_item)+'.csv'
                 file_in=open(fname_output_100,'w')
-                pstring=pstring[1:]
+                pstring=json.dumps(request_lastest_50)
                 print(pstring,file=file_in)
                 file_in.close()
 
@@ -319,20 +319,21 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
             # ### end debug
             # update lifetime and expel dead blocks
                 
-
+            ReplicationAlgorithms_zipf.broadcast_popularity_and_get_gobal_popularity(end_since)
             if expel_type!='noexpel':
                 debug_expel_blocks=ReplicationAlgorithms_zipf.expel_blocks(expel_type,end_since,step,last_num_to_expel,fp)
 
-                if end_since>=ReplicationAlgorithms_zipf.endID-10:
+                # if end_since>=ReplicationAlgorithms_zipf.endID-100:
                     
-                    print('epoch=',end_since,file=fw)
-                    for i in range(10):
-                        print('blocks get from node ',i,': ',sorted([rb-654000 for rb in request_block_ID[i]]) ,file=fw)
-                    print('======',file=fw)
-                    for i in range(10):
-                        print('blocks expelled by node ',i,': ',sorted([deb-654000 for deb in debug_expel_blocks[i]]),file=fw)
-                    print('======',file=fw)
-                    print('======',file=fw)
+                #     print('epoch=',end_since,file=fw)
+                #     for i in range(10):
+                #         print('blocks get from node ',i,': ',sorted([rb-654000 for rb in request_block_ID[i]]) ,file=fw)
+                #     print('======',file=fw)
+                #     for i in range(10):
+                #         print('blocks expelled by node ',i,': ',sorted([deb-654000 for deb in debug_expel_blocks[i]]),file=fw)
+                #     print('======',file=fw)
+                #     print('======',file=fw)
+                
                 # for i in range(len(expel_blocks)):
                 #     print('epoch=',end_since,',',sorted(expel_blocks[i]),file=expelfile_index[i])
             # append storage_used if it's true
@@ -416,7 +417,7 @@ def get_one_total_time_and_replicate(nodeID,end_since,passive_replicate_type,per
     chosen_blocks_popularity={}
     chosen_blocks_load={}
     sort_value_dict=[]
-    popularity_passing_dict={}
+    # popularity_passing_dict={}
 
     # get block_numbers blocks based on chosen_block_distribution
     chosen_blocks,rd=InitChainAndNodes_zipf.get_needed_blocks(ReplicationAlgorithms_zipf.beginID,end_since,chosen_block_distribution,block_numbers,rank_distribution)
@@ -439,7 +440,7 @@ def get_one_total_time_and_replicate(nodeID,end_since,passive_replicate_type,per
         # record popularity, for choosing blocks and for popularity passing
         popularity_blockID=ReplicationAlgorithms_zipf.nodes_stored_blocks_popularity[min_node][blockID]
         chosen_blocks_popularity[blockID]=popularity_blockID[0]+popularity_blockID[1]
-        popularity_passing_dict[blockID]=popularity_blockID
+        # popularity_passing_dict[blockID]=popularity_blockID
         # record time cost
         chosen_blocks_load[blockID]=time_cost
         #record access time
@@ -458,7 +459,7 @@ def get_one_total_time_and_replicate(nodeID,end_since,passive_replicate_type,per
             sort_value_dict=chosen_blocks_load
         else:
             sort_value_dict=[]
-        ReplicationAlgorithms_zipf.passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_replicate_type,sort_value_dict,period,popularity_passing_dict)
+        ReplicationAlgorithms_zipf.passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_replicate_type,sort_value_dict,period)#,popularity_passing_dict)
     # return total time
     return time_used,rd,signle_request_time,chosen_blocks
     

@@ -23,3 +23,47 @@ D:
 @REM: extra
 @REM cd d:/Languages/PythonSpace/AnalysisSanning/finalTest/finalRes/extra/
 @REM python d:/Languages/PythonSpace/AnalysisSanning/finalTest/get_writefile.py A-extra.txt ./A-zipf-3-nopassive-calculate3-llu8-100.txt ./A-zipf-3-nopassive-calculate3-curve3-100.txt ./A-zipfr-3-nopassive-calculate3-llu8-100.txt ./A-zipfr-3-nopassive-calculate3-curve3-100.txt
+
+@echo off
+
+@REM D:
+@REM rem 1
+@REM cd D:\Languages\PythonSpace\AnalysisSanning\finalTest\
+@REM call ./run_bat/merge_1.bat ./1-initial/zipf
+
+@REM rem 2
+@REM cd D:\Languages\PythonSpace\AnalysisSanning\finalTest\
+@REM call ./run_bat/merge_1.bat ./2-passive/zipf/c3
+
+@REM cd D:\Languages\PythonSpace\AnalysisSanning\finalTest\
+@REM call ./run_bat/merge_1.bat ./2-passive/zipf/llu
+
+@REM rem 3
+@REM cd D:\Languages\PythonSpace\AnalysisSanning\finalTest\
+@REM call ./run_bat/merge_1.bat ./3-active/zipf/c3
+
+@REM cd D:\Languages\PythonSpace\AnalysisSanning\finalTest\
+@REM call ./run_bat/merge_1.bat ./3-active/zipf/llu
+
+@REM rem 4
+@REM cd D:\Languages\PythonSpace\AnalysisSanning\finalTest\
+@REM call ./run_bat/merge_1.bat ./4-random/zipf
+
+@REM rem 5
+@REM cd D:\Languages\PythonSpace\AnalysisSanning\finalTest\
+@REM call ./run_bat/merge_1.bat ./5-mixed/zipf/c3
+
+@REM cd D:\Languages\PythonSpace\AnalysisSanning\finalTest\
+@REM call ./run_bat/merge_1.bat ./5-mixed/zipf/llu
+
+rem 6
+@REM cd D:\Languages\PythonSpace\AnalysisSanning\finalTest\
+@REM call ./run_bat/merge_1.bat ./6-expel/zipf/c3
+
+@REM cd D:\Languages\PythonSpace\AnalysisSanning\finalTest\
+@REM call ./run_bat/merge_1.bat ./6-expel/zipf/llu
+
+
+rem extra
+cd D:\Languages\PythonSpace\AnalysisSanning\finalTest\
+call ./run_bat/merge_1.bat ./extra/store

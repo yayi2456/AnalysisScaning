@@ -26,8 +26,11 @@ def write_in_file():
         input_file_name.append(input_name)
     with open(write_file_name,'w') as write_file:
         files_opend=[]
+        head_string='filename'
         for i in input_file_name:
             files_opend.append(open(i))
+            head_string+=","+i[2:len(i)-4]
+        print(head_string,file=write_file)
         lists=[]
         # get begin,end,step
         begin_end_step=files_opend[0].readline()
