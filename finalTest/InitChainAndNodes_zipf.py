@@ -133,8 +133,25 @@ def get_needed_blocks(beginID,endID,distribution_type,chosen_block_nums,rank_dis
         for i in range(len(probabllity)):
             probabllity[new_dict_rank[i][0]]=1/(generalized_harmonic_number(chain_length,szr)*pow(rank_now,szr))
             rank_now+=1
-        
-
+    elif distribution_type=='flyclient':
+        # c and k are 2 params of flyclient, c\in (0,1],k\in N
+        # delta=c^k
+        c=0.5
+        k=10
+        neg_small=pow(c,k)
+        #PDF of flyclient is g(x)=1/((x-1)*ln(δ)), δ is c^k. c\in (0,1],k\in N
+        # in their test, δ=2^{-10}
+        # flyclient use difficult percentage.
+        # here we consider unchanged target only.
+        # P(x=k)=F_{k+1/N}-F{k}=(1/ln(δ))*(ln|k+1/N-1|-ln|k-1|)
+        ### math.log1p(x), Return the natural logarithm of 1+x (base e). 
+        ln_delta=1/math.log1p(pow(c,k)-1)
+        for i in range(len(probabllity)):
+            percentage_k=i/(endID-beginID)
+            percentage_k_step_forward=percentage_k+1/(endID-beginID)
+            if i==len(probabllity)-1:
+                percentage_k_step_forward-=neg_small
+            probabllity[i]=ln_delta*(math.log1p(-percentage_k_step_forward)-math.log1p(-percentage_k))
 
     elif distribution_type=='zipfr-old':
         sr=1.2

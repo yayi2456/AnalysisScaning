@@ -4,7 +4,7 @@ set replica_num=3
 set passive_param=10
 set active_param=3
 set total_run_times=100
-echo nihao
+echo [%date% %time%]:[run_new]: new running start...
 D:
 cd d:/Languages/PythonSpace/AnalysisSanning
 
@@ -18,7 +18,7 @@ rem call llu
 @REM rem call curve
 @REM call ./finalTest/run_bat/run_curve.bat %distribution_type%
 
-set distribution_type=uniform
+set distribution_type=flyclient
 rem call curve
 call ./finalTest/run_bat/run_curve.bat %distribution_type%
 

@@ -66,4 +66,4 @@ rem 6
 
 rem extra
 cd D:\Languages\PythonSpace\AnalysisSanning\finalTest\
-call ./run_bat/merge_1.bat ./extra/store
+call ./run_bat/merge_1.bat ./extra/last_epoch_zipfr

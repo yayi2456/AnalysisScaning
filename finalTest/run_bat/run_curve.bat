@@ -40,10 +40,10 @@ python ./finalTest/RunReplica_zipf.py %distribution_type% %replica_num% populari
 
 
 rem curve itself. 5 is contained
-@REM for /L %%i in (1,1,7) do (
-@REM     if %%i NEQ %curve_param% (
-@REM         python ./finalTest/RunReplica_zipf.py %distribution_type% %replica_num% popularity %passive_param% calculate %active_param% curve %%i %total_run_times%
-@REM     )
-@REM )
+for /L %%i in (1,1,7) do (
+    if %%i NEQ %curve_param% (
+        python ./finalTest/RunReplica_zipf.py %distribution_type% %replica_num% popularity %passive_param% calculate %active_param% curve %%i %total_run_times%
+    )
+)
 
 set curve_param=

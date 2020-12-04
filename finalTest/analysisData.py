@@ -4,6 +4,7 @@ import json
 import numpy as np
 import time
 import os
+import popularity_analysis
 
 def load_avg_times(chosen_block_distribution,piece,passive_item,active_item,expel_item,total_times):
     # file_average_time='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\averageTime-'+chosen_block_distribution+'-'+passive_replicate_type+'.'+str(passive_on)+'-'+active_replicate_type+'.'+str(active_on)+'-'+str(period)+'-'+str(lambdai)+'-'+str(top_num_to_offload)+'.txt'
@@ -102,27 +103,32 @@ def plot_avg():
 
     ### random的加入：修改distribution/curve
     # Avgtime04nn, b02, e02, s02 = load_avg_times(distribution,replica_sum,'nopassive','noactive',expel_item,run_times)
-    # Avgtime04nr, b02, e02, s02 = load_avg_times(distribution,replica_sum,'nopassive','random3',expel_item,run_times)
-    # Avgtime04rn, b01, e01, s01 = load_avg_times(distribution,replica_sum,'random10','noactive',expel_item,run_times)
-    # Avgtime04rr, b02, e02, s02 = load_avg_times(distribution,replica_sum,'random10','random3',expel_item,run_times)
-    # ### random的加入plot
+    Avgtime04nr, b02, e02, s02 = load_avg_times(distribution,replica_sum,'nopassive','random3',expel_item,run_times)
+    Avgtime04rn, b01, e01, s01 = load_avg_times(distribution,replica_sum,'random10','noactive',expel_item,run_times)
+    Avgtime04rr, b02, e02, s02 = load_avg_times(distribution,replica_sum,'random10','random3',expel_item,run_times)
+    ### random的加入plot
     # plt.plot(range(b02, e02, s02), Avgtime04nn, color=colors[3], label='nn',marker='.')
-    # plt.plot(range(b02, e02, s02), Avgtime04nr, color=colors[2], label='nr',marker='.')
-    # plt.plot(range(b02, e02, s02), Avgtime04rn, color=colors[0], label='rn',marker='.')
-    # plt.plot(range(b02, e02, s02), Avgtime04rr, color=colors[1], label='rr',marker='.')
+    plt.plot(range(b02, e02, s02), Avgtime04nr, color=colors[2], label='nr',marker='.')
+    plt.plot(range(b02, e02, s02), Avgtime04rn, color=colors[0], label='rn',marker='.')
+    plt.plot(range(b02, e02, s02), Avgtime04rr, color=colors[1], label='rr',marker='.')
     ### random的加入done
 
     ### 最终的比较：修改distribution/curve
-    Avgtime04rr, b02, e02, s02 = load_avg_times(distribution,replica_sum,'random10','random3',expel_item,run_times)
-    Avgtime04rc, b02, e02, s02 = load_avg_times(distribution,replica_sum,'random10','calculate3',expel_item,run_times)
-    Avgtime04lr, b01, e01, s01 = load_avg_times(distribution,replica_sum,'popularity10','random3',expel_item,run_times)
-    Avgtime04lc, b02, e02, s02 = load_avg_times(distribution,replica_sum,'popularity10','calculate3',expel_item,run_times)
-    ### 最终的比较plot
-    plt.plot(range(b02, e02, s02), Avgtime04rr, color=colors[3], label='rr',marker='.')
-    plt.plot(range(b02, e02, s02), Avgtime04rc, color=colors[2], label='rc',marker='.')
-    plt.plot(range(b02, e02, s02), Avgtime04lr, color=colors[0], label='lr',marker='.')
-    plt.plot(range(b02, e02, s02), Avgtime04lc, color=colors[1], label='lc',marker='.')
+    # Avgtime04rr, b02, e02, s02 = load_avg_times(distribution,replica_sum,'random10','random3',expel_item,run_times)
+    # Avgtime04rc, b02, e02, s02 = load_avg_times(distribution,replica_sum,'random10','calculate3',expel_item,run_times)
+    # Avgtime04lr, b01, e01, s01 = load_avg_times(distribution,replica_sum,'popularity10','random3',expel_item,run_times)
+    # Avgtime04lc, b02, e02, s02 = load_avg_times(distribution,replica_sum,'popularity10','calculate3',expel_item,run_times)
+    # ### 最终的比较plot
+    # plt.plot(range(b02, e02, s02), Avgtime04rr, color=colors[3], label='rr',marker='.')
+    # plt.plot(range(b02, e02, s02), Avgtime04rc, color=colors[2], label='rc',marker='.')
+    # plt.plot(range(b02, e02, s02), Avgtime04lr, color=colors[0], label='lr',marker='.')
+    # plt.plot(range(b02, e02, s02), Avgtime04lc, color=colors[1], label='lc',marker='.')
     ### 最终的比较done
+
+    ## popularity的比较
+    if distribution=='zipfr':
+        p_r=popularity_analysis.plot_distribution_replia_nums_v3(654400)
+        plt.plot(range(654000,654400),p_r,color='black',marker='*')
 
     ### extra comparasion
 
@@ -206,7 +212,7 @@ def load_storage(chosen_block_distribution,piece,passive_item,active_item,expel_
     file_storage_used='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\experimenta\\5-mixed\\zipf\\c3\\S-'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
     NodesSizeAll =[] 
     BlockSize=[]
-    # NodeSize_se=[]
+    NodeSize_se=[]
     last_time=time.ctime(os.stat(file_storage_used).st_mtime)
     print('file modify time: ',last_time,', file: ',file_storage_used)
     with open(file_storage_used, 'r') as datafile:
@@ -224,15 +230,15 @@ def load_storage(chosen_block_distribution,piece,passive_item,active_item,expel_
                 NodesSize=np.array(json.loads(dataline))
                 # print('nodeid=',i-2,', \n',NodesSize)
                 NodesSizeAll+=NodesSize
-                # NodeSize_se.append(NodesSize)
+                NodeSize_se.append(NodesSize)
             i += 1
         # print('filename=', file_storage_used, '-------')
         # print(NodesSizeAll)
-        NodesSizeAll=NodesSizeAll/10
+        NodesSizeAll=NodesSizeAll#/10
         # print('filename=',file_storage_used,'-------')
         # print(NodesSizeAll)
         # print(BlockSize)
-    return BlockSize,NodesSizeAll, begin, ends, step#, NodeSize_se
+    return BlockSize,NodesSizeAll, begin, ends, step, NodeSize_se
 
 def plot_storage():
     distribution='zipf'
@@ -277,15 +283,12 @@ def plot_storage():
     # if b01 != b12 or e01 != e12 or s01 != s12:
     #     exit(-1)
     colors = ['blue', 'red', 'green', 'skyblue', 'pink', 'yellow', 'purple', 'black', 'cyan', 'orange','gold','brown','grey','lime']
-    blk1,node1, b02, e02, s02 = load_storage(distribution,replica_sum,'random10','random3',expel_item,run_times)
     # blk2,node2, b02, e02, s02 = load_storage(distribution,replica_sum,'random10','calculate3',expel_item,run_times)
     # blk3,node3, b01, e01, s01 = load_storage(distribution,replica_sum,'popularity10','random3',expel_item,run_times)
-    blk4,node4, b02, e02, s02 = load_storage(distribution,replica_sum,'popularity10','calculate3',expel_item,run_times)
-    # blk5,node5, b02, e02, s02 = load_storage(distribution,replica_sum,'load10','calculate3',expel_item,run_times)
-    plt.plot(range(b02, e02, s02), np.array(node1)/np.array(blk1), color=colors[3], label='rr',marker='.')
+    blk4,node4, b02, e02, s02,each_node_block = load_storage(distribution,replica_sum,'popularity10','calculate3',expel_item,run_times)
     # plt.plot(range(b02, e02, s02), np.array(node2)/np.array(blk2), color=colors[2], label='rc',marker='.')
     # plt.plot(range(b02, e02, s02), np.array(node3)/np.array(blk3), color=colors[0], label='pr',marker='.')
-    plt.plot(range(b02, e02, s02), np.array(node4)/np.array(blk4), color=colors[1], label='pc',marker='.')
+    # plt.plot(range(b02, e02, s02), np.array(node4)/np.array(blk4), color=colors[1], label='pc',marker='.')
     # plt.plot(range(b02, e02, s02), np.array(node5)/np.array(blk5), color=colors[4], label='lc',marker='.')
     # plt.plot(range(b01, e01, s01),np.array(NodeSize01)/np.array(Blocksize01),color=colors[13],label='llu7')
     # plt.plot(range(b01, e01, s01),np.array(NodeSize02)/np.array(Blocksize01),color=colors[0],label='llu8')
@@ -295,8 +298,8 @@ def plot_storage():
     # # plt.plot(range(b01, e01, s01),np.array(NodeSize04),color='gold',label='SUM-block')
     # # plt.plot(range(b01, e01, s01),np.array(Blocksize01),color='brown',label='SUM')
     
-    # # for i in range(10):
-    # #     plt.plot(range(b01, e01, s01),np.array(NodeSizeS033[i]),color=colors[i],label=str(i))
+    for i in range(10):
+        plt.plot(range(b02, e02, s02),np.array(each_node_block[i])/np.array(blk4),color=colors[i],label=str(i))
     # plt.plot(range(b01, e01, s01),np.array(NodeSize04)/np.array(Blocksize01),color=colors[2],label='llu4')
     # plt.plot(range(b01, e01, s01),np.array(NodeSize05)/np.array(Blocksize01),color=colors[3],label='llu5')
     # # # plt.plot(range(b01, e01, s01),np.array(NodeSize05r)/np.array(Blocksize01),color=colors[4],label='5r')
@@ -322,24 +325,36 @@ def plot_storage():
     plt.title('storage per node/ storage one replica')
     # plt.title('s-'+distribution+str(replica_sum)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(run_times))
     plt.show()
-    store_file_name_1='./A-P-rr.txt'
-    store_file_name_zipf='./A-P-pc.txt'
-    with open(store_file_name_1,'w')as w_f:
-        pstring=str(b02)+' '+str(e02)+' '+str(s02)
-        print(pstring,file=w_f)
-        print(json.dumps((np.array(node1)/np.array(blk1)).tolist()),file=w_f)
-    with open(store_file_name_zipf,'w')as w_f:
-        pstring=str(b02)+' '+str(e02)+' '+str(s02)
-        print(pstring,file=w_f)
-        print(json.dumps((np.array(node4)/np.array(blk4)).tolist()),file=w_f)
+    store_file_name_1='./finalTest/finalRes/experimenta/extra/Combine-A.csv'
+    start=654010
+    with open(store_file_name_1,'w')as file_in:
+        print('epoch,node1,node2,node3,node4,node5,node6,node7,node8,node9,node10,one replica,total block size in system',file=file_in)
+        for line_index in range(len(blk4)):
+            line2=str(start)
+            start+=1
+            for i in range(10):
+                line2+=','+str(each_node_block[i][line_index])
+            line2+=','+str(blk4[line_index])+','+str(node4[line_index])
+            print(line2,file=file_in)
+
+        
+
 
 
 
 
 
 if __name__=='__main__':
-    plot_avg()
-    # plot_storage()
+    # Avgtime04nn, b02, e02, s02 = load_avg_times('zipf',3,'nopassive','noactive','noexpel',100)
+    # Avgtime04r, b02, e02, s02 = load_avg_times('zipfr',3,'nopassive','noactive','noexpel',100)
+    # plt.figure()
+    # plt.plot(range(b02,e02,s02),Avgtime04nn,color='r',marker='.',label='zipf')
+    # plt.plot(range(b02,e02,s02),Avgtime04r,color='g',marker='.',label='zipfr')
+    # plt.ylim(0,1)
+    # plt.legend()
+    # plt.show()
+    # plot_avg()
+    plot_storage()
     # plot_storage_end_epoch()
 
     # plt.plot(range(begin+beginblock,end),RR[beginblock:],color='r',marker='.',label='needed-actual')

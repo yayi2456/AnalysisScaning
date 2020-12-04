@@ -287,6 +287,7 @@ def plot_distribution_replia_nums_v3(epoch):
         probabllity[len(probabllity)-1-i]=1/(generalized_harmonic_number((epoch-654000),s)*pow(i+1,s))
         probabllity_r[pzr[i]]=1/(generalized_harmonic_number((epoch-654000),s)*pow(i+1,s))
     probabllity=np.array(probabllity)
+    probabllity_r=np.array(probabllity_r)
 
     
 
@@ -301,41 +302,42 @@ def plot_distribution_replia_nums_v3(epoch):
     # sqrt_prob_ratio=np.array(sqrt_prob)/sum(sqrt_prob)
     # sqrt_prob_ratio_uni=np.array(sqrt_prob_uni)/sum(sqrt_prob_uni)
 
-    plt.figure()
+    # plt.figure()
 
-    X=range(epoch-654000)
+    # X=range(epoch-654000)
 
-    TAIL_BLOCKS=0
+    # TAIL_BLOCKS=0
     
     # replica_ratio_1=[math.log10(i) for i in replica_ratio_1]
-    plt.scatter(X,replica_ratio_1,marker='*',color='red',label='CL-replica_ratio_1')
+    # plt.scatter(X,replica_ratio_1,marker='*',color='red',label='CL-replica_ratio_1')
     # plt.scatter(X,replica_ratio_2,marker='.',color='black',label='AL-replica_ratio_2')
     # plt.scatter(X[0:len(X)-TAIL_BLOCKS],sqrt_prob_ratio[0:len(X)-TAIL_BLOCKS],marker='+',color='blue',label='sqrt-probability')
     # probabllity=[math.log10(i) for i in probabllity]
     # plt.scatter(X[0:len(X)-TAIL_BLOCKS],probabllity[0:len(X)-TAIL_BLOCKS],marker='+',color='green',label='probability')
-    plt.scatter(X[0:len(X)-TAIL_BLOCKS],probabllity_r[0:len(X)-TAIL_BLOCKS],marker='+',color='green',label='probability')
+    # plt.scatter(X[0:len(X)-TAIL_BLOCKS],probabllity_r[0:len(X)-TAIL_BLOCKS],marker='+',color='green',label='probability')
     # plt.ylim(150,400)
 
     # plt.plot(X,replica_ratio_1,color='red',label='A-replica_ratio_1')
-    # plt.plot(X,replica_ratio_2,color='black',label='C-replica_ratio_2')
+    # # plt.plot(X,replica_ratio_2,color='black',label='C-replica_ratio_2')
     # plt.plot(X,probabllity_r,color='green',label='probabllity')
-    # plt.plot(X[0:len(X)-8],sqrt_prob_ratio[0:len(X)-8],color='blue',label='sqrt_prob_ratio')
-    plt.legend()
+    # # plt.plot(X[0:len(X)-8],sqrt_prob_ratio[0:len(X)-8],color='blue',label='sqrt_prob_ratio')
+    # plt.legend()
 
-    plt.xlabel('block')
-    plt.ylabel('num')
-    plt.show()
+    # plt.xlabel('block')
+    # plt.ylabel('num')
+    # plt.show()
 
-    # store_file_name_1='./P-list1.txt'
-    # store_file_name_zipf='./P-zipf.txt'
-    # with open(store_file_name_1,'w')as w_f:
-    #     pstring=str(epoch)+' '+str(epoch+400)+' 1'
-    #     print(pstring,file=w_f)
-    #     print(json.dumps(replica_ratio_1.tolist()),file=w_f)
-    # with open(store_file_name_zipf,'w')as w_f:
-    #     pstring=str(epoch)+' '+str(epoch+400)+' 1'
-    #     print(pstring,file=w_f)
-    #     print(json.dumps(probabllity.tolist()),file=w_f)
+    store_file_name_1='./P-list1.txt'
+    store_file_name_zipf='./P-zipf.txt'
+    with open(store_file_name_1,'w')as w_f:
+        pstring=str(epoch)+' '+str(epoch+400)+' 1'
+        print(pstring,file=w_f)
+        print(json.dumps(replica_ratio_1.tolist()),file=w_f)
+    with open(store_file_name_zipf,'w')as w_f:
+        pstring=str(epoch)+' '+str(epoch+400)+' 1'
+        print(pstring,file=w_f)
+        print(json.dumps(probabllity_r.tolist()),file=w_f)
+    return probabllity_r
 
 
 
@@ -432,10 +434,74 @@ def plot_load():
     # plt.title('s-'+distribution+str(replica_sum)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(run_times))
     plt.show()
 
+def plot_pro(distribution_type):
+    chain_length=400
+    # probability of each node to be chosen.
+    probabllity=[0]*(chain_length)
+    # sum()=1
+
+
+    if distribution_type=='uniform':
+        for i in range(len(probabllity)):
+            probabllity[i]=1/(chain_length)
+    elif distribution_type=='zipf':
+        #zipf PMF=F(K=k)=1/ghn(N,s)*k^s. k is the rank, N is the total number, 
+        # s is a parameter to describe zipf curve
+        #s is a parameter used in zipf distribution
+        s=1.2
+        for i in range(len(probabllity)):
+            probabllity[len(probabllity)-1-i]=1/(generalized_harmonic_number(chain_length,s)*pow(i+1,s))
+    elif distribution_type=='zipf8':
+        s8=.8
+        for i in range(len(probabllity)):
+            probabllity[len(probabllity)-1-i]=1/(generalized_harmonic_number(chain_length,s8)*pow(i+1,s8))
+    # elif distribution_type=='zipfr':
+    #     szr=1.2
+    #     # new block: endID-1 is coming
+    #     new_dict={}
+    #     # key: block number
+    #     # value: rank
+    #     for i in range(chain_length):
+    #         new_dict[i]=CONSTANT_RANK[i]
+    #     new_dict_rank=sorted(new_dict.items(),key=lambda x:x[1])
+    #     rank_now=1
+    #     for i in range(len(probabllity)):
+    #         probabllity[new_dict_rank[i][0]]=1/(generalized_harmonic_number(chain_length,szr)*pow(rank_now,szr))
+    #         rank_now+=1
+    elif distribution_type=='flyclient':
+        # c and k are 2 params of flyclient, c\in (0,1],k\in N
+        # delta=c^k
+        c=0.5
+        k=10
+        neg_small=pow(c,k)
+        #PDF of flyclient is g(x)=1/((x-1)*ln(δ)), δ is c^k. c\in (0,1],k\in N
+        # in their test, δ=2^{-10}
+        # flyclient use difficult percentage.
+        # here we consider unchanged target only.
+        # P(x=k)=F_{k+1/N}-F{k}=(1/ln(δ))*(ln|k+1/N-1|-ln|k-1|)
+        ### math.log1p(x), Return the natural logarithm of 1+x (base e). 
+        ln_delta=1/math.log1p(pow(c,k)-1)
+        for i in range(len(probabllity)):
+            percentage_k=i/(chain_length)
+            percentage_k_step_forward=percentage_k+1/(chain_length)
+            if i==len(probabllity)-1:
+                percentage_k_step_forward-=neg_small
+            probabllity[i]=ln_delta*(math.log1p(-percentage_k_step_forward)-math.log1p(-percentage_k))
+    
+    return probabllity
+
 
 if __name__=='__main__':
-    begin_epoch=654010
     # plot_popularity(begin_epoch+30)
     # plot_size()
-    plot_distribution_replia_nums_v3(begin_epoch+390)
+    plot_distribution_replia_nums_v3(654010+390)
     # plot_load()
+    # p_zipf=plot_pro('zipf')
+    # p_fly=plot_pro('flyclient')
+
+    # plt.figure()
+
+    # plt.plot(range(400),p_zipf,color='r',label='zipf',marker='*')
+    # plt.plot(range(400),p_fly,color='g',label='fly',marker='*')
+    # plt.legend()
+    # plt.show()

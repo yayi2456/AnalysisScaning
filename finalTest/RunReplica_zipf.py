@@ -166,7 +166,7 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
     ### end debug
     for run_times in range(total_times):
         # store all avg_time in each runtime
-        print('(',run_times+1,'/',total_times,')')
+        # print('(',run_times+1,'/',total_times,')')
         avg_time.append([])
         block_use_ratio_one_runtime=[]
         block_sizes_stored_by_nodes_tmp=[]
