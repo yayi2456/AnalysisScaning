@@ -4,6 +4,7 @@ import numpy as np
 import sys
 import math
 import random
+import json
 
 """
 multiple replica algorithms which can be embed into replication process.
@@ -29,7 +30,7 @@ multiple replica algorithms which can be embed into replication process.
 """
 
 #minium blocks left
-LEFT_BLOCKS=1
+LEFT_BLOCKS=2
 
 # blocksizes is the size of all blocks
 blocksizes=[]
@@ -42,10 +43,10 @@ nodes_num=10
 
 # beginID is the starting block and endID is the ending block
 beginID=654000
-endID=beginID+1000
+endID=beginID+400
 # static_blocks is the number of blocks that shall be assigned statically
 # assert(static_blocks<=endID-beginID)
-static_blocks=600
+static_blocks=10
 
 # which nodes a block is stored and the corresponding lifetime left.
 # a list of dictionary, whose index is blockID-beginID, value is a dict.
@@ -61,7 +62,8 @@ nodes_stored_blocks_popularity=[]
 # a list of float, whose index is nodeID, and value is storage the index node have used.
 nodes_storage_used=[]
 
-    
+# REPLICA_LIMIT=[.699,.299]
+REPLICA_LIMIT=[.499,.299]
 
 def static_assign_blocks(piece,period):
     """(int,int) - list of dict:(int, int), list of dict:(int,int), list of int
@@ -338,7 +340,6 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
         # print(len(blocks_to_be_offload))
         # if len(blocks_to_be_offload)!=top_num_to_offload:
         #     print('***candidate choose warning :calculate: ,',len(blocks_to_be_offload),', blocks are chosen.')
-        
         for blockID in blocks_to_be_offload:
             # largest improvement is brought by which nodes_test
             max_improve=0
@@ -350,8 +351,6 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
                     considered_nodes.append(nodeid)
             if len(considered_nodes)==0:
                 print('active: calculate: no endough andidate nodes!')
-            
-
             for nodes_test in considered_nodes:
                 # improvement brought by storing blockID in nodes_test
                 total_saved_in_node_test =0
@@ -384,6 +383,143 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
         ##debug
 
         ##end
+    elif active_type=='calvary':
+        # print(len(blocks_to_be_offload))
+        # if len(blocks_to_be_offload)!=top_num_to_offload:
+        #     print('***candidate choose warning :calculate: ,',len(blocks_to_be_offload),', blocks are chosen.')
+        for blockID in blocks_to_be_offload:
+            # largest improvement is brought by which nodes_test
+            max_improve=[0,0,0]#顺序是：0最大，1其次，2最后
+            max_improve_node=[-1,-1,-1]
+            # which node shall I store blockID
+            considered_nodes=[]
+            for nodeid in range(nodes_num):
+                if nodeid not in blocks_in_which_nodes_and_timelived[blockID-beginID]:
+                    considered_nodes.append(nodeid)
+            if len(considered_nodes)==0:
+                print('active: calculate: no endough andidate nodes!')
+            for nodes_test in considered_nodes:
+                # improvement brought by storing blockID in nodes_test
+                total_saved_in_node_test =0
+                # caculate total improvement by adding each node's improvement if I store node into nodes_test
+                for each_node_in_system in range(nodes_num):
+                    # node each_node_in_system's improvement brought by storing blockID in nodes_test
+                    this_node_saved_in_node_test=0
+                    storage_nodes_of_blockID=blocks_in_which_nodes_and_timelived[blockID-beginID].keys()
+                    min_communicate_before_store=np.inf
+                    # current min_communication.
+                    # if communication_cost[nodes_test][each_node_in_system]<min_communication currently,
+                    # there is a improvemnt >0
+                    for nodes_store in storage_nodes_of_blockID:
+                        this_communication_cost=communication_cost[each_node_in_system][nodes_store]
+                        if this_communication_cost<min_communicate_before_store:
+                            min_communicate_before_store=this_communication_cost
+                    # if blockID is stored in node_test, node each_node_in_system can improve by 
+                    # (min_communicate_before_store-communication_cost[each_node_in_system][nodes_test])*blockIDsize
+                    if min_communicate_before_store>communication_cost[each_node_in_system][nodes_test]:
+                        this_node_saved_in_node_test+=blocksizes[blockID-beginID]*(min_communicate_before_store>communication_cost[each_node_in_system][nodes_test])
+                        total_saved_in_node_test+=this_node_saved_in_node_test
+                if total_saved_in_node_test>max_improve[0]:
+                    max_improve[0]=total_saved_in_node_test
+                    max_improve_node[0]=nodes_test
+                elif total_saved_in_node_test<=max_improve[0] and total_saved_in_node_test>max_improve[1]:
+                    max_improve[1]=total_saved_in_node_test
+                    max_improve_node[1]=nodes_test
+                elif total_saved_in_node_test<=max_improve[1] and total_saved_in_node_test>max_improve[2]:
+                    max_improve[2]=total_saved_in_node_test
+                    max_improve_node[2]=nodes_test
+            # got the best position for blockID to store
+            ##debug
+            Chosen_nodes_debug[blockID]=max_improve_node
+            ##end
+            for i in range(len(max_improve)):
+                if max_improve[i]<=0:
+                    max_improve_node[i]=-1
+            if np.sum(max_improve_node)==-3:
+                print('[calv]: invalid block chosen!')
+            n_popu_1=nodes_stored_blocks_popularity[nodeID][blockID][0]
+            #get popularity distribution
+            # get this with >> redirection
+            len_max_prove_nodes=0
+            for i in max_improve_node:
+                if i!=-1:
+                    len_max_prove_nodes+=1
+            actual_replica_store=0
+            if n_popu_1>REPLICA_LIMIT[0]:
+                actual_replica_store=len(max_improve_node)
+                # print("[calv]: me:",nodeID,'block:',blockID,'popularity[1]:',n_popu_1,'already store nodes:',sorted(blocks_in_which_nodes_and_timelived[blockID-beginID]),', this node set:',max_improve_node)
+                for i in range(1):#len(max_improve_node)):
+                    store_block_to_node(blockID,max_improve_node[i],period)#,popularity_passing_dict[blockID])
+            elif n_popu_1<=REPLICA_LIMIT[0] and nodes_stored_blocks_popularity[nodeID][blockID][1]>REPLICA_LIMIT[1]:
+                actual_replica_store=len(max_improve_node)-1
+                # print("[calv]: me:",nodeID,'block:',blockID,'popularity[1]:',n_popu_1,'already store nodes:',sorted(blocks_in_which_nodes_and_timelived[blockID-beginID]),', this node set:',max_improve_node)
+                for i in range(2):#len(max_improve_node)-1):
+                    store_block_to_node(blockID,max_improve_node[i],period)#,popularity_passing_dict[blockID])
+            else:
+                actual_replica_store=1
+                # print("[calv]: me:",nodeID,'block:',blockID,'popularity[1]:',n_popu_1,'already store nodes:',sorted(blocks_in_which_nodes_and_timelived[blockID-beginID]),', this node set:',max_improve_node)
+                for i in range(3):
+                    store_block_to_node(blockID,max_improve_node[i],period)#,popularity_passing_dict[blockID])
+            
+            # print(json.dumps([len_max_prove_nodes,n_popu_1]))
+            if actual_replica_store>len_max_prove_nodes:
+                actual_replica_store=len_max_prove_nodes
+            # print(str(len_max_prove_nodes)+','+str(n_popu_1)+','+str(actual_replica_store))
+            #end
+    elif active_type=='caltwo':
+        # print(len(blocks_to_be_offload))
+        # if len(blocks_to_be_offload)!=top_num_to_offload:
+        #     print('***candidate choose warning :calculate: ,',len(blocks_to_be_offload),', blocks are chosen.')
+        for blockID in blocks_to_be_offload:
+            # largest improvement is brought by which nodes_test
+            max_improve=[0,0]
+            max_improve_node=[-1,-1]
+            # which node shall I store blockID
+            considered_nodes=[]
+            for nodeid in range(nodes_num):
+                if nodeid not in blocks_in_which_nodes_and_timelived[blockID-beginID]:
+                    considered_nodes.append(nodeid)
+            if len(considered_nodes)==0:
+                print('active: calculate: no endough andidate nodes!')
+            for nodes_test in considered_nodes:
+                # improvement brought by storing blockID in nodes_test
+                total_saved_in_node_test =0
+                # caculate total improvement by adding each node's improvement if I store node into nodes_test
+                for each_node_in_system in range(nodes_num):
+                    # node each_node_in_system's improvement brought by storing blockID in nodes_test
+                    this_node_saved_in_node_test=0
+                    storage_nodes_of_blockID=blocks_in_which_nodes_and_timelived[blockID-beginID].keys()
+                    min_communicate_before_store=np.inf
+                    # current min_communication.
+                    # if communication_cost[nodes_test][each_node_in_system]<min_communication currently,
+                    # there is a improvemnt >0
+                    for nodes_store in storage_nodes_of_blockID:
+                        this_communication_cost=communication_cost[each_node_in_system][nodes_store]
+                        if this_communication_cost<min_communicate_before_store:
+                            min_communicate_before_store=this_communication_cost
+                    # if blockID is stored in node_test, node each_node_in_system can improve by 
+                    # (min_communicate_before_store-communication_cost[each_node_in_system][nodes_test])*blockIDsize
+                    if min_communicate_before_store>communication_cost[each_node_in_system][nodes_test]:
+                        this_node_saved_in_node_test+=blocksizes[blockID-beginID]*(min_communicate_before_store>communication_cost[each_node_in_system][nodes_test])
+                        total_saved_in_node_test+=this_node_saved_in_node_test
+                if total_saved_in_node_test>max_improve[0]:
+                    max_improve[0]=total_saved_in_node_test
+                    max_improve_node[0]=nodes_test
+                elif total_saved_in_node_test<=max_improve[0] and total_saved_in_node_test>max_improve[1]:
+                    max_improve[1]=total_saved_in_node_test
+                    max_improve_node[1]=nodes_test
+            # got the best position for blockID to store
+            ##debug
+            Chosen_nodes_debug[blockID]=max_improve_node
+            ##end
+            for i in range(len(max_improve)):
+                if max_improve[i]<=0:
+                    max_improve_node[i]=-1
+            if np.sum(max_improve_node)==-2:
+                print('[calthree]: invalid block chosen!')
+            # print("[calthree]: me:",nodeID,'block:',blockID,',already store nodes:',sorted(blocks_in_which_nodes_and_timelived[blockID-beginID]),', this node set:',max_improve_node)
+            for i in range(len(max_improve_node)):
+                store_block_to_node(blockID,max_improve_node[i],period)#,popularity_passing_dict[blockID])
     else:
         print("invalid active type! default('random') is set.")
         node_to_be_offload=random.randint(0,nodes_num-1)
@@ -399,6 +535,8 @@ def store_block_to_node(blockID,nodeID,period):#,popularity_value):
     store 1 block to 1 node.
     update the 3 big lists.
     """
+    if nodeID==-1:
+        return
     if nodeID in blocks_in_which_nodes_and_timelived[blockID-beginID]:
         print("[store_block_to_node]: trying to store a block to a node in which the block is already exist!")
         if len(blocks_in_which_nodes_and_timelived[blockID-beginID])<nodes_num:
@@ -570,6 +708,7 @@ def broadcast_popularity_and_get_gobal_popularity(last_blockID):
                 block_global_popularity[blockID-beginID]+=nodes_stored_blocks_popularity[nodeID][blockID][1]
     # update
     for blockID in range(beginID,last_blockID+1):
+        # replica_sum=len(blocks_in_which_nodes_and_timelived[blockID-beginID])
         for nodeID in range(nodes_num):
             if blockID in nodes_stored_blocks_popularity[nodeID]:
                 nodes_stored_blocks_popularity[nodeID][blockID][1]=block_global_popularity[blockID-beginID]/10

@@ -232,7 +232,7 @@ def plot_distribution_replia_nums_v3(epoch):
     epoch=654400
     replica_nums_1=[0]*(epoch-654000)
     for nodeid in range(node_sum):
-        fname=('D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\debug\\zipfr-calculate3-popularity10-curve3-PL-node'+str(nodeid)+'-100.txt')
+        fname=('D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\debug\\zipf-calculate3-popularity10-curve3-PL-node'+str(nodeid)+'-100.txt')
         # fname=('D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\debug\\calculate3-curve3-popularity-node'+str(nodeid)+'-100.txt')
         # popu_dicts.append({})
         last_time=time.ctime(os.stat(fname).st_mtime)
@@ -302,18 +302,18 @@ def plot_distribution_replia_nums_v3(epoch):
     # sqrt_prob_ratio=np.array(sqrt_prob)/sum(sqrt_prob)
     # sqrt_prob_ratio_uni=np.array(sqrt_prob_uni)/sum(sqrt_prob_uni)
 
-    # plt.figure()
+    plt.figure()
 
-    # X=range(epoch-654000)
+    X=range(epoch-654000)
 
-    # TAIL_BLOCKS=0
+    TAIL_BLOCKS=0
     
     # replica_ratio_1=[math.log10(i) for i in replica_ratio_1]
-    # plt.scatter(X,replica_ratio_1,marker='*',color='red',label='CL-replica_ratio_1')
+    plt.scatter(X,replica_ratio_1,marker='*',color='red',label='CL-replica_ratio_1')
     # plt.scatter(X,replica_ratio_2,marker='.',color='black',label='AL-replica_ratio_2')
     # plt.scatter(X[0:len(X)-TAIL_BLOCKS],sqrt_prob_ratio[0:len(X)-TAIL_BLOCKS],marker='+',color='blue',label='sqrt-probability')
     # probabllity=[math.log10(i) for i in probabllity]
-    # plt.scatter(X[0:len(X)-TAIL_BLOCKS],probabllity[0:len(X)-TAIL_BLOCKS],marker='+',color='green',label='probability')
+    plt.scatter(X[0:len(X)-TAIL_BLOCKS],probabllity[0:len(X)-TAIL_BLOCKS],marker='+',color='green',label='probability')
     # plt.scatter(X[0:len(X)-TAIL_BLOCKS],probabllity_r[0:len(X)-TAIL_BLOCKS],marker='+',color='green',label='probability')
     # plt.ylim(150,400)
 
@@ -321,22 +321,22 @@ def plot_distribution_replia_nums_v3(epoch):
     # # plt.plot(X,replica_ratio_2,color='black',label='C-replica_ratio_2')
     # plt.plot(X,probabllity_r,color='green',label='probabllity')
     # # plt.plot(X[0:len(X)-8],sqrt_prob_ratio[0:len(X)-8],color='blue',label='sqrt_prob_ratio')
-    # plt.legend()
+    plt.legend()
 
-    # plt.xlabel('block')
-    # plt.ylabel('num')
-    # plt.show()
+    plt.xlabel('block')
+    plt.ylabel('num')
+    plt.show()
 
-    store_file_name_1='./P-list1.txt'
-    store_file_name_zipf='./P-zipf.txt'
-    with open(store_file_name_1,'w')as w_f:
-        pstring=str(epoch)+' '+str(epoch+400)+' 1'
-        print(pstring,file=w_f)
-        print(json.dumps(replica_ratio_1.tolist()),file=w_f)
-    with open(store_file_name_zipf,'w')as w_f:
-        pstring=str(epoch)+' '+str(epoch+400)+' 1'
-        print(pstring,file=w_f)
-        print(json.dumps(probabllity_r.tolist()),file=w_f)
+    # store_file_name_1='./P-list1.txt'
+    # store_file_name_zipf='./P-zipf.txt'
+    # with open(store_file_name_1,'w')as w_f:
+    #     pstring=str(epoch)+' '+str(epoch+400)+' 1'
+    #     print(pstring,file=w_f)
+    #     print(json.dumps(replica_ratio_1.tolist()),file=w_f)
+    # with open(store_file_name_zipf,'w')as w_f:
+    #     pstring=str(epoch)+' '+str(epoch+400)+' 1'
+    #     print(pstring,file=w_f)
+    #     print(json.dumps(probabllity_r.tolist()),file=w_f)
     return probabllity_r
 
 

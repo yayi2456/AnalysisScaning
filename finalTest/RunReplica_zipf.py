@@ -163,6 +163,7 @@ def replication_run(get_average_time=True,get_storage_used=False,get_replica_use
     datafile_index=[]
     for i in range(files_index):
         datafile_index.append(open('./finalTest/finalRes/debug/'+str(chosen_block_distribution+'-'+active_item+'-'+passive_item+'-'+expel_item)+'-PL-node'+str(i)+'-'+str(total_times)+'.txt','w'))
+    
     ### end debug
     for run_times in range(total_times):
         # store all avg_time in each runtime

@@ -35,10 +35,10 @@ def plot_avg():
     #     avg_time.append(avgtime)
     # avgtime,_,_,_=load_avg_times(chosen_block_distribution,passive_replicate_type,passive_on,active_replicate_type,active_on,np.inf,lambdai,top_num_to_offload)
     # avg_time.append(avgtime)
-    distribution='zipfr'
+    distribution='zipf'
     replica_sum=3
-    passive_item='nopassive'
-    active_item='noactive'
+    passive_item='popularity10'
+    active_item='calculate3'
     expel_item='curve3'
     run_times=100
     colors = ['blue', 'red', 'green', 'skyblue', 'pink', 'yellow', 'purple', 'black', 'cyan', 'orange']
@@ -103,14 +103,14 @@ def plot_avg():
 
     ### random的加入：修改distribution/curve
     # Avgtime04nn, b02, e02, s02 = load_avg_times(distribution,replica_sum,'nopassive','noactive',expel_item,run_times)
-    Avgtime04nr, b02, e02, s02 = load_avg_times(distribution,replica_sum,'nopassive','random3',expel_item,run_times)
-    Avgtime04rn, b01, e01, s01 = load_avg_times(distribution,replica_sum,'random10','noactive',expel_item,run_times)
-    Avgtime04rr, b02, e02, s02 = load_avg_times(distribution,replica_sum,'random10','random3',expel_item,run_times)
-    ### random的加入plot
-    # plt.plot(range(b02, e02, s02), Avgtime04nn, color=colors[3], label='nn',marker='.')
-    plt.plot(range(b02, e02, s02), Avgtime04nr, color=colors[2], label='nr',marker='.')
-    plt.plot(range(b02, e02, s02), Avgtime04rn, color=colors[0], label='rn',marker='.')
-    plt.plot(range(b02, e02, s02), Avgtime04rr, color=colors[1], label='rr',marker='.')
+    # Avgtime04nr, b02, e02, s02 = load_avg_times(distribution,replica_sum,'nopassive','random3',expel_item,run_times)
+    # Avgtime04rn, b01, e01, s01 = load_avg_times(distribution,replica_sum,'random10','noactive',expel_item,run_times)
+    # Avgtime04rr, b02, e02, s02 = load_avg_times(distribution,replica_sum,'random10','random3',expel_item,run_times)
+    # ### random的加入plot
+    # # plt.plot(range(b02, e02, s02), Avgtime04nn, color=colors[3], label='nn',marker='.')
+    # plt.plot(range(b02, e02, s02), Avgtime04nr, color=colors[2], label='nr',marker='.')
+    # plt.plot(range(b02, e02, s02), Avgtime04rn, color=colors[0], label='rn',marker='.')
+    # plt.plot(range(b02, e02, s02), Avgtime04rr, color=colors[1], label='rr',marker='.')
     ### random的加入done
 
     ### 最终的比较：修改distribution/curve
@@ -126,9 +126,18 @@ def plot_avg():
     ### 最终的比较done
 
     ## popularity的比较
-    if distribution=='zipfr':
-        p_r=popularity_analysis.plot_distribution_replia_nums_v3(654400)
-        plt.plot(range(654000,654400),p_r,color='black',marker='*')
+    # if distribution=='zipfr':
+    #     p_r=popularity_analysis.plot_distribution_replia_nums_v3(654400)
+    #     plt.plot(range(654000,654400),p_r,color='black',marker='*')
+    Avgtime04, b02, e02, s02 = load_avg_times(distribution,replica_sum,'popularity10','calculate3',expel_item,run_times)
+    # Avgtime04o, b02, e02, s02 = load_avg_times('zipfori',replica_sum,'popularity10','calculate3',expel_item,run_times)
+    Avgtime04v, b02, e02, s02 = load_avg_times(distribution,replica_sum,'popularity10','calvary3',expel_item,run_times)
+    Avgtime04t, b02, e02, s02 = load_avg_times(distribution,replica_sum,'popularity10','caltwo3',expel_item,run_times)
+
+    plt.plot(range(b02,e02,s02),Avgtime04,color=colors[1],label='cal',marker='.')
+    # plt.plot(range(b02,e02,s02),Avgtime04o,color=colors[3],label='cal-ori',marker='.')
+    plt.plot(range(b02,e02,s02),Avgtime04v,color=colors[0],label='cal-vary',marker='.')
+    plt.plot(range(b02,e02,s02),Avgtime04t,color=colors[2],label='cal-2',marker='.')
 
     ### extra comparasion
 
@@ -288,7 +297,7 @@ def plot_storage():
     blk4,node4, b02, e02, s02,each_node_block = load_storage(distribution,replica_sum,'popularity10','calculate3',expel_item,run_times)
     # plt.plot(range(b02, e02, s02), np.array(node2)/np.array(blk2), color=colors[2], label='rc',marker='.')
     # plt.plot(range(b02, e02, s02), np.array(node3)/np.array(blk3), color=colors[0], label='pr',marker='.')
-    # plt.plot(range(b02, e02, s02), np.array(node4)/np.array(blk4), color=colors[1], label='pc',marker='.')
+    plt.plot(range(b02, e02, s02), np.array(node4)/10/(np.array(blk4)), color=colors[10], label='pc',marker='.')
     # plt.plot(range(b02, e02, s02), np.array(node5)/np.array(blk5), color=colors[4], label='lc',marker='.')
     # plt.plot(range(b01, e01, s01),np.array(NodeSize01)/np.array(Blocksize01),color=colors[13],label='llu7')
     # plt.plot(range(b01, e01, s01),np.array(NodeSize02)/np.array(Blocksize01),color=colors[0],label='llu8')
@@ -325,17 +334,17 @@ def plot_storage():
     plt.title('storage per node/ storage one replica')
     # plt.title('s-'+distribution+str(replica_sum)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(run_times))
     plt.show()
-    store_file_name_1='./finalTest/finalRes/experimenta/extra/Combine-A.csv'
-    start=654010
-    with open(store_file_name_1,'w')as file_in:
-        print('epoch,node1,node2,node3,node4,node5,node6,node7,node8,node9,node10,one replica,total block size in system',file=file_in)
-        for line_index in range(len(blk4)):
-            line2=str(start)
-            start+=1
-            for i in range(10):
-                line2+=','+str(each_node_block[i][line_index])
-            line2+=','+str(blk4[line_index])+','+str(node4[line_index])
-            print(line2,file=file_in)
+    # store_file_name_1='./finalTest/finalRes/experimenta/extra/Combine-A.csv'
+    # start=654010
+    # with open(store_file_name_1,'w')as file_in:
+    #     print('epoch,node1,node2,node3,node4,node5,node6,node7,node8,node9,node10,one replica,total block size in system',file=file_in)
+    #     for line_index in range(len(blk4)):
+    #         line2=str(start)
+    #         start+=1
+    #         for i in range(10):
+    #             line2+=','+str(each_node_block[i][line_index])
+    #         line2+=','+str(blk4[line_index])+','+str(node4[line_index])
+    #         print(line2,file=file_in)
 
         
 
@@ -353,8 +362,8 @@ if __name__=='__main__':
     # plt.ylim(0,1)
     # plt.legend()
     # plt.show()
-    # plot_avg()
-    plot_storage()
+    plot_avg()
+    # plot_storage()
     # plot_storage_end_epoch()
 
     # plt.plot(range(begin+beginblock,end),RR[beginblock:],color='r',marker='.',label='needed-actual')

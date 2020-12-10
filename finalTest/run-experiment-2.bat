@@ -164,3 +164,6 @@
 @REM python d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 10 calculate 3 curve 3 100
 @REM python d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 10 raccess 3 curve 3 100
 @REM python d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 10 raccess 3 llu 8 100
+
+python d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 popularity 10 calthree 3 curve 3 100
+python d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 popularity 10 calvary 3 curve 3 100
