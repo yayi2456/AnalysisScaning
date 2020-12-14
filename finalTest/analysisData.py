@@ -130,14 +130,16 @@ def plot_avg():
     #     p_r=popularity_analysis.plot_distribution_replia_nums_v3(654400)
     #     plt.plot(range(654000,654400),p_r,color='black',marker='*')
     Avgtime04, b02, e02, s02 = load_avg_times(distribution,replica_sum,'popularity10','calculate3',expel_item,run_times)
+    Avgtime04r, b02, e02, s02 = load_avg_times(distribution,replica_sum,'popularity10','random3',expel_item,run_times)
     # Avgtime04o, b02, e02, s02 = load_avg_times('zipfori',replica_sum,'popularity10','calculate3',expel_item,run_times)
     Avgtime04v, b02, e02, s02 = load_avg_times(distribution,replica_sum,'popularity10','calvary3',expel_item,run_times)
     Avgtime04t, b02, e02, s02 = load_avg_times(distribution,replica_sum,'popularity10','caltwo3',expel_item,run_times)
-
+    # print(Avgtime04)
     plt.plot(range(b02,e02,s02),Avgtime04,color=colors[1],label='cal',marker='.')
+    plt.plot(range(b02,e02,s02),Avgtime04r,color=colors[2],label='rand',marker='.')
     # plt.plot(range(b02,e02,s02),Avgtime04o,color=colors[3],label='cal-ori',marker='.')
     plt.plot(range(b02,e02,s02),Avgtime04v,color=colors[0],label='cal-vary',marker='.')
-    plt.plot(range(b02,e02,s02),Avgtime04t,color=colors[2],label='cal-2',marker='.')
+    plt.plot(range(b02,e02,s02),Avgtime04t,color=colors[3],label='cal-2',marker='.')
 
     ### extra comparasion
 
