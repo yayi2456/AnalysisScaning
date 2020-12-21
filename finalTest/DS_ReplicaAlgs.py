@@ -66,7 +66,7 @@ nodes_stored_blocks_popularity=[]
 nodes_storage_used=[]
 
 # REPLICA_LIMIT=[.699,.299]
-REPLICA_LIMIT=[.5,.3]
+REPLICA_LIMIT=[5,3]
 
 def static_assign_blocks(piece,period):
     """(int,int) - list of dict:(int, int), list of dict:(int,int), list of int
@@ -152,7 +152,7 @@ def initial_assign_block(blockID,piece,period):
     """
     assign_one_block(blockID,piece,period)#,[0,0])
 
-def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_value_dict,period):#,popularity_passing_dict):
+def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_value_dict,period,lambdai):#,popularity_passing_dict):
     """(int,list of int,int,str,dict,int,str) - list of dict:(int, int), list of dict:(int,int), list of int
 
     passive algorithms to replicate for 1 node.
@@ -173,7 +173,7 @@ def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_
     # popularity_value=[]
     # print(popularity_passing_dict)
     # amounts of blocks we want to replicate
-    blocks_replicated_num=math.ceil(len(chosen_blocks)/nodes_num)
+    blocks_replicated_num=math.ceil(len(chosen_blocks)/lambdai)
     if blocks_replicated_num>len(chosen_blocks):
         blocks_replicated_num=len(chosen_blocks)
 
@@ -225,7 +225,7 @@ def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_
         store_block_to_node(all_blocks_replicated[i],nodeID,period)#,popularity_value[i])
     
     # nothing to return
-    return
+    return len(all_blocks_replicated)
 
 def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,period):
     """(int,int,,str) - list of dict:(int, int), list of dict:(int,int), list of int
@@ -245,7 +245,9 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
     blocks_to_be_offload=[]
     # print(nodes_stored_blocks_popularity[nodeID])
     # get the top_num_to_offload most popular blocks
+    
     kvs=sorted(nodes_stored_blocks_popularity[nodeID].items(),key=lambda x:x[1][0]+x[1][1],reverse=True)
+    
     # kvs=kvs[:top_num_to_offload]
     blocks_to_be_offload=[]#blockID[0] for blockID in kvs]
     off_load_num=0
@@ -264,12 +266,23 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
     ###
     # get the target node_to_be_offload
     if active_type=='random':
+        stored_blocks={}
         for blockID in blocks_to_be_offload:
-            node_to_be_offload=random.randint(0,nodes_num-1)
-            while node_to_be_offload in blocks_in_which_nodes_and_timelived[blockID-beginID]:
-                node_to_be_offload=random.randint(0,nodes_num-1)
-            Chosen_nodes_debug[blockID]=node_to_be_offload
-            store_block_to_node(blockID,node_to_be_offload,period)#,popularity_passing_dict[blockID])
+            candidate_des=[]
+            for nodeid in range(nodes_num):
+                if nodeid not in blocks_in_which_nodes_and_timelived[blockID-beginID]:
+                    candidate_des.append(nodeid)
+            if len(candidate_des)==0:
+                print('active: calculate: no endough andidate nodes!')
+            node_to_be_offload=random.randint(0,len(candidate_des)-1)
+            # while node_to_be_offload in blocks_in_which_nodes_and_timelived[blockID-beginID]:
+            #     node_to_be_offload=random.randint(0,nodes_num-1)
+            Chosen_nodes_debug[blockID]=candidate_des[node_to_be_offload]
+            # print('before store:',candidate_des[node_to_be_offload],', stored blocks=',len(nodes_stored_blocks_popularity[candidate_des[node_to_be_offload]]))
+            stored_blocks[candidate_des[node_to_be_offload]]=blockID
+            store_block_to_node(blockID,candidate_des[node_to_be_offload],period)#,popularity_passing_dict[blockID])
+            # print('after store:',candidate_des[node_to_be_offload],', stored blocks=',len(nodes_stored_blocks_popularity[candidate_des[node_to_be_offload]]))
+        return [],len(blocks_to_be_offload),stored_blocks
     elif active_type=='access':
         candidate_blocks=[]
         # popularity_passing_dict_new={}
@@ -343,6 +356,7 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
         # if len(blocks_to_be_offload)!=top_num_to_offload:
         #     print('***candidate choose warning :calculate: ,',len(blocks_to_be_offload),', blocks are chosen.')
         # print(communication_cost)
+        stored_blocks={}
         for blockID in blocks_to_be_offload:
             # largest improvement is brought by which nodes_test
             max_improve=0
@@ -385,6 +399,8 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
             if blockID in nodes_stored_blocks_popularity[max_improve_node]:
                 print('cal: going to store ',blockID,' into ',max_improve_node,',improve is:',max_improve,'blocks\'s list is',blocks_in_which_nodes_and_timelived[blockID-beginID],',considered nodes are:',considered_nodes )
             store_block_to_node(blockID,max_improve_node,period)#,popularity_passing_dict[blockID])
+            stored_blocks[max_improve_node]=blockID
+        return [],len(blocks_to_be_offload),stored_blocks
         ##debug
 
         ##end
@@ -392,6 +408,7 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
         # print(len(blocks_to_be_offload))
         # if len(blocks_to_be_offload)!=top_num_to_offload:
         #     print('***candidate choose warning :calculate: ,',len(blocks_to_be_offload),', blocks are chosen.')
+        stored_blocks={}
         for blockID in blocks_to_be_offload:
             # largest improvement is brought by which nodes_test
             max_improve=[]#顺序是：0最大，1其次，2最后
@@ -461,30 +478,42 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
                     len_max_prove_nodes+=1
             actual_replica_store=0
             if n_popu_1>REPLICA_LIMIT[0]:
-                actual_replica_store=len(max_improve_node)
+                # actual_replica_store=len(max_improve_node)
                 # print("[calv]: me:",nodeID,'block:',blockID,'popularity[1]:',n_popu_1,'already store nodes:',sorted(blocks_in_which_nodes_and_timelived[blockID-beginID]),', this node set:',max_improve_node)
                 for i in range(len(max_improve_node)):
                     store_block_to_node(blockID,max_improve_node[i],period)#,popularity_passing_dict[blockID])
+                    stored_blocks[max_improve_node[i]]=blockID
             elif n_popu_1<=REPLICA_LIMIT[0] and nodes_stored_blocks_popularity[nodeID][blockID][1]>REPLICA_LIMIT[1]:
-                actual_replica_store=len(max_improve_node)-1
+                # actual_replica_store=len(max_improve_node)-1
                 # print("[calv]: me:",nodeID,'block:',blockID,'popularity[1]:',n_popu_1,'already store nodes:',sorted(blocks_in_which_nodes_and_timelived[blockID-beginID]),', this node set:',max_improve_node)
-                for i in range(len(max_improve_node)-1):
+                upper_bound=2
+                if len(max_improve_node)<upper_bound:
+                    upper_bound=len(max_improve_node)
+                for i in range(upper_bound):
                     store_block_to_node(blockID,max_improve_node[i],period)#,popularity_passing_dict[blockID])
+                    stored_blocks[max_improve_node[i]]=blockID
             else:
-                actual_replica_store=1
+                # actual_replica_store=1
                 # print("[calv]: me:",nodeID,'block:',blockID,'popularity[1]:',n_popu_1,'already store nodes:',sorted(blocks_in_which_nodes_and_timelived[blockID-beginID]),', this node set:',max_improve_node)
-                for i in range(len(max_improve_node)-2):
+                upper_bound=1
+                if len(max_improve_node)<upper_bound:
+                    upper_bound=len(max_improve_node)
+                for i in range(upper_bound):
                     store_block_to_node(blockID,max_improve_node[i],period)#,popularity_passing_dict[blockID])
+                    stored_blocks[max_improve_node[i]]=blockID
             
             # print(json.dumps([len_max_prove_nodes,n_popu_1]))
-            if actual_replica_store>len_max_prove_nodes:
-                actual_replica_store=len_max_prove_nodes
+            # if actual_replica_store>len_max_prove_nodes:
+            #     actual_replica_store=len_max_prove_nodes
             # print(str(len_max_prove_nodes)+','+str(n_popu_1)+','+str(actual_replica_store))
             #end
+        return [],len(blocks_to_be_offload),stored_blocks
     elif active_type=='caltwo':
+        replica_nums_=2
         # print(len(blocks_to_be_offload))
         # if len(blocks_to_be_offload)!=top_num_to_offload:
         #     print('***candidate choose warning :calculate: ,',len(blocks_to_be_offload),', blocks are chosen.')
+        stored_blocks={}
         for blockID in blocks_to_be_offload:
             # largest improvement is brought by which nodes_test
             max_improve=[]
@@ -523,7 +552,7 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
             cost_and_nodes_kvs=sorted(cost_and_nodes.items(),key=lambda x:x[1],reverse=True)
             nums_2=0
             for kvs in cost_and_nodes_kvs:
-                if nums_2>=2:
+                if nums_2>=replica_nums_:
                     break
                 max_improve_node.append(kvs[0])
                 max_improve.append(kvs[1])
@@ -537,15 +566,20 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
             if np.sum(max_improve_node)==-2:
                 print('[calthree]: invalid block chosen!')
             # print("[calthree]: me:",nodeID,'block:',blockID,',already store nodes:',sorted(blocks_in_which_nodes_and_timelived[blockID-beginID]),', this node set:',max_improve_node)
-            for i in range(len(max_improve_node)):
+            replica_num_upper_bound=replica_nums_
+            if replica_num_upper_bound>len(max_improve_node):
+                replica_num_upper_bound=len(max_improve_node)
+            for i in range(replica_num_upper_bound):
                 store_block_to_node(blockID,max_improve_node[i],period)#,popularity_passing_dict[blockID])
+                stored_blocks[max_improve_node[i]]=blockID
+        return [],len(blocks_to_be_offload),stored_blocks
     else:
         print("invalid active type! default('random') is set.")
         node_to_be_offload=random.randint(0,nodes_num-1)
         for blockID in blocks_to_be_offload:
             store_block_to_node(blockID,node_to_be_offload,period)#,popularity_passing_dict[blockID])
     # nothing else to return 
-    return Chosen_nodes_debug
+    return Chosen_nodes_debug,len(blocks_to_be_offload)
 
     
 def store_block_to_node(blockID,nodeID,period):#,popularity_value):
@@ -555,7 +589,8 @@ def store_block_to_node(blockID,nodeID,period):#,popularity_value):
     update the 3 big lists.
     """
     if nodeID==-1:
-        return
+        print('[store_block_to_node]: invalid store.')
+        return -1
     if nodeID in blocks_in_which_nodes_and_timelived[blockID-beginID]:
         print("[store_block_to_node]: trying to store a block to a node in which the block is already exist!")
         if len(blocks_in_which_nodes_and_timelived[blockID-beginID])<nodes_num:
@@ -730,7 +765,7 @@ def broadcast_popularity_and_get_gobal_popularity(last_blockID):
         # replica_sum=len(blocks_in_which_nodes_and_timelived[blockID-beginID])
         for nodeID in range(nodes_num):
             if blockID in nodes_stored_blocks_popularity[nodeID]:
-                nodes_stored_blocks_popularity[nodeID][blockID][1]=block_global_popularity[blockID-beginID]/10
+                nodes_stored_blocks_popularity[nodeID][blockID][1]=block_global_popularity[blockID-beginID]
                 # print(nodes_stored_blocks_popularity[nodeID][blockID][1])
     # print('update done')
     #

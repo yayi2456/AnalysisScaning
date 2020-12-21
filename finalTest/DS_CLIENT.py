@@ -44,7 +44,7 @@ def init_environment():
     # return max_level
     return all_storage
 
-def replication_run(get_average_time=True,get_storage_used=False,get_popularity_list=False):
+def replication_run(get_average_time=True,get_storage_used=False,get_delay_info=True,get_popularity_list=False):
     """ () - (list of float, list of list of float, list of list of float)
 
     run a certain replica algorithm, and store the average cost time in every dynamic epoch.
@@ -81,10 +81,10 @@ def replication_run(get_average_time=True,get_storage_used=False,get_popularity_
     if passive_replicate_type!='nopassive':
         passive_on=True
         # how many requests in step epoch
-        lambdai=int(sys.argv[next_param_index])
-        next_param_index+=1
+    lambdai=int(sys.argv[next_param_index])
+    next_param_index+=1
         # modify the passive item of file name
-        passive_item=passive_replicate_type+str(lambdai)
+    passive_item=passive_replicate_type+str(lambdai)
     # active alg type
     active_replicate_type=sys.argv[next_param_index]#'calculate'#'random'#'calculate'
     next_param_index+=1
@@ -126,8 +126,13 @@ def replication_run(get_average_time=True,get_storage_used=False,get_popularity_
     step=1
     # average time, a list of list of float
     avg_time=[]
+    # delay percentile
+    delay_percentile=[]
+    # delay per request
+    delay_per_request=[]
     # blocks size stored by nodes, a list of list of float. key=nodeID,value=blocksize
     block_sizes_stored_by_nodes=[]
+    block_nums_stored_by_nodes=[]
     total_storage_one_replica=[0]*(dsrpal.endID-dsrpal.beginID-dsrpal.static_blocks+1)
     total_storage_one_replica[0]=sum(dsrpal.blocksizes[:dsrpal.static_blocks])
 
@@ -137,29 +142,33 @@ def replication_run(get_average_time=True,get_storage_used=False,get_popularity_
 
     # filename to store average_time_cost statistical data
     # file_average_time='./finalTest/averageTime-'+chosen_block_distribution+'-'+passive_replicate_type+'.'+str(passive_on)+'-'+active_replicate_type+'.'+str(active_on)+'-'+str(period)+'-'+str(lambdai)+'-'+str(top_num_to_offload)+'.txt'
-    file_average_time='./finalTest/finalRes/A-'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
+    file_average_time='./finalTest/finalRes/A-CLIENT'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
     #file name to store storage used by each node in every runtime
     # file_storage_used='./finalTest/storageUsed-'+chosen_block_distribution+'-'+passive_replicate_type+'.'+str(passive_on)+'-'+active_replicate_type+'.'+str(active_on)+'-'+str(period)+'-'+str(lambdai)+'-'+str(top_num_to_offload)+'.txt'
-    file_storage_used='./finalTest/finalRes/S-'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
-    
+    file_storage_used='./finalTest/finalRes/S-CLIENT'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
+    file_delay_info='./finalTest/finalRes/D-CLIENT'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
     #open storage used file to write if it's true
-    if get_storage_used:
-        file_storage_used_write=open(file_storage_used,'w')
-        print(dsrpal.beginID+dsrpal.static_blocks,' ',dsrpal.endID,' ',step,file=file_storage_used_write)
+    
     ##debug
     if get_popularity_list:
         files_index=10
         datafile_index=[]
         for i in range(files_index):
-            datafile_index.append(open('./finalTest/finalRes/debug/'+str(chosen_block_distribution+'-'+active_item+'-'+passive_item+'-'+expel_item)+'-PL-node'+str(i)+'-'+str(total_times)+'.txt','w'))
-    
+            datafile_index.append(
+                open('./finalTest/finalRes/debug/'+str(chosen_block_distribution+'-'+active_item+'-'+passive_item+'-'+expel_item)+'-PLCLIENT-'+str(i)+'-'+str(total_times)+'.txt','w'))
     ### end debug
+    #record request list#
+    file_write_request='./finalTest/finalRes/request/REQ-'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
+    f_write_request=open(file_write_request,'w')
+    # end record
     for run_times in range(total_times):
         # store all avg_time in each runtime
-        print('(',run_times+1,'/',total_times,')')
+        # print('(',run_times+1,'/',total_times,')')
         avg_time.append([])
-        block_use_ratio_one_runtime=[]
+        delay_per_request.append([])
+        delay_percentile.append([])
         block_sizes_stored_by_nodes_tmp=[]
+        block_nums_stored_by_nodes_tmp=[]
 
         dsrpal.blocks_in_which_nodes_and_timelived.clear()
         dsrpal.nodes_stored_blocks_popularity.clear()
@@ -210,23 +219,41 @@ def replication_run(get_average_time=True,get_storage_used=False,get_popularity_
                 dsrpal.initial_assign_block(end_since+all_blocks,piece,period)
                 block_size_add_up+=dsrpal.blocksizes[end_since+all_blocks-start_point]
             # active replicate
+            # print('before: system blocks,',np.sum(np.array([len(dsrpal.nodes_stored_blocks_popularity[_nid]) for _nid in range(dsrpal.nodes_num)])))
             if active_on:
-                nodes_active_replicate=range(dsrpal.nodes_num)
-                for nodeID in nodes_active_replicate:
-                    _=dsrpal.active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_replicate_type,period)
+                offload_ac,stored_blocks=replicate_actively(top_num_to_offload,active_replicate_type,period,dsrpal.nodes_num)
+                # print('active,runtime,',run_times,',epoch',end_since,',',offload_ac,'all system blocks,',np.sum(np.array([len(dsrpal.nodes_stored_blocks_popularity[_nid]) for _nid in range(dsrpal.nodes_num)])))
+                
+                # nodes_active_replicate=range(dsrpal.nodes_num)
+                # for nodeID in nodes_active_replicate:
+                #     _=dsrpal.active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_replicate_type,period)
                     # cn_debug=sorted(cn_debug.items(),key=lambda x:x[0],reverse=False)
                     # print('epoch=',end_since,',',cn_debug,file=activefile_index[nodeID])
             # print(dsrpal.nodes_stored_blocks_popularity)
             #request
-            average_time_i,storage_per_node,request_time_per_node,passive_type_blks,chosen_blocks=dsrequest.request(dsrpal.beginID,end_since+1,epoch_interval,chosen_block_distribution,dsrpal.nodes_num,lambdai,passive_replicate_type)
+            give_in_writter=None
+            if end_since==dsrpal.endID-1:
+                give_in_writter=f_write_request
+            average_time_i,storage_per_node,request_time_per_node,passive_type_blks,chosen_blocks,delay_p,delay_p_r=dsrequest.request(
+                dsrpal.beginID,end_since+1,epoch_interval,chosen_block_distribution,dsrpal.nodes_num,lambdai,passive_replicate_type,give_in_writter)
+
             avg_time[run_times].append(average_time_i)
+            if get_delay_info:
+                delay_percentile[run_times].append(delay_p)
+                delay_per_request[run_times].append(delay_p_r)
 
             # passive_replicate
-            replicate_passivly(chosen_blocks,passive_replicate_type,passive_type_blks,period)
+            if passive_on:
+                store_actually_all=replicate_passivly(chosen_blocks,passive_replicate_type,passive_type_blks,period,lambdai)
+                # print('passive,runtime,',run_times,',epoch',end_since,',',store_actually_all)
 
             # broadcast local popularity
             #block end_since is included.
             dsrpal.broadcast_popularity_and_get_gobal_popularity(end_since)
+            # if end_since==end_since==dsrpal.endID-1:
+            #         for i in range(dsrpal.nodes_num):
+            #             # print('node=',i,',',sorted(stored_blocks[i]))
+            #             print('node=',i,',',sorted(dsrpal.nodes_stored_blocks_popularity[i].items(),key=lambda x:x[1][0]+x[1][1],reverse=True))
             # update communication cost
             dsrpal.update_communication(storage_per_node,request_time_per_node)
 
@@ -250,14 +277,16 @@ def replication_run(get_average_time=True,get_storage_used=False,get_popularity_
             # ### end debug
             # update lifetime and expel dead blocks
             if expel_type!='noexpel':
-                _=dsrpal.expel_blocks(expel_type,end_since+1,step,last_num_to_expel,None)
+                expel_blocks=dsrpal.expel_blocks(expel_type,end_since+1,step,last_num_to_expel,None)
                 # if end_since==654055:
                 #     for nodeid in range(10):
                 #         if end_since-1 in dsrpal.nodes_stored_blocks_popularity[nodeid]:
                 #             print('address of node',nodeid,',block',end_since-1,',is:',id(dsrpal.nodes_stored_blocks_popularity[nodeid][end_since-1]),', value is:',dsrpal.nodes_stored_blocks_popularity[nodeid][end_since-1])
 
                 # for i in range(len(expel_blocks)):
-                #     print('epoch=',end_since,',',sorted(expel_blocks[i]),file=expelfile_index[i])
+                #     print('epoch=',end_since,',node=',i,',',sorted(expel_blocks[i]))
+
+                # print('expel,runtime,',run_times,',epoch',end_since,',all system blocks,',np.sum(np.array([len(dsrpal.nodes_stored_blocks_popularity[_nid]) for _nid in range(dsrpal.nodes_num)])))
             
             # append storage_used if it's true
             if get_storage_used:
@@ -266,6 +295,8 @@ def replication_run(get_average_time=True,get_storage_used=False,get_popularity_
                 block_sizes_stored_by_nodes_tmp.append(storage_tmp)
                 # print(block_sizes_stored_by_nodes_tmp[0])
                 total_storage_one_replica[end_since-(start_point)+1]=total_storage_one_replica[end_since-(start_point)]+block_size_add_up
+                
+                block_nums_stored_by_nodes_tmp.append([len(dsrpal.nodes_stored_blocks_popularity[_nid]) for _nid in range(dsrpal.nodes_num)])
         ##!!!DEBUG
         # for i in range(files_index):
         #     datafile_index[i].close()
@@ -279,8 +310,10 @@ def replication_run(get_average_time=True,get_storage_used=False,get_popularity_
         # get sum after 1 runtime
         if get_storage_used:
             block_sizes_stored_by_nodes.append(block_sizes_stored_by_nodes_tmp)
+            block_nums_stored_by_nodes.append(block_nums_stored_by_nodes_tmp)
             # print(block_sizes_stored_by_nodes_tmp)
             block_sizes_stored_by_nodes=[np.sum(block_sizes_stored_by_nodes,axis=0)]
+            block_nums_stored_by_nodes=[np.sum(block_nums_stored_by_nodes,axis=0)]
             # print(block_sizes_stored_by_nodes)
         # print(dsrpal.communication_cost)
         # print(np.mean(avg_time,axis=0))
@@ -291,14 +324,21 @@ def replication_run(get_average_time=True,get_storage_used=False,get_popularity_
     ### end
     # get mean and store them
     if get_storage_used:
-        # get total storage by store one replica
-        print(json.dumps(total_storage_one_replica[1:]),file=file_storage_used_write)
+        with open(file_storage_used,'w')as file_storage_used_write:
+            print(dsrpal.beginID+dsrpal.static_blocks,' ',dsrpal.endID,' ',step,file=file_storage_used_write)
+            # get total storage by store one replica
+            print(json.dumps(total_storage_one_replica[1:]),file=file_storage_used_write)
 
-        block_sizes_stored_by_nodes=np.array(block_sizes_stored_by_nodes[0])/total_times
-        block_sizes_stored_by_nodes=block_sizes_stored_by_nodes.T
-        for i in range(len(block_sizes_stored_by_nodes)):
-            # print(block_sizes_stored_by_nodes[i])
-            print(json.dumps(block_sizes_stored_by_nodes[i].tolist()),file=file_storage_used_write)
+            block_sizes_stored_by_nodes=np.array(block_sizes_stored_by_nodes[0])/total_times
+            block_nums_stored_by_nodes=np.array(block_nums_stored_by_nodes[0])/total_times
+            block_sizes_stored_by_nodes=block_sizes_stored_by_nodes.T
+            block_nums_stored_by_nodes=block_nums_stored_by_nodes.T
+            for i in range(len(block_sizes_stored_by_nodes)):
+                # print(block_sizes_stored_by_nodes[i])
+                print(json.dumps(block_sizes_stored_by_nodes[i].tolist()),file=file_storage_used_write)
+            for i in range(len(block_nums_stored_by_nodes)):
+                print(json.dumps(block_nums_stored_by_nodes[i].tolist()),file=file_storage_used_write)
+            print(json.dumps((np.sum(block_nums_stored_by_nodes,axis=0)).tolist()),file=file_storage_used_write)
     # got all average_time, which is a list of list of float
     # store them
     if get_average_time:
@@ -306,11 +346,19 @@ def replication_run(get_average_time=True,get_storage_used=False,get_popularity_
             print(dsrpal.beginID+dsrpal.static_blocks,' ',dsrpal.endID,' ',step,file=file_write)
             avg_time_mean=np.mean(avg_time,axis=0)
             print(json.dumps(avg_time_mean.tolist()),file=file_write)
-    if get_storage_used:
-        file_storage_used_write.close()
+    if get_delay_info:
+        with open(file_delay_info,'w') as file_write:
+            print(dsrpal.beginID+dsrpal.static_blocks,' ',dsrpal.endID,' ',step,file=file_write)
+            delay_p_mean=np.mean(delay_percentile,axis=0)
+            delay_p_r_mean=np.mean(delay_per_request,axis=0)
+            print(json.dumps(delay_p_mean.tolist()),file=file_write)
+            print(json.dumps(delay_p_r_mean.tolist()),file=file_write)
+    # close record file
+    f_write_request.close()
+    #end
    
 
-def replicate_passivly(replicate_blocks,passive_type,sort_value_dict,period):
+def replicate_passivly(replicate_blocks,passive_type,sort_value_dict,period,lambdai):
     '''(list of list,string)
     
     choose replicate blocks in replicate_blocks and passively replicate them at local.
@@ -319,10 +367,28 @@ def replicate_passivly(replicate_blocks,passive_type,sort_value_dict,period):
     replicate_blocks is a list of list. replicate_blocks[i] stores all blocks node i has request in one epoch.
     '''
     _nodes_sum=len(replicate_blocks)
+    store_actually_all=[]
     for i in range(_nodes_sum):
-        dsrpal.passive_dynamic_replication_one_node(replicate_blocks[i],i,passive_type,sort_value_dict[i],period)
+        s_a=dsrpal.passive_dynamic_replication_one_node(replicate_blocks[i],i,passive_type,sort_value_dict[i],period,lambdai)
+        store_actually_all.append(s_a)
+    return store_actually_all
 
-
+def replicate_actively(top_to_offload,active_type,period,nodes_num):
+    '''
+    choose local top hot blocks and offload
+    '''
+    node_seq=(list(range(0,nodes_num)))
+    random.shuffle(node_seq)
+    offload_actually_all=[]
+    stored_blocks=[]
+    for i in range(dsrpal.nodes_num):
+        stored_blocks.append([])
+    for _nid in node_seq:
+        _,offload_actually,sb=dsrpal.active_dynamic_replication_one_node(_nid,top_to_offload,active_type,period)
+        offload_actually_all.append(offload_actually)
+        for i in sb:
+            stored_blocks[i].append(sb[i])
+    return offload_actually_all,stored_blocks
     
 
 def get_storage_place():
@@ -342,6 +408,11 @@ def get_storage_place():
 
 if __name__=='__main__':
     all_storage_cost=init_environment()
-    replication_run(True,True,True)
+    avg_s=True
+    storage_s=True
+    delay_s=True
+    popu_s=True
+    replication_run(avg_s,storage_s,delay_s,popu_s)
     get_storage_place()
-    print('running done')
+    time_string= '['+time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())+']'
+    print(time_string+': running-done. ')

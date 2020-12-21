@@ -165,5 +165,35 @@
 @REM python d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 10 raccess 3 curve 3 100
 @REM python d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 load 10 raccess 3 llu 8 100
 
-python d:/Languages/PythonSpace/AnalysisSanning/finalTest/DS_CLIENT.py zipf 3 popularity 10 calculate 3 curve 3 100
-python d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 popularity 10 calvary 3 curve 3 100
+@REM python d:/Languages/PythonSpace/AnalysisSanning/finalTest/DS_CLIENT.py zipf 3 popularity 10 calculate 3 curve 3 100
+@REM python d:/Languages/PythonSpace/AnalysisSanning/finalTest/RunReplica_zipf.py zipf 3 popularity 10 calvary 3 curve 3 100
+
+@REM python d:/Languages/PythonSpace/AnalysisSanning/finalTest/DS_CLIENT.py zipf 3 random 10 random 3 curve 3 100
+@REM python d:/Languages/PythonSpace/AnalysisSanning/finalTest/DS_CLIENT.py zipf 3 nopassive random 3 curve 3 100
+@REM python d:/Languages/PythonSpace/AnalysisSanning/finalTest/DS_CLIENT.py zipf 3 random 10 noactive curve 3 100
+
+@REM python ./finalTest/DS_CLIENT.py zipf 3 load 20 calculate 3 curve 3 50
+
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 30 calculate 3 curve 3 30
+@REM python ./finalTest/DS_CLIENT.py zipf 3 load 30 calculate 3 curve 3 30
+
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 40 calculate 3 curve 3 25
+@REM python ./finalTest/DS_CLIENT.py zipf 3 load 40 calculate 3 curve 3 25
+
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 50 calculate 3 curve 3 20
+@REM python ./finalTest/DS_CLIENT.py zipf 3 load 50 calculate 3 curve 3 20
+
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 30 noactive curve 3 30
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 40 noactive curve 3 25
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 50 noactive curve 3 20
+
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 60 noactive curve 3 20
+
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 80 noactive curve 3 12
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 90 noactive curve 3 15
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 95 noactive curve 3 15
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 96 noactive curve 3 15
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 97 noactive curve 3 15
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 100 noactive curve 3 15
+
+python ./finalTest/DS_CLIENT.py zipf 3 popularity 100 noactive curve 3 1

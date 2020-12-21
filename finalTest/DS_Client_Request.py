@@ -3,6 +3,7 @@ import random
 import math
 import DS_init as dsinit
 import DS_ReplicaAlgs as dsrpal
+import json
 
 # dict which is to accelerate runing time of jiecheng
 
@@ -51,12 +52,14 @@ def get_chosen_blocks_numbers(expection,node_num,total_blks):
         probability=[0]*(max_chosen_num+1)
 
         # total probability of [0,max_chosen_num-1]
-        pre_probability=0
+        # pre_probability=0
         # 
         for i in range(max_chosen_num):
             probability[i]=(pow(expection,i)/jiecheng(i))/pow(np.e,expection)
-            pre_probability+=probability[i]
-        probability[max_chosen_num]=1-pre_probability
+            # pre_probability+=probability[i]
+        probability[max_chosen_num]=1-np.sum(np.array(probability[:max_chosen_num]))
+        if probability[max_chosen_num]<0:
+            probability[max_chosen_num]=0
         Pission_Probablity[expection]=probability
     # print(probability)
     # choose one value based on probability
@@ -212,14 +215,14 @@ def generate_time_increasment_list(chosen_numbers_all_nodes,epoch_interval,lambd
     '''
     Generate request arriving time list for all nodes, which is expotional distribution with exception `lambdai`.
     we set the granularity as epoch_interval/20.
-    epoch_interval=10*60*5
+    epoch_interval=10*60
 
     CDF=1-e^{-\lambda x}, x>=0.
     '''
     #calculate the expontional probability
     granularity=100# granularity of time
     probability=[0]*granularity
-    happend_times=25
+    happend_times=2*lambdai+int(1/2*lambdai)
     one_interval=epoch_interval/happend_times# get a approximate time range for time increasment list.
     one_step=one_interval/granularity
     global Cache_Exp
@@ -254,7 +257,7 @@ def generate_time_increasment_list(chosen_numbers_all_nodes,epoch_interval,lambd
     return interval_lists
 
 
-def request_by_arriving_requests(interval_list,chosen_blocks,beginID,passive_type):
+def request_by_arriving_requests(interval_list,chosen_blocks,beginID,passive_type,fwrite):
     '''
     requesting by time interval, get average accessing time, 
     get communication cost and data transamission amounts between each 2 nodes.
@@ -265,6 +268,12 @@ def request_by_arriving_requests(interval_list,chosen_blocks,beginID,passive_typ
 
     `chosen_blocks` is a list of list, 
     chosen_blocks[i] stores node i's chosen block, corresponding to the arrival time of requests.
+
+    `beginID` indicates id of begin blocks.
+
+    `passive_type` tells the function which sort_of_dict to record and return.
+
+    `fwrite` is a file pointer to write. the function writes request list into this file.
     '''
     node_num=len(chosen_blocks)
     requests_list=[]
@@ -275,7 +284,7 @@ def request_by_arriving_requests(interval_list,chosen_blocks,beginID,passive_typ
         for _tid in range(len(interval_list[_nid])):
             happend_time+=interval_list[_nid][_tid]
             to_node,time_cost=dsrpal.get_blockID_from_which(_nid,chosen_blocks[_nid][_tid])
-            requests_list.append([_nid,to_node,chosen_blocks[_nid][_tid],happend_time,time_cost])
+            requests_list.append([_nid,int(to_node),int(chosen_blocks[_nid][_tid]),float(happend_time),time_cost])
     # sort the request according to the happend time
     requests_list=sorted(requests_list,key=lambda x:x[3])
     # get the respond time for each request.   
@@ -293,20 +302,27 @@ def request_by_arriving_requests(interval_list,chosen_blocks,beginID,passive_typ
     # for metrics record
     total_time_cost=[0]*10# stored by to_node
     total_access_times=[0]*10
-    #debug
     delayed_request=0
-    #end
+    delayed_time_per_request=0
+    #record queue#
+    # print(requests_list)
+    if fwrite:
+        print(json.dumps(requests_list),file=fwrite)
+    
+    ##end##
     for i in range(len(requests_list)):
         from_node=requests_list[i][0]
         to_node=requests_list[i][1]
         get_blk=requests_list[i][2]
         happen_time=requests_list[i][3]
         time_cost=requests_list[i][4]
+        dsrpal.nodes_stored_blocks_popularity[to_node][get_blk][1]+=1
         real_time_cost=time_cost
         if nodes_service_queue[to_node]>happen_time:
             real_time_cost+=(nodes_service_queue[to_node]-happen_time)
             nodes_service_queue[to_node]+=time_cost
             delayed_request+=1
+            delayed_time_per_request+=(nodes_service_queue[to_node]-happen_time)
         else:
             nodes_service_queue[to_node]=happen_time+time_cost
         total_access_times[to_node]+=1
@@ -321,10 +337,11 @@ def request_by_arriving_requests(interval_list,chosen_blocks,beginID,passive_typ
     #debug
     # print('delayed reuqest/total requests:',delayed_request,',',np.sum(np.array(total_access_times)),',ratio:',round(delayed_request/np.sum(np.array(total_access_times))*100,4))
     #end
-    return average_time,storage_per_node,request_time_per_node,passive_type_blocks,round(delayed_request/np.sum(np.array(total_access_times))*100,4)
+    total_access_times_scalar=np.sum(np.array(total_access_times))
+    return average_time,storage_per_node,request_time_per_node,passive_type_blocks,round(delayed_request/total_access_times_scalar*100,4),round(delayed_time_per_request/total_access_times_scalar,6)
 
 
-def request(bid,eid,epoch_interval,choose_distribution,nodes_num,lambdai,passive_type):
+def request(bid,eid,epoch_interval,choose_distribution,nodes_num,lambdai,passive_type,fwrite):
     '''
 
     big request function, including all request modula logic.
@@ -336,7 +353,8 @@ def request(bid,eid,epoch_interval,choose_distribution,nodes_num,lambdai,passive
     # get time intervals
     request_intervals=generate_time_increasment_list(chosen_numbers_total,epoch_interval,lambdai)
     # request
-    average_time,storage_per_node,request_time_per_node,passive_type_blks,_=request_by_arriving_requests(request_intervals,chosen_blocks,bid,passive_type)
+    average_time,storage_per_node,request_time_per_node,passive_type_blks,delay_percentile,delay_per_request=request_by_arriving_requests(
+        request_intervals,chosen_blocks,bid,passive_type,fwrite)
     # print(eid,':',request_time_per_node)
     # print('comm:')
     # for i in range(10):
@@ -346,5 +364,6 @@ def request(bid,eid,epoch_interval,choose_distribution,nodes_num,lambdai,passive
     #     print(dsrpal.communication_cost_ori[i])
     
     # return
-    return average_time,storage_per_node,request_time_per_node,passive_type_blks,chosen_blocks
+    # print(passive_type_blks)
+    return average_time,storage_per_node,request_time_per_node,passive_type_blks,chosen_blocks,delay_percentile,delay_per_request
 
