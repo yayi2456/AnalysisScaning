@@ -9,17 +9,27 @@ import json
 """
 multiple replica algorithms which can be embed into replication process.
 1. replica numbers determining function
-2. static replica algorithm: each blocks have piece*2^level replicas, distributed among all nodes.
-3. initial replica algorithm: a new block have piece*2^level replicas, distributed among all nodes, before dynamic replication.
+2. static replica algorithm: 
+    - level: a new block have piece*2^level replicas, distributed among all nodes, before dynamic replication.
+    - piece: a new block have piece replicas, randomly distributed among all nodes, before dynamic replication.
+    - piecekad: a new block have piece replicas, 
+        distributed in 'piece' nodes which have the top 'piece' hortest distance from blockid
+3. initial replica algorithm: 
+    - level: a new block have piece*2^level replicas, distributed among all nodes, before dynamic replication.
+    - piece: a new block have piece replicas, randomly distributed among all nodes, before dynamic replication.
+    - piecekad: a new block have piece replicas, 
+        distributed in 'piece' nodes which have the top 'piece' hortest distance from blockid
 4. dynaminc algorithms
     1. passive: 
         - random: when requester obtains x blocks reqtesed from other nodes, 
-            it stores int(x/node_num) random blocks locally
+            it stores int(x/lambdai) random blocks locally
         - popularity based: when requester obtains x blocks requested from other nodes,
-            it stores int(x/node_num) most popular blocks locally. 
+            it stores int(x/lambdai) most popular blocks locally. 
             Requester gets popularity of blocks from the node from which it get the block.
         - load based: when requester obtains x blocks requested from other nodes,
-            it stores int(x/node_num) highest-communication-cost blocks. 
+            it stores int(x/lambdai) highest-communication-cost blocks. 
+        - kad：when requester obtains x blocks requested from other nodes, 
+        it stores int(x/lambdai) random blocks into nodes which has shortest distance from these nodes.
     2. active:
         - random: every x epoch, nodes offload 3 most popular blocks to a random neighbour.
         - selective: every x epoch, nodes offload 3 most popular blocks to a select node, 
@@ -68,7 +78,7 @@ nodes_storage_used=[]
 # REPLICA_LIMIT=[.699,.299]
 REPLICA_LIMIT=[5,3]
 
-def static_assign_blocks(piece,period):
+def static_assign_blocks(piece,period,type):
     """(int,int) - list of dict:(int, int), list of dict:(int,int), list of int
 
     Init nodes_storage_used and nodes_stored_blocks_popularity
@@ -76,6 +86,7 @@ def static_assign_blocks(piece,period):
     Select storage node randomly.
     `piece`: how many replicas are stored
     `period`: lifetime of this block
+    `type`: type of static assign alg
 
     Get the static assign result. a list , whose index is blockID-beginID and value is a dict. 
         the dict's key is nodeID and value is timelived.
@@ -156,16 +167,17 @@ def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_
     """(int,list of int,int,str,dict,int,str) - list of dict:(int, int), list of dict:(int,int), list of int
 
     passive algorithms to replicate for 1 node.
-    3 type of passive_type are allowed:'random','popularity','load'.default is'random'.
+    3 type of passive_type are allowed:'random','popularity','load','kad'.default is'random'.
     when passive_type=='random', sort_value_dict can be empty.
     when passive_type=='popularity', sort_value_dict must be the block provider's popularity of chosen blocks.
     when passive_type=='load', sort_value_dict must be the block requester's communication cost of chosen blocks.
-
+    'kad',choose the node which is the nearest to blockID and has not stored this block.
     len(chosen)/nodes_num blocks are stored locally at nodeID. Stored blocks are chosen based on passive_type.
     """
+    global nodes_num
     # if len(chosen_blocks)==0:
     #     print('passive_dynamic_replication_one_node: no chosen blocks. no need to replicate.')
-    if passive_type!='random' and len(sort_value_dict)!=len(chosen_blocks):
+    if (passive_type=='popularity' or passive_type=='load') and len(sort_value_dict)!=len(chosen_blocks):
         print('passive replication: bad sort_value_dict!','sort_value_dict:',len(sort_value_dict),'vs. chosen:',len(chosen_blocks))
     # blocksID that will be stored locally
     all_blocks_replicated=[]
@@ -211,6 +223,16 @@ def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_
         # # get the top blocks_replicated_num
         # for blockID in all_blocks_replicated:
         #     popularity_value.append(popularity_passing_dict[blockID])
+    elif passive_type=='kad':
+        new_random_chosen_blocks=chosen_blocks
+        random.shuffle(new_random_chosen_blocks)
+        i=0
+        for block_ids in new_random_chosen_blocks:
+            if i>=blocks_replicated_num:
+                break
+            if len(blocks_in_which_nodes_and_timelived[block_ids-beginID])<nodes_num:
+                all_blocks_replicated.append(block_ids)
+                i+=1
     else:
         print("invalid passive_type. default('random') is set.")
         exit(-1)
@@ -221,8 +243,17 @@ def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_
     # print('passive blocks stored=',len(all_blocks_replicated))
     #debug end
     # assign and update the 3 big list
-    for i in range(len(all_blocks_replicated)):
-        store_block_to_node(all_blocks_replicated[i],nodeID,period)#,popularity_value[i])
+    if passive_type!='kad':
+        for i in range(len(all_blocks_replicated)):
+            store_block_to_node(all_blocks_replicated[i],nodeID,period)#,popularity_value[i])
+    else:#passive_type=='kad'
+        for i in range(len(all_blocks_replicated)):
+            not_stored_nodes=[]
+            for nid in range(nodes_num):
+                if nid not in blocks_in_which_nodes_and_timelived[all_blocks_replicated[i]-beginID]:
+                    not_stored_nodes.append(nid)
+            kvs=sorted(not_stored_nodes,key=lambda x:x^all_blocks_replicated[i],reverse=False)
+            store_block_to_node(all_blocks_replicated[i],kvs[0],period)
     
     # nothing to return
     return len(all_blocks_replicated)
@@ -775,6 +806,20 @@ def update_communication(chosen_blocks_storage_per_node,chosen_blocks_request_ti
             if chosen_blocks_request_time_per_node[i][j]!=0:
                 communication_cost[i][j]=chosen_blocks_request_time_per_node[i][j]/chosen_blocks_storage_per_node[i][j]
     
+def get_block_from_which_xor(nodeID,blockID):
+    storage_nodes_of_blockID=blocks_in_which_nodes_and_timelived[blockID-beginID].keys()
+    min_distance=np.inf
+    min_node=-1
+    for nodes_store in storage_nodes_of_blockID:
+        this_distance=blockID^nodes_store
+        if this_distance<min_distance:
+            min_distance=this_distance
+            min_node=nodes_store
+    if min_node==-1:
+        print("no block stored now! for blocks:",blockID,',requesting node:',nodeID,',store block nodes:',storage_nodes_of_blockID)
+        exit(-1)
+    time_cost=communication_cost_ori[nodeID][min_node]*blocksizes[beginID-beginID]
+    return min_node,time_cost
 
 
 

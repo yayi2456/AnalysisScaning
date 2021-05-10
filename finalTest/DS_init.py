@@ -78,18 +78,6 @@ def load_blocksizes(beginID,endID):
     return blocksizes,storage_of_all_blocks
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 ### open
 def generate_communication_cost(nodes_num, distribution_type):
     """(int,str) -> list of list of float

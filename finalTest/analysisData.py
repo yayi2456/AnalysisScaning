@@ -37,10 +37,13 @@ def plot_avg():
     # avg_time.append(avgtime)
     distribution='zipf'
     replica_sum=3
-    passive_items=['popularity10','popularity50','popularity60','popularity80','popularity95','popularity96','popularity97','popularity98','popularity99','popularity100']
+    passive_type='kad'
+    passive_items_su=['10','95','96','97','100','150','160','200']
+    passive_items=[passive_type+x for x in passive_items_su]
     active_item='noactive'
     expel_item='curve3'
-    run_times=[100,20,20,12,15,15,15,15,15,15]
+    run_times=[15]*len(passive_items)#[15,10,6,5]
+    run_times[0]=100
     Avg=[]
     b=0
     e=0
@@ -56,7 +59,7 @@ def plot_avg():
     # Avg4l,b,e,s=load_avg_times(distribution,replica_sum,'load40',active_item,expel_item,25)
     # Avg5p,b,e,s=load_avg_times(distribution,replica_sum,'popularity50',active_item,expel_item,20)
     # Avg5l,b,e,s=load_avg_times(distribution,replica_sum,'load50',active_item,expel_item,20)
-    for i in range(6):
+    for i in range(5):#len(passive_items_su)):
         avg_t,b,e,s=load_avg_times(distribution,replica_sum,passive_items[i],active_item,expel_item,run_times[i])
         Avg.append(avg_t)
     
@@ -332,15 +335,17 @@ def load_storage(chosen_block_distribution,piece,passive_item,active_item,expel_
 def plot_storage():
     distribution='zipf'
     replica_sum=3
-    passive_items=['popularity95','popularity96','popularity97','popularity98','popularity99','popularity100']
+    passive_type='kad'
+    passive_items_su=['95','96','97','100','150','160','200']
+    passive_items=[passive_type+x for x in passive_items_su]
     active_item='noactive'
     expel_item='curve3'
     run_times=100
     
     colors = ['blue', 'red', 'green', 'skyblue', 'pink', 'yellow', 'purple', 'black', 'cyan', 'orange','gold','brown','grey','lime']
-    blk,node100,b,e,s,_,node_num_se100=load_storage('zipf',3,'popularity150','noactive',expel_item,1)
+    blk,node100,b,e,s,_,node_num_se100=load_storage('zipf',3,'popularity200','noactive',expel_item,1)
     x_axis=range(b,e,s)
-    str_send=''
+    str_send='['
     len_10=len(node_num_se100[0])-1
     for i in range(len(node_num_se100)):
         # plt.plot(x_axis,node_num_se100[i],color=colors[i],label=str(i))
@@ -468,45 +473,38 @@ def load_delay_info(chosen_block_distribution,piece,passive_item,active_item,exp
 def plot_delay():
     distribution='zipf'
     replica_sum=3
-    passive_item='load10'
+    passive_type='kad'
+    passive_items_su=['95','96','97','100','150','160','200']
+    passive_items=[passive_type+x for x in passive_items_su]
     active_item='noactive'
     expel_item='curve3'
-    run_times=100
+    run_times=[15,15,15,15,15,15,15]
+    dps=[]
+    dts=[]
     
     colors = ['blue', 'red', 'green', 'skyblue', 'pink', 'yellow', 'purple', 'black', 'cyan', 'orange','gold','brown','grey','lime']
-    dp,dt, b01, e01, s01 = load_delay_info(distribution,replica_sum,'popularity98',active_item,expel_item,15)
-    dp2,dt2, b01, e01, s01 = load_delay_info(distribution,replica_sum,'popularity95',active_item,expel_item,15)
-    dp3,dt3, b01, e01, s01 = load_delay_info(distribution,replica_sum,'popularity99',active_item,expel_item,15)
-    dp4,dt4, b01, e01, s01 = load_delay_info(distribution,replica_sum,'popularity100',active_item,expel_item,15)
-    dp5,dt5, b01, e01, s01 = load_delay_info(distribution,replica_sum,'popularity96',active_item,expel_item,15)
-    dp6,dt6, b01, e01, s01 = load_delay_info(distribution,replica_sum,'popularity97',active_item,expel_item,15)
-    dp7,dt7, b01, e01, s01 = load_delay_info(distribution,replica_sum,'popularity150',active_item,expel_item,10)
-    dp8,dt8, b01, e01, s01 = load_delay_info(distribution,replica_sum,'popularity300',active_item,expel_item,4)
+    for i in range(len(passive_items)):
+        dp,dt,b,e,s=load_delay_info(distribution,replica_sum,passive_items[i],active_item,expel_item,run_times[i])
+        dps.append(dp)
+        dts.append(dt)
+    
     # dp5,dt5, b01, e01, s01 = load_delay_info(distribution,replica_sum,'popularity90',active_item,expel_item,20)
 
-    s01=s01*10
-    # plt.plot(range(b01,e01,s01),dp[::s01],color=colors[0],label='98-p')
-    # plt.plot(range(b01,e01,s01),dp2[::s01],color=colors[1],label='95-p')
-    # plt.plot(range(b01,e01,s01),dp3[::s01],color=colors[2],label='99-p')
-    # plt.plot(range(b01,e01,s01),dp4[::s01],color=colors[3],label='100-p')
-    # plt.plot(range(b01,e01,s01),dp5[::s01],color=colors[4],label='96-p')
-    # plt.plot(range(b01,e01,s01),dp6[::s01],color=colors[5],label='97-p')
-    # plt.plot(range(b01,e01,s01),dp7[::s01],color=colors[6],label='150-p')
-    # plt.plot(range(b01,e01,s01),dp8[::s01],color=colors[7],label='300-p')
+    s01=s*10
+    x_axis=range(b,e,s01)
 
-    plt.plot(range(b01,e01,s01),dt[::s01],color=colors[0],label='98-p')
-    plt.plot(range(b01,e01,s01),dt2[::s01],color=colors[1],label='95-p')
-    plt.plot(range(b01,e01,s01),dt3[::s01],color=colors[2],label='99-p')
-    plt.plot(range(b01,e01,s01),dt4[::s01],color=colors[3],label='100-p')
-    plt.plot(range(b01,e01,s01),dt5[::s01],color=colors[4],label='96-p')
-    plt.plot(range(b01,e01,s01),dt6[::s01],color=colors[5],label='97-p')
-    plt.plot(range(b01,e01,s01),dt7[::s01],color=colors[6],label='150-p')
-    plt.plot(range(b01,e01,s01),dt8[::s01],color=colors[7],label='300-p')
+    # for i in range(len(dps)):
+    #     plt.plot(x_axis,dts[i][::s01],color=colors[i],label=passive_items[i])
+    # plt.ylabel('average delay time')
+
+    for i in range(len(dps)):
+        plt.plot(x_axis,dps[i][::s01],color=colors[i],label=passive_items[i])
+    plt.ylabel('delay percentile(%)')
+
 
     plt.title('delay')
     plt.xlabel('epoch')
-    # plt.ylabel('delay percentile(%)')
-    plt.ylabel('average delay time')
+    
     plt.legend()
     plt.show()
 
@@ -523,8 +521,8 @@ if __name__=='__main__':
     # plt.show()
 
     # plot_delay()
-    # plot_avg()
-    plot_storage()
+    plot_avg()
+    # plot_storage()
 
     # plot_storage_end_epoch()
 

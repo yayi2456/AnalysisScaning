@@ -38,7 +38,7 @@ set llu_param_pa=4
 @REM python ./finalTest/RunReplica_zipf.py %distribution_type% %replica_num% random %passive_param% random %active_param% llu %llu_param_pa% %total_run_times%
 @REM python ./finalTest/RunReplica_zipf.py %distribution_type% %replica_num% random %passive_param% calculate %active_param% llu %llu_param_pa% %total_run_times%
 @REM python ./finalTest/RunReplica_zipf.py %distribution_type% %replica_num% popularity %passive_param% random %active_param% llu %llu_param_pa% %total_run_times%
-python ./finalTest/RunReplica_zipf.py %distribution_type% %replica_num% popularity %passive_param% calculate %active_param% llu %llu_param_pa% %total_run_times%
+@REM python ./finalTest/RunReplica_zipf.py %distribution_type% %replica_num% popularity %passive_param% calculate %active_param% llu %llu_param_pa% %total_run_times%
 set llu_param_pa=
 
 rem llu itself. 5 is contained

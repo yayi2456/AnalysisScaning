@@ -30,16 +30,35 @@ def get_to_node_queue(reuqests_list):
         to_node_serve_queue[to_node].append([happen_time,real_end_time])
     return to_node_serve_queue
 
+def each_node_delay_percentile(to_node_serve_queue):
+    total_requests=[len(to_node_serve_queue[i])for i in range(len(to_node_serve_queue))]
+    serve_time_queue=[]
+    delay_requests=[0]*10
+    for i in range(10):
+        serve_time_queue.append(0)
+    for _nid in range(len(to_node_serve_queue)):
+        this_node_serve_queue=to_node_serve_queue[_nid]
+        for request_time in this_node_serve_queue:
+            if request_time[0]<serve_time_queue[_nid]:
+                delay_requests[_nid]+=1
+            serve_time_queue[_nid]=request_time[1]
+    return total_requests,delay_requests
+
+
 if __name__=='__main__':
     fnames=[]
     prefix_file='./finalTest/finalRes/request/REQ-'
-    fnames.append(prefix_file+'zipf-3-popularity150-noactive-curve3-1'+'.txt')
+    # fnames.append(prefix_file+'zipf-3-popularity160-noactive-curve3-1'+'.txt')
+    fnames.append(prefix_file+'zipf-3-kad100-noactive-curve3-15'+'.txt')
     requests_list=get_requests_list(fnames[0])
     to_node_serve_queue=get_to_node_queue(requests_list)
+    total_requests,delay_requests=each_node_delay_percentile(to_node_serve_queue)
+    print('total=',total_requests)
+    print('delay percentile=',[round(delay_requests[i]/total_requests[i],4) for i in range(10)])
     #
-    str_p=''
-    for i in range(10):
-        str_p+=str(len(to_node_serve_queue[i]))+','
-    print(str_p)
+    # str_p=''
+    # for i in range(10):
+    #     str_p+=str(len(to_node_serve_queue[i]))+','
+    # print(str_p)
     # for i in range(10):
     #     print('node:',i,',',to_node_serve_queue[i],'\n')

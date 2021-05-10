@@ -283,7 +283,10 @@ def request_by_arriving_requests(interval_list,chosen_blocks,beginID,passive_typ
         happend_time=0
         for _tid in range(len(interval_list[_nid])):
             happend_time+=interval_list[_nid][_tid]
-            to_node,time_cost=dsrpal.get_blockID_from_which(_nid,chosen_blocks[_nid][_tid])
+            if passive_type!='kad':
+                to_node,time_cost=dsrpal.get_blockID_from_which(_nid,chosen_blocks[_nid][_tid])
+            else:
+                to_node,time_cost=dsrpal.get_block_from_which_xor(_nid,chosen_blocks[_nid][_tid])
             requests_list.append([_nid,int(to_node),int(chosen_blocks[_nid][_tid]),float(happend_time),time_cost])
     # sort the request according to the happend time
     requests_list=sorted(requests_list,key=lambda x:x[3])

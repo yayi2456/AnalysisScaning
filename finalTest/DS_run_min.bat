@@ -195,5 +195,18 @@
 @REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 96 noactive curve 3 15
 @REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 97 noactive curve 3 15
 @REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 100 noactive curve 3 15
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 150 noactive curve 3 15
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 160 noactive curve 3 15
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 200 noactive curve 3 15
+python ./finalTest/DS_CLIENT.py zipf 3 kad 95 noactive curve 3 15
+python ./finalTest/DS_CLIENT.py zipf 3 kad 96 noactive curve 3 15
+python ./finalTest/DS_CLIENT.py zipf 3 kad 97 noactive curve 3 15
+python ./finalTest/DS_CLIENT.py zipf 3 kad 100 noactive curve 3 15
+python ./finalTest/DS_CLIENT.py zipf 3 kad 150 noactive curve 3 15
+python ./finalTest/DS_CLIENT.py zipf 3 kad 160 noactive curve 3 15
+python ./finalTest/DS_CLIENT.py zipf 3 kad 200 noactive curve 3 15
 
-python ./finalTest/DS_CLIENT.py zipf 3 popularity 100 noactive curve 3 1
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 95 noactive curve 3 1
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 100 noactive curve 3 10
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 150 noactive curve 3 1
+@REM python ./finalTest/DS_CLIENT.py zipf 3 popularity 160 noactive curve 3 1
