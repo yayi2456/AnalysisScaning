@@ -47,6 +47,7 @@ CONSTANT_RANK={239: 0, 39: 1, 161: 2, 24: 3, 383: 4, 46: 5, 26: 6, 249: 7, 365: 
  188: 369, 296: 370, 136: 371, 222: 372, 98: 373, 213: 374, 182: 375, 76: 376, 152: 377, 257: 378, 216: 379, 196: 380, 212: 381, 356: 382, 191: 383, 117: 384, 
  124: 385, 65: 386, 232: 387, 74: 388, 218: 389, 312: 390, 122: 391, 165: 392, 179: 393, 119: 394, 114: 395, 253: 396, 44: 397, 263: 398, 319: 399}
 
+
 ### open
 def load_blocksizes(beginID,endID):
     """(int,int) -> (list of float, float)
@@ -129,6 +130,7 @@ def generate_communication_cost(nodes_num, distribution_type):
     # nodes have no communication cost with itself
     for i in range(nodes_num):
         communication_cost[i][i]=0
+    #
     
     return communication_cost
     

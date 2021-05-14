@@ -232,7 +232,7 @@ def plot_distribution_replia_nums_v3(epoch):
     epoch=654400
     replica_nums_1=[0]*(epoch-654000)
     for nodeid in range(node_sum):
-        fname=('D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\debug\\zipf-calculate3-popularity10-curve3-PL-node'+str(nodeid)+'-100.txt')
+        fname=('D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\debug\\zipf-kadvary3-kad10-curve3-PLCLIENT-'+str(nodeid)+'-100.txt')
         # fname=('D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\debug\\calculate3-curve3-popularity-node'+str(nodeid)+'-100.txt')
         # popu_dicts.append({})
         last_time=time.ctime(os.stat(fname).st_mtime)

@@ -69,12 +69,14 @@ def replication_run(get_average_time=True,get_storage_used=False,get_delay_info=
 
     # chosen block type :nipopows
     chosen_block_distribution=sys.argv[1]
+    # sttaic replica method
+    static_rep_type=sys.argv[2]
     # replica nummbers
-    piece=int(sys.argv[2])
+    piece=int(sys.argv[3])
     # passive alg type
-    passive_replicate_type=sys.argv[3]
+    passive_replicate_type=sys.argv[4]
     # next_params
-    next_param_index=4
+    next_param_index=5
     lambdai=10 # default
     #switch on/off replicate
     passive_on=False
@@ -129,7 +131,9 @@ def replication_run(get_average_time=True,get_storage_used=False,get_delay_info=
     # delay percentile
     delay_percentile=[]
     # delay per request
-    delay_per_request=[]
+    delay_time_div_total_time=[]
+    total_access_time=[]
+    total_cost_time=[]
     # blocks size stored by nodes, a list of list of float. key=nodeID,value=blocksize
     block_sizes_stored_by_nodes=[]
     block_nums_stored_by_nodes=[]
@@ -138,15 +142,15 @@ def replication_run(get_average_time=True,get_storage_used=False,get_delay_info=
 
     
     time_string= '['+time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())+']'
-    print(time_string+': running: ',chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times))
+    print(time_string+': running: ',chosen_block_distribution+'-'+static_rep_type+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times))
 
     # filename to store average_time_cost statistical data
     # file_average_time='./finalTest/averageTime-'+chosen_block_distribution+'-'+passive_replicate_type+'.'+str(passive_on)+'-'+active_replicate_type+'.'+str(active_on)+'-'+str(period)+'-'+str(lambdai)+'-'+str(top_num_to_offload)+'.txt'
-    file_average_time='./finalTest/finalRes/A-CLIENT'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
+    file_average_time='./finalTest/finalRes/A-CLIENT'+chosen_block_distribution+'-'+static_rep_type+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
     #file name to store storage used by each node in every runtime
     # file_storage_used='./finalTest/storageUsed-'+chosen_block_distribution+'-'+passive_replicate_type+'.'+str(passive_on)+'-'+active_replicate_type+'.'+str(active_on)+'-'+str(period)+'-'+str(lambdai)+'-'+str(top_num_to_offload)+'.txt'
-    file_storage_used='./finalTest/finalRes/S-CLIENT'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
-    file_delay_info='./finalTest/finalRes/D-CLIENT'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
+    file_storage_used='./finalTest/finalRes/S-CLIENT'+chosen_block_distribution+'-'+static_rep_type+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
+    file_delay_info='./finalTest/finalRes/D-CLIENT'+chosen_block_distribution+'-'+static_rep_type+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
     #open storage used file to write if it's true
     
     ##debug
@@ -158,15 +162,15 @@ def replication_run(get_average_time=True,get_storage_used=False,get_delay_info=
                 open('./finalTest/finalRes/debug/'+str(chosen_block_distribution+'-'+active_item+'-'+passive_item+'-'+expel_item)+'-PLCLIENT-'+str(i)+'-'+str(total_times)+'.txt','w'))
     ### end debug
     #record request list#
-    file_write_request='./finalTest/finalRes/request/REQ-'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
+    file_write_request='./finalTest/finalRes/request/REQ-'+chosen_block_distribution+'-'+static_rep_type+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
     f_write_request=open(file_write_request,'w')
     # end record
     for run_times in range(total_times):
         # store all avg_time in each runtime
         # print('(',run_times+1,'/',total_times,')')
         avg_time.append([])
-        delay_per_request.append([])
-        delay_percentile.append([])
+        # delay_time_div_total_time.append([])
+        # delay_percentile.append([])
         block_sizes_stored_by_nodes_tmp=[]
         block_nums_stored_by_nodes_tmp=[]
 
@@ -176,7 +180,7 @@ def replication_run(get_average_time=True,get_storage_used=False,get_delay_info=
         dsrpal.set_communication_cost()
         
         # statically assign
-        dsrpal.static_assign_blocks(piece,period)
+        dsrpal.static_assign_blocks(piece,period,static_rep_type)
         # dynamic assign
         # active->request->passive->expel
         start_point=dsrpal.beginID+dsrpal.static_blocks
@@ -216,7 +220,7 @@ def replication_run(get_average_time=True,get_storage_used=False,get_delay_info=
             ### end debug
             # init new coming block
             for all_blocks in range(step):
-                dsrpal.initial_assign_block(end_since+all_blocks,piece,period)
+                dsrpal.initial_assign_block(end_since+all_blocks,piece,period,static_rep_type)
                 block_size_add_up+=dsrpal.blocksizes[end_since+all_blocks-start_point]
             # active replicate
             # print('before: system blocks,',np.sum(np.array([len(dsrpal.nodes_stored_blocks_popularity[_nid]) for _nid in range(dsrpal.nodes_num)])))
@@ -232,15 +236,29 @@ def replication_run(get_average_time=True,get_storage_used=False,get_delay_info=
             # print(dsrpal.nodes_stored_blocks_popularity)
             #request
             give_in_writter=None
-            if end_since==dsrpal.endID-1:
-                give_in_writter=f_write_request
-            average_time_i,storage_per_node,request_time_per_node,passive_type_blks,chosen_blocks,delay_p,delay_p_r=dsrequest.request(
+            # if end_since==dsrpal.endID-1:
+            # if run_times==total_times-1:
+            #     give_in_writter=f_write_request
+            average_time_i,storage_per_node,request_time_per_node,passive_type_blks,chosen_blocks,\
+                delay_p,delay_time_dtt,total_a_t,total_t_c=dsrequest.request(
                 dsrpal.beginID,end_since+1,epoch_interval,chosen_block_distribution,dsrpal.nodes_num,lambdai,passive_replicate_type,give_in_writter)
 
             avg_time[run_times].append(average_time_i)
-            if get_delay_info:
-                delay_percentile[run_times].append(delay_p)
-                delay_per_request[run_times].append(delay_p_r)
+            end_since_index=end_since-(dsrpal.beginID+dsrpal.static_blocks)
+            if get_delay_info :
+                if run_times==0:
+                    delay_percentile.append(delay_p)
+                    delay_time_div_total_time.append(delay_time_dtt)
+                    total_access_time.append(total_a_t)
+                    total_cost_time.append(total_t_c)
+                else:
+                    # print('len-delay-per=',len(delay_percentile))
+                    # print('len-inside=',len(delay_percentile[0]))
+                    # print('len-per=',len(delay_p))
+                    delay_percentile[end_since_index]=np.array(delay_percentile[end_since_index])+np.array(delay_p)
+                    delay_time_div_total_time[end_since_index]=np.array(delay_time_div_total_time[end_since_index])+np.array(delay_time_dtt)
+                    total_access_time[end_since_index]=np.array(total_access_time[end_since_index])+np.array(total_a_t)
+                    total_cost_time[end_since_index]=np.array(total_cost_time[end_since_index])+np.array(total_t_c)
 
             # passive_replicate
             if passive_on:
@@ -249,7 +267,9 @@ def replication_run(get_average_time=True,get_storage_used=False,get_delay_info=
 
             # broadcast local popularity
             #block end_since is included.
-            dsrpal.broadcast_popularity_and_get_gobal_popularity(end_since)
+            ################################DO NOT UPDATE GLOBAL POPULARITY###########################################
+            # dsrpal.broadcast_popularity_and_get_gobal_popularity(end_since)
+            ##########################################################################################################
             # if end_since==end_since==dsrpal.endID-1:
             #         for i in range(dsrpal.nodes_num):
             #             # print('node=',i,',',sorted(stored_blocks[i]))
@@ -349,10 +369,17 @@ def replication_run(get_average_time=True,get_storage_used=False,get_delay_info=
     if get_delay_info:
         with open(file_delay_info,'w') as file_write:
             print(dsrpal.beginID+dsrpal.static_blocks,' ',dsrpal.endID,' ',step,file=file_write)
-            delay_p_mean=np.mean(delay_percentile,axis=0)
-            delay_p_r_mean=np.mean(delay_per_request,axis=0)
-            print(json.dumps(delay_p_mean.tolist()),file=file_write)
-            print(json.dumps(delay_p_r_mean.tolist()),file=file_write)
+            delay_percentile=np.array(delay_percentile)/total_times
+            delay_time_div_total_time=np.array(delay_time_div_total_time)/total_times
+            total_access_time=np.array(total_access_time)/total_times
+            total_cost_time=np.array(total_cost_time)/total_times
+
+            # delay_p_mean=np.mean(delay_percentile,axis=0)
+            # delay_p_r_mean=np.mean(delay_time_div_total_time,axis=0)
+            print(json.dumps(delay_percentile.tolist()),file=file_write)
+            print(json.dumps(delay_time_div_total_time.tolist()),file=file_write)
+            print(json.dumps(total_access_time.tolist()),file=file_write)
+            print(json.dumps(total_cost_time.tolist()),file=file_write)
     # close record file
     f_write_request.close()
     #end

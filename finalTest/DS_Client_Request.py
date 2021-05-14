@@ -34,10 +34,10 @@ Pission_Probablity={}
 
 def get_chosen_blocks_numbers(expection,node_num,total_blks):
     '''(int) -> int
-    Return chosen_block numbers this epoch.
+    Return chosen_block numbers in this epoch.
 
     process of choosing blocks are regarded as Pission distirbution.
-    we choose one chosen_block_number according to probability
+    we choose one chosen_block_number according to probability.
 
     Pission distribution:
     P(X=k)=((\lambda^k)/(k!))*e^{-\lambda}, lambda is expection.
@@ -81,7 +81,7 @@ def get_needed_blocks(beginID,endID,distribution_type,chosen_block_nums_all_node
     Return rank_distribution for the next run.
 
     'rank_distribution' is for randomz distribution.
-    We randomly get a distribution of popularity rank ate the first time, if the rank_distribution is [].
+    We randomly get a distribution of popularity rank at the first time, if the rank_distribution is [].
     if len(rank_distribution) is not 0, we choose endID-beginID-len(rank_distribution) random numbers and insert them into rank_distribution,
     all the following rank are increased.
 
@@ -250,14 +250,350 @@ def generate_time_increasment_list(chosen_numbers_all_nodes,epoch_interval,lambd
     # debug
     # print(probability)
     # print(np.sum(probability,axis=1))
-
     # end
     for _nid in range(nodes_num):
         interval_lists.append(np.random.choice(choose_range,size=chosen_numbers_all_nodes[_nid],replace=True,p=probability))
     return interval_lists
 
-
 def request_by_arriving_requests(interval_list,chosen_blocks,beginID,passive_type,fwrite):
+    if passive_type[:7]!='kadvary':
+        return request_by_arriving_requests_not_kad(interval_list,chosen_blocks,beginID,passive_type,fwrite)
+    else:#passive_type==kad
+        return request_by_arriveing_requests_kad_ver2(interval_list,chosen_blocks,beginID,fwrite)
+
+########### do not use this ###################################################
+def request_by_arriveing_requests_kad(interval_list,chosen_blocks,beginID,fwrite,timeup=np.inf):
+    '''
+    request by arriving time, get average access time, 
+    get communication cost and data transamission amounts between each 2 nodes.
+
+    PARAMS:
+    `interval_list` is a list of list, 
+    interval_list[i] stores node i's request arrival increasment time.
+
+    `chosen_blocks` is a list of list, 
+    chosen_blocks[i] stores node i's chosen block, corresponding to the arrival time of requests.
+
+    `beginID` indicates id of begin blocks.
+
+    `passive_type` tells the function which sort_of_dict to record and return.
+
+    `fwrite` is a file pointer to write. the function writes request list into this file.
+
+    `timeup` is the maxinum time that a node wait for response. np.inf is default.
+    '''
+    node_num=len(chosen_blocks)
+    requests_list=[]
+    #get the happend time from increasment time list for each node.
+    # fill in each request: [from_node,request_block,request_time,min_vector],min_vector=[[to_node,time_cost],...]
+    for _nid in range(len(interval_list)):
+        happend_time=0
+        for _tid in range(len(interval_list[_nid])):
+            happend_time+=interval_list[_nid][_tid]
+            min_vector=dsrpal.get_block_from_which_xor(_nid,chosen_blocks[_nid][_tid])
+            requests_list.append([_nid,int(chosen_blocks[_nid][_tid]),float(happend_time),min_vector])
+    # sort the request according to the happend time(request arrived time)
+    requests_list=sorted(requests_list,key=lambda x:x[2])
+    # get the respond time for each request.   
+    # request...
+    nodes_service_queue=[0 for i in range(node_num)]
+    # for communication update
+    storage_per_node=[[0 for i in range(node_num)] for j in range(node_num)]#storage_per_node[from_nde][to_node]
+    request_time_per_node=[[0 for i in range(node_num)] for j in range(node_num)]
+    # for passive replicate : passive_type, just for return here.
+    passive_type_blocks=[{} for i in range(node_num)]
+    # for metrics record
+    total_time_cost=[0]*10# stored by to_node
+    total_access_times=[0]*10
+    total_request=0
+    total_valid_request=len(requests_list)
+    delayed_request=0
+    delayed_time_per_request=0
+    #record queue#
+    # print(requests_list)
+    if fwrite:
+        print(json.dumps(requests_list),file=fwrite)
+    
+    ##end##
+    # request nodes sum:
+    piece=3
+    for i in range(len(requests_list)):
+        from_node=requests_list[i][0]
+        get_blk=requests_list[i][1]
+        happen_time=requests_list[i][2]
+        min_vector=requests_list[i][3]
+        ## process this request
+        to_nodes=[mv_entry[0] for mv_entry in min_vector]
+        real_time_cost=[mv_entry[1] for mv_entry in min_vector]
+        final_serve_node=-1
+        final_time_cost=np.inf
+        # request to the fixed `piece` nodes
+        min_nodes=-1
+        min_time_arrive=np.inf
+        for i in range(piece):
+            real_time_arrive=real_time_cost[i]+happen_time
+            to_node_i=to_nodes[i]
+            if nodes_service_queue[to_node_i]>happen_time:
+                real_time_arrive=(nodes_service_queue[to_node_i])+real_time_cost[i]
+            if real_time_arrive<min_time_arrive:
+                min_time_arrive=real_time_arrive
+                min_nodes=to_node_i
+            total_request+=1
+        # if these request succeed:
+        if min_time_arrive-happen_time<timeup or len(to_nodes)<=piece:
+            final_serve_node=min_nodes
+            final_time_cost=min_time_arrive-happen_time
+            if nodes_service_queue[min_nodes]>happen_time:
+                delayed_request+=1
+                delayed_time_per_request+=(nodes_service_queue[min_nodes]-happen_time)
+            #update node_service queue
+            for i in range(piece):
+                to_node_i=to_nodes[i]
+                if nodes_service_queue[to_node_i]<min_time_arrive:
+                    nodes_service_queue[to_node_i]=min_time_arrive     
+            ###########
+            # print(min_time_arrive)
+            # print('dot1:',nodes_service_queue)
+            # ############# 
+        else:
+            # min_nodes=-1
+            # min_time_arrive=np.inf
+            # minnode应该继承前面的结果
+            tlimit=2*piece
+            if len(to_nodes)<2*piece:
+                tlimit=len(to_nodes)
+            for i in range(piece,tlimit):
+                real_time_arrive=real_time_cost[i]+happen_time+timeup
+                to_node_i=to_nodes[i]
+                if nodes_service_queue[to_node_i]>happen_time+timeup:
+                    real_time_arrive=(nodes_service_queue[to_node_i])+real_time_cost[i]
+                if real_time_arrive<min_time_arrive:
+                    min_time_arrive=real_time_arrive
+                    min_nodes=to_node_i
+                total_request+=1
+            # if these request succeed:
+            if min_time_arrive-happen_time-timeup<timeup or len(to_nodes)<=piece:
+                final_serve_node=min_nodes
+                final_time_cost=min_time_arrive-happen_time
+                if nodes_service_queue[min_nodes]>happen_time:
+                    delayed_request+=1
+                    delayed_time_per_request+=(nodes_service_queue[min_nodes]-happen_time)
+                #update node_service queue
+                for i in range(tlimit):
+                    to_node_i=to_nodes[i]
+                    if nodes_service_queue[to_node_i]<min_time_arrive:
+                        nodes_service_queue[to_node_i]=min_time_arrive
+            else:
+                for i in range(tlimit,len(to_nodes)):
+                    real_time_arrive=real_time_cost[i]+happen_time+2*timeup
+                    to_node_i=to_nodes[i]
+                    if nodes_service_queue[to_node_i]>happen_time+2*timeup:
+                        real_time_arrive=(nodes_service_queue[to_node_i])+real_time_cost[i]
+                    if real_time_arrive<min_time_arrive:
+                        min_time_arrive=real_time_arrive
+                        min_nodes=to_node_i
+                    total_request+=1
+                final_serve_node=min_nodes
+                final_time_cost=min_time_arrive-happen_time
+                if nodes_service_queue[min_nodes]>happen_time:
+                    delayed_request+=1
+                    delayed_time_per_request+=(nodes_service_queue[min_nodes]-happen_time)
+                #update node_service queue
+                for i in range(tlimit):
+                    to_node_i=to_nodes[i]
+                    if nodes_service_queue[to_node_i]<min_time_arrive:
+                        nodes_service_queue[to_node_i]=min_time_arrive
+        #request done
+        # print(dsrpal.nodes_stored_blocks_popularity[final_serve_node].items())
+        # print('final_serve_node:',final_serve_node)
+        # print(dsrpal.blocks_in_which_nodes_and_timelived[get_blk-beginID].items())
+        # print(min_vector)
+        # print(nodes_service_queue)
+        if final_serve_node==-1:
+            if len(dsrpal.blocks_in_which_nodes_and_timelived[get_blk-beginID])==0:
+                print('[FATAL]:[request_by_arriveing_requests_kad]: do not have any serve node!')
+            else:
+                print('[FATAL]:[request_by_arriveing_requests_kad]:something wrong when requesting...')
+            exit(-1)
+        dsrpal.nodes_stored_blocks_popularity[final_serve_node][get_blk][1]+=1
+        total_access_times[final_serve_node]+=1
+        total_time_cost[final_serve_node]+=final_time_cost
+        storage_per_node[from_node][final_serve_node]+=dsrpal.blocksizes[get_blk-beginID]
+        request_time_per_node[from_node][final_serve_node]+=final_time_cost
+    average_time=np.sum(np.array(total_time_cost))/np.sum(np.array(total_access_times))
+    #debug
+    # print('delayed reuqest/total requests:',delayed_request,',',np.sum(np.array(total_access_times)),',ratio:',round(delayed_request/np.sum(np.array(total_access_times))*100,4))
+    #end
+    total_access_times_scalar=np.sum(np.array(total_access_times))
+    return average_time,storage_per_node,request_time_per_node,passive_type_blocks,round(delayed_request/total_access_times_scalar*100,4),round(delayed_time_per_request/total_access_times_scalar,6)
+
+def request_by_arriveing_requests_kad_ver2(interval_list,chosen_blocks,beginID,fwrite,timeup=np.inf):
+    '''
+    request by arriving time, get average access time, 
+    get communication cost and data transamission amounts between each 2 nodes.
+
+    PARAMS:
+    `interval_list` is a list of list, 
+    interval_list[i] stores node i's request arrival increasment time.
+
+    `chosen_blocks` is a list of list, 
+    chosen_blocks[i] stores node i's chosen block, corresponding to the arrival time of requests.
+
+    `beginID` indicates id of begin blocks.
+
+    `passive_type` tells the function which sort_of_dict to record and return.
+
+    `fwrite` is a file pointer to write. the function writes request list into this file.
+
+    `timeup` is the maxinum time that a node wait for response. np.inf is default.
+    '''
+    node_num=len(chosen_blocks)
+    requests_list=[]
+    server_queue=[]
+    # server queue:[_server_node]:[from_node,request_block,arrive_time,time_cost,tag(fist_time_process/second_time_process/third_time_process),request_id]
+    for i in range(node_num):
+        server_queue.append([])
+    # for communication update
+    storage_per_node=[[0 for i in range(node_num)] for j in range(node_num)]#storage_per_node[from_nde][to_node]
+    request_time_per_node=[[0 for i in range(node_num)] for j in range(node_num)]
+    # for passive replicate : passive_type, just for return here.
+    passive_type_blocks=[{} for i in range(node_num)]
+    # for metrics record
+    total_time_cost=[0 for i in range(node_num)]# stored by to_node
+    total_access_times=[0 for i in range(node_num)]
+    delayed_request=[0 for i in range(node_num)]
+    delayed_time_per_request=[0 for i in range(node_num)]
+    #get the happend time from increasment time list for each node.
+    # fill in each request: [from_node,request_block,request_time,min_vector],min_vector=[[to_node,time_cost],...]
+    for _nid in range(len(interval_list)):
+        happend_time=0
+        for _tid in range(len(interval_list[_nid])):
+            happend_time+=interval_list[_nid][_tid]
+            min_vector=dsrpal.get_block_from_which_xor(_nid,chosen_blocks[_nid][_tid])
+            # get from local
+            if min_vector==[[-1,0]]:
+                dsrpal.nodes_stored_blocks_popularity[_nid][chosen_blocks[_nid][_tid]][1]+=1
+                total_access_times[_nid]+=1
+                storage_per_node[_nid][_nid]+=dsrpal.blocksizes[chosen_blocks[_nid][_tid]-beginID]
+            else:
+                requests_list.append([_nid,int(chosen_blocks[_nid][_tid]),float(happend_time),min_vector])#1 represents not be processed yet
+    # sort the request according to the happend time(request arrived time)
+    requests_list=sorted(requests_list,key=lambda x:x[2])
+    # issue these cmsd
+    #注意，因为如果是第一次处理就成功，这个时候第二批第三批cmds应当还没发出，因此在第一批处理成功之后revoke第二批是完全没有影响的。
+    # 同理，第二批处理完成之后revoke第三批也是，
+    # 第二批、第三批处理完成之后revoke前面几批也是可以的，只是需要立即执行下一个命令
+    piece=3
+    for i in range(len(requests_list)):
+        from_node=requests_list[i][0]
+        get_blk=requests_list[i][1]
+        happen_time=requests_list[i][2]
+        min_vector=requests_list[i][3]
+        to_nodes=[mv_entry[0] for mv_entry in min_vector]
+        real_time_cost=[mv_entry[1] for mv_entry in min_vector]
+        for request_i_ in range(piece):
+            server_queue[to_nodes[request_i_]].append([happen_time,real_time_cost[request_i_],1,i,0])
+        xlimit=2*piece
+        if xlimit<len(to_nodes):
+            xlimit=len(to_nodes)
+        for request_i_ in range(piece,xlimit):
+            server_queue[to_nodes[request_i_]].append([happen_time+timeup,real_time_cost[request_i_],2,i,0])
+        for request_i_i in range(xlimit,len(to_nodes)):
+            server_queue[to_nodes[request_i_]].append([happen_time+2*timeup,real_time_cost[request_i_],3,i,0])
+    # get the respond time for each request.   
+    # request...
+    # nodes_service_queue=[0 for i in range(node_num)]
+    
+    #record queue#
+    # print(requests_list)
+    # if fwrite:
+    #     print(json.dumps(requests_list),file=fwrite)
+
+    request_res=[]#[[final_server_node,final_time_cost]]
+    for i in range(len(requests_list)):
+        request_res.append([])
+    
+    node_cur_time=[0 for i in range(node_num)]
+    HPTIME=0
+    TCOST=1
+    RID=3
+    LAST_FINISH_TIME=4
+    while True:   
+        next_complete_time=np.inf
+        next_complete_node=-1
+        next_complete_rid=-1
+        next_happen_time=-1
+        empty_node_count=0
+        for snode in range(node_num):
+            if len(server_queue[snode])==0:
+                empty_node_count+=1
+                continue
+            #已经计算过并且不需要更新
+            if server_queue[snode][0][LAST_FINISH_TIME]!=0:
+                continue
+            if node_cur_time[snode]<=server_queue[snode][0][HPTIME]:#happen_time
+                tmp_finish_time=server_queue[snode][0][HPTIME]+server_queue[snode][0][TCOST]
+            else:
+                tmp_finish_time=node_cur_time[snode]+server_queue[snode][0][TCOST]
+            server_queue[snode][0][LAST_FINISH_TIME]=tmp_finish_time
+            if next_complete_time>tmp_finish_time:
+                next_complete_time=tmp_finish_time
+                next_complete_node=snode
+                next_complete_rid=server_queue[snode][0][RID]
+                next_happen_time=server_queue[snode][0][HPTIME]
+        if empty_node_count==node_num:
+            break
+        # process this cmd, get real_time_cost, server_node and revoke other request with the same RID
+        if request_res[next_complete_rid]!=[]:
+            print('[request_by_arriveing_requests_kad_ver2]: cms update wrong!')
+            exit(-1)
+        request_res[next_complete_rid]=[next_complete_node,next_complete_time-next_happen_time]
+        for sqlength in range(node_num):
+            if sqlength==next_complete_node:
+                node_cur_time[sqlength]=next_complete_time
+                server_queue[sqlength]=server_queue[sqlength][1:]
+                continue
+            for sqindex in range(server_queue[sqlength]):
+                if server_queue[sqlength][sqindex][RID]==next_complete_rid:
+                    if sqindex==0:
+                        #排名最前的cmd要么在执行一部分，要么根本还没开始执行，在当前已完成指令执行的时候在空等。无论是哪一种情况，
+                        # 把需要revoke的命令的直接revoke，并把节点的当前时间设置为当前最靠前的命令执行完成的时间都是没问题的。
+                        # 因为无论是正在执行还是空等，这部分时间都是真切地消耗了的，该节点后面的其他指令不会在这段时间执行。
+                        server_queue[sqlength]=server_queue[sqlength][:sqindex]+server_queue[sqlength][sqindex+1:]
+                        node_cur_time[sqlength]=next_complete_time
+                    else: 
+                        #not processing yet, as this cmd(next_complete_node the 0th cmd) is the first complete cmd.
+                        # other cmds, which is not the 0th cmd of one node, have not been in processing yet
+                        # just revoke them
+                        # 不是排名最前的肯定还没开始执行，这个时候直接delete掉就可以了。
+                        server_queue[sqlength]=server_queue[sqlength][:sqindex]+server_queue[sqlength][sqindex+1:]
+                    #因为每次都只会计算首个的LAST_FINISH_TIME，因此所有LAST_FINISH_TIME为之不是0的都是已经计算过且不需要更新的，
+                    #是0的一定是没计算过，要么是前一个指令被revoke，要么是前一个指令正确完成被revoke
+    # process request_res
+
+    for i in range(len(requests_list)):
+        final_serve_node=request_res[i][0]
+        get_blk=requests_list[i][1]
+        final_time_cost=request_res[i][1]
+        excepted_time_cost=requests_list[i][3][1]
+        delay_time=final_time_cost-excepted_time_cost
+        if delay_time>0:
+            delayed_request[final_serve_node]+=1
+            delayed_time_per_request[final_serve_node]+=delay_time
+        dsrpal.nodes_stored_blocks_popularity[final_serve_node][get_blk][1]+=1
+        total_access_times[final_serve_node]+=1
+        total_time_cost[final_serve_node]+=final_time_cost
+        storage_per_node[from_node][final_serve_node]+=dsrpal.blocksizes[get_blk-beginID]
+        request_time_per_node[from_node][final_serve_node]+=final_time_cost
+    average_time=np.sum(np.array(total_time_cost))/np.sum(np.array(total_access_times))
+    #debug
+    # print('delayed reuqest/total requests:',delayed_request,',',np.sum(np.array(total_access_times)),',ratio:',round(delayed_request/np.sum(np.array(total_access_times))*100,4))
+    #end
+    # total_access_times_scalar=np.sum(np.array(total_access_times))
+    return average_time,storage_per_node,request_time_per_node,passive_type_blocks,delayed_request,delayed_time_per_request,total_access_times,total_time_cost#round(delayed_request/total_access_times_scalar*100,4),round(delayed_time_per_request/total_access_times_scalar,6)
+
+
+def request_by_arriving_requests_not_kad(interval_list,chosen_blocks,beginID,passive_type,fwrite):
     '''
     requesting by time interval, get average accessing time, 
     get communication cost and data transamission amounts between each 2 nodes.
@@ -283,10 +619,7 @@ def request_by_arriving_requests(interval_list,chosen_blocks,beginID,passive_typ
         happend_time=0
         for _tid in range(len(interval_list[_nid])):
             happend_time+=interval_list[_nid][_tid]
-            if passive_type!='kad':
-                to_node,time_cost=dsrpal.get_blockID_from_which(_nid,chosen_blocks[_nid][_tid])
-            else:
-                to_node,time_cost=dsrpal.get_block_from_which_xor(_nid,chosen_blocks[_nid][_tid])
+            to_node,time_cost=dsrpal.get_blockID_from_which(_nid,chosen_blocks[_nid][_tid])
             requests_list.append([_nid,int(to_node),int(chosen_blocks[_nid][_tid]),float(happend_time),time_cost])
     # sort the request according to the happend time
     requests_list=sorted(requests_list,key=lambda x:x[3])
@@ -305,8 +638,8 @@ def request_by_arriving_requests(interval_list,chosen_blocks,beginID,passive_typ
     # for metrics record
     total_time_cost=[0]*10# stored by to_node
     total_access_times=[0]*10
-    delayed_request=0
-    delayed_time_per_request=0
+    delayed_request=[0 for i in range(node_num)]
+    delayed_time_per_request=[0 for i in range(node_num)]
     #record queue#
     # print(requests_list)
     if fwrite:
@@ -324,8 +657,8 @@ def request_by_arriving_requests(interval_list,chosen_blocks,beginID,passive_typ
         if nodes_service_queue[to_node]>happen_time:
             real_time_cost+=(nodes_service_queue[to_node]-happen_time)
             nodes_service_queue[to_node]+=time_cost
-            delayed_request+=1
-            delayed_time_per_request+=(nodes_service_queue[to_node]-happen_time)
+            delayed_request[to_node]+=1
+            delayed_time_per_request[to_node]+=(nodes_service_queue[to_node]-happen_time)
         else:
             nodes_service_queue[to_node]=happen_time+time_cost
         total_access_times[to_node]+=1
@@ -341,7 +674,7 @@ def request_by_arriving_requests(interval_list,chosen_blocks,beginID,passive_typ
     # print('delayed reuqest/total requests:',delayed_request,',',np.sum(np.array(total_access_times)),',ratio:',round(delayed_request/np.sum(np.array(total_access_times))*100,4))
     #end
     total_access_times_scalar=np.sum(np.array(total_access_times))
-    return average_time,storage_per_node,request_time_per_node,passive_type_blocks,round(delayed_request/total_access_times_scalar*100,4),round(delayed_time_per_request/total_access_times_scalar,6)
+    return average_time,storage_per_node,request_time_per_node,passive_type_blocks,delayed_request,delayed_time_per_request,total_access_times,total_time_cost#round(delayed_request/total_access_times_scalar*100,4),round(delayed_time_per_request/total_access_times_scalar,6)
 
 
 def request(bid,eid,epoch_interval,choose_distribution,nodes_num,lambdai,passive_type,fwrite):
@@ -356,7 +689,7 @@ def request(bid,eid,epoch_interval,choose_distribution,nodes_num,lambdai,passive
     # get time intervals
     request_intervals=generate_time_increasment_list(chosen_numbers_total,epoch_interval,lambdai)
     # request
-    average_time,storage_per_node,request_time_per_node,passive_type_blks,delay_percentile,delay_per_request=request_by_arriving_requests(
+    average_time,storage_per_node,request_time_per_node,passive_type_blks,delayed_request,delayed_time_per_request,total_access_times,total_time_cost=request_by_arriving_requests(
         request_intervals,chosen_blocks,bid,passive_type,fwrite)
     # print(eid,':',request_time_per_node)
     # print('comm:')
@@ -368,5 +701,38 @@ def request(bid,eid,epoch_interval,choose_distribution,nodes_num,lambdai,passive
     
     # return
     # print(passive_type_blks)
-    return average_time,storage_per_node,request_time_per_node,passive_type_blks,chosen_blocks,delay_percentile,delay_per_request
+    # print('delay_request=',delayed_request)
+    # print('total-access-time',total_access_times)
+    # print('delay-time-per=',delayed_time_per_request)
+    # print('total_time-cost',total_time_cost)
+    # count=-1
+    # for i in total_access_times:
+    #     count+=1
+    #     if i==0:
+    #         print('0 in total_access_times:count=',count)
+    #         print(np.array([1,1])/np.array([0,1]))
+    #         print('access-times:',total_access_times)
+    #         print('delay-requests=',delayed_request)
+    # count=-1
+    # for j in total_time_cost:
+    #     count+=1
+    #     if j==0:
+    #         print('0 in total-time-cost:count=',count)
+    #         print(np.array([1,1])/np.array([0,1]))
+    #         print('time-cost:',total_time_cost)
+    #         print('delay-time-per=',delayed_time_per_request)
+    # incase 0  be divided:
+    for i in range(len(total_access_times)):
+        if total_access_times[i]==0:
+            if delayed_request[i]!=0:
+                print('[request]:error in delay request!')
+            total_access_times[i]=1
+    for i in range(len(total_time_cost)):
+        if total_time_cost[i]==0:
+            if delayed_time_per_request[i]!=0:
+                print('[request]:error in delay_time-per-request!')
+            total_time_cost[i]=1
+    delay_percentile=np.array(delayed_request)/np.array(total_access_times)
+    delay_time_div_total_time=np.array(delayed_time_per_request)/np.array(total_time_cost)
+    return average_time,storage_per_node,request_time_per_node,passive_type_blks,chosen_blocks,delay_percentile,delay_time_div_total_time,total_access_times,total_time_cost
 

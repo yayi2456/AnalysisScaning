@@ -41,7 +41,57 @@ multiple replica algorithms which can be embed into replication process.
 
 #minium blocks left
 LEFT_BLOCKS=2
-
+# id of nodes, used in distance calculate
+# random.randint(beginID-1,endID+1)
+# NODE_ID=[654285, 654401, 654334, 654392, 654233, 654117, 654245, 654139, 654317, 654046]
+NODE_ID=[36168 ,14987 ,64837 ,14867 , 2348, 46855,  6335, 39719, 59885 ,11132]
+BLOCK_ID=[14927, 60005, 50853, 50561 ,  434 ,52693, 26039 ,29320 ,57903 ,63559 ,34287 , 4859,
+ 43758 ,36160 ,54874, 55817 ,36359 ,16828 , 6253  , 438 ,29003, 35806 , 3204, 46628,
+ 20825  ,8464 ,19967 ,47377, 34195, 29356 ,40653 ,26477 ,16444, 22959, 43538 ,64447,
+ 54841, 16460, 57070, 64532, 25389,  2283  , 951 ,12764  ,1946, 32882, 62371 , 5413,
+  3468 ,39375 ,52292 ,15594 , 8300 ,24973, 63779, 22173, 10192, 62634, 29129, 52106,
+ 42265 ,39634, 48699 ,37057 ,41466 ,46239,  7415, 32633, 14855 ,16124, 44662, 50380,
+ 44849 ,  783 ,50048 , 2971 ,57962 ,53133, 50530,   781, 22039 ,32578,  6252,  5381,
+ 40255 , 9448 ,60071 ,19632 ,37333 ,42086,  4662, 28351,  8623 ,38266, 26987, 44467,
+ 15689, 25408, 55413 , 6389 ,14349 ,43447, 65181, 34288, 58872 ,32139, 55211, 51399,
+ 62673, 63585, 43092 ,17828 ,27107, 51707,  9455, 50633, 59921 ,59325,  3615, 55242,
+ 36483, 62319 ,46487 ,24825 ,13092 ,33536, 14654, 39970, 44800 ,25139, 35799, 35764,
+ 42235, 13595, 47883 ,42993, 61195 ,10334, 52501, 23080, 57778 ,24817, 20067, 37560,
+ 15894, 37703, 36289 , 9487, 63484 ,34574, 12370, 33110, 58887 , 2276, 33741, 20375,
+ 22726, 36109, 58431 ,36966, 30027 ,34188, 16558, 30771, 58971 ,42169, 53660, 21764,
+ 23531, 13822, 58818 ,15049 ,12563 , 3820, 33149, 57798, 46256 ,30308, 42020, 32059,
+ 33004, 56094 ,56407 ,46144 ,57263 ,36546, 15190, 17303, 12507 ,63296, 35922, 18608,
+ 41818 , 1479 , 5893 ,16109 ,42856 ,26418, 21862, 17204, 32274 ,50079,  8234,  8605,
+ 63437, 20492, 27405 ,35648, 64862 ,22610,  6666, 14966, 24610 ,12878, 33442, 62841,
+ 59333,  5337, 37413 ,32124, 18093 ,23439, 27683, 48056, 45186 ,46963, 17851, 63374,
+ 50480 , 1955 ,45356 ,58332 ,46071 ,48657, 39094, 40361, 55781 ,56155, 27514, 40647,
+  1046 ,51459,  2604 ,46114 ,45175 ,35116, 59402, 26657, 39053 , 5623, 24097, 31868,
+  4119, 62466 ,42212 ,25000 ,33622 ,55696,  5160, 37720,   147 ,28285, 33471, 16240,
+ 42617, 17779, 24888 ,51771 ,61572 ,47544, 52212, 61810, 26336 ,45735, 48266,  1576,
+ 52963 ,25860 ,20827 ,23218, 28798 ,47222, 23228, 38965, 51772 ,50415, 11167, 32681,
+ 18081, 12116, 13353, 14196, 31682 ,  776, 45076, 22987, 49925 ,40410, 20870, 23548,
+ 32180 ,30753 ,42328 , 6814 ,35225 ,16858, 50535, 54141, 65059 ,15678, 55682,  7293,
+  7181, 35552 , 7233 , 6606 ,  390 ,25001, 61445, 65372, 49745 ,37825, 34298 ,56730,
+ 53651 ,62380 ,62600 ,35304 ,31748 , 9509, 50715, 50241,  6816 ,13997, 50591 , 8681,
+ 61068, 34923, 25935 , 8125, 12573 ,20240, 45594,  4086, 60415 ,61382, 49239 ,62761,
+ 22975 ,34590 ,20619 ,29072, 12810 ,34023, 40054, 64316, 17066 ,24013,  2041 ,64611,
+ 27444 ,51126, 11478 ,58789 ,65446 ,49131 ,55792, 31036, 55606 ,47583, 19049 , 7933,
+  7470 ,58520 ,12863 ,33915 ,57964 , 6611 ,45210, 14410, 52050 ,25128, 21451, 15334,
+ 45427 ,  890 ,21982 ,46986, 24613 ,50217 ,40303, 50972, 42185 ,54447, 45888,   926,
+ 45890 , 2637 ,12202, 30257]
+######## choose node_id carefully
+# for i in range(10):
+#     NODE_ID.append(random.randint(beginID-1,endID+1))
+# top_3=[]
+# nid_NID={}
+# for i in range(10):
+#     nid_NID[i]=NODE_ID[i]
+# for i in range(endID-beginID):
+#     tmp_id=nid_NID
+#     for j in range(10):
+#         tmp_id[j]=nid_NID[j]^(i+beginID)
+#     tmp_id=sorted(tmp_id.items(),key=lambda x:x[1])[:3]
+#     top_3.append([x[0] for x in tmp_id])
 # blocksizes is the size of all blocks
 blocksizes=[]
 
@@ -85,7 +135,7 @@ def static_assign_blocks(piece,period,type):
     Statically assign blocks from beginID to beginID+static_blocks.
     Select storage node randomly.
     `piece`: how many replicas are stored
-    `period`: lifetime of this block
+    `period`: lifetime of this block, np.inf now
     `type`: type of static assign alg
 
     Get the static assign result. a list , whose index is blockID-beginID and value is a dict. 
@@ -106,21 +156,22 @@ def static_assign_blocks(piece,period,type):
 
     # statically assign each blocks one by one
     for blockID in range(beginID,beginID+static_blocks):
-        assign_one_block(blockID,piece,period)#,[0,0])
+        assign_one_block(blockID,piece,period,type)#,[0,0])
     
     # nothing to return
     return
 
-def assign_one_block(blockID,piece,period):#,popularity_epoch_list):
+def assign_one_block(blockID,piece,period,type):#,popularity_epoch_list):
     """(int,int,int,list of float) - list of dict:(int, int), list of dict:(int,int), list of int
 
-    assign block `blockID` to `piece` nodes , whose lifetime is `period` and popularity list is `popularity_epoch_list`.
+    assign block `blockID` to `piece` nodes , whose lifetime is `np.inf` and popularity list is `popularity_epoch_list`.
     popularity_epoch_list: [.,.]
     this function is only used in initial assign of new coming block and static assign blocks.
 
     Select storage node randomly.
     `piece`: how many replicas are stored
     `period`: lifetime of this block
+    `type`: type of initial&static replica method
 
     Get the one block assign result. a list, whose index is blockID-beginID and value is a dict.
         the dict's key is nodeID and value is timelived.
@@ -134,9 +185,15 @@ def assign_one_block(blockID,piece,period):#,popularity_epoch_list):
     if replica_numbers>nodes_num:
         replica_numbers=nodes_num
     # get time lived
-    time_lived=period
+    time_lived=np.inf
     # sample random nodes
-    nodes_store_replicas=random.sample(range(0,nodes_num),replica_numbers)
+    if type=='piecekad':
+        nodes_store_replicas=sorted(range(0,nodes_num),key=lambda x:NODE_ID[x]^BLOCK_ID[blockID-beginID],reverse=False)[:replica_numbers]
+    elif type=='piece':
+        nodes_store_replicas=random.sample(range(0,nodes_num),replica_numbers)
+    else:
+        print('[assign_one_block]:invalid assign type! type=',type,'piece is default!')
+        nodes_store_replicas=random.sample(range(0,nodes_num),replica_numbers)
     ###debug
     # print('blockID=',blockID,', replica nodes=',nodes_store_replicas)
     ###
@@ -154,14 +211,15 @@ def assign_one_block(blockID,piece,period):#,popularity_epoch_list):
     # nothing tpo return
     return
 
-def initial_assign_block(blockID,piece,period):
+def initial_assign_block(blockID,piece,period,type):
     """(int,int,int) - list of dict:(int, int), list of dict:(int,int), list of int
 
     Assign the new coming block `blockID` to random `piece` nodes, whose lifetime is `period`.
+    `type`: type of initial&static replica method
     we assign the popularity_epoch_list to [0,0].
     This function is used to assign new coming blocks.
     """
-    assign_one_block(blockID,piece,period)#,[0,0])
+    assign_one_block(blockID,piece,period,type)#,[0,0])
 
 def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_value_dict,period,lambdai):#,popularity_passing_dict):
     """(int,list of int,int,str,dict,int,str) - list of dict:(int, int), list of dict:(int,int), list of int
@@ -252,7 +310,7 @@ def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_
             for nid in range(nodes_num):
                 if nid not in blocks_in_which_nodes_and_timelived[all_blocks_replicated[i]-beginID]:
                     not_stored_nodes.append(nid)
-            kvs=sorted(not_stored_nodes,key=lambda x:x^all_blocks_replicated[i],reverse=False)
+            kvs=sorted(not_stored_nodes,key=lambda x:NODE_ID[x]^BLOCK_ID[all_blocks_replicated[i]-beginID],reverse=False)
             store_block_to_node(all_blocks_replicated[i],kvs[0],period)
     
     # nothing to return
@@ -267,6 +325,8 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
     2 type of active_type are allowed.
     'random': randomly offload top_num_to_offload most popular blocks to 1 node
     'calculate': choose the best nodes which can maxmize the reduction of communication cost
+    `calvary`: replicate replicas into nodes according to it's popularity
+    `kadvary`: replicate replicas into nodes according to it's popularity and distance from blockID.
     'random' is default.
     """
 
@@ -277,12 +337,12 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
     # print(nodes_stored_blocks_popularity[nodeID])
     # get the top_num_to_offload most popular blocks
     
-    kvs=sorted(nodes_stored_blocks_popularity[nodeID].items(),key=lambda x:x[1][0]+x[1][1],reverse=True)
+    blocks_to_be_offload_ori_kvs=sorted(nodes_stored_blocks_popularity[nodeID].items(),key=lambda x:x[1][0]+x[1][1],reverse=True)
     
     # kvs=kvs[:top_num_to_offload]
     blocks_to_be_offload=[]#blockID[0] for blockID in kvs]
     off_load_num=0
-    for b2p in kvs:
+    for b2p in blocks_to_be_offload_ori_kvs:
         if off_load_num>=top_num_to_offload:
             break
         if len(blocks_in_which_nodes_and_timelived[b2p[0]-beginID])<nodes_num:
@@ -604,6 +664,27 @@ def active_dynamic_replication_one_node(nodeID,top_num_to_offload,active_type,pe
                 store_block_to_node(blockID,max_improve_node[i],period)#,popularity_passing_dict[blockID])
                 stored_blocks[max_improve_node[i]]=blockID
         return [],len(blocks_to_be_offload),stored_blocks
+    elif active_type=='kadvary':
+        stored_blocks={}
+        replicas_base=1
+        replicas_add=1
+        thres=[8,5,2,0]
+        thres_r=[replicas_base+2*replicas_base,replicas_base+replicas_base,replicas_base,0]
+        for blocks_i in blocks_to_be_offload:
+            store_nodes_tmp=[]
+            for thres_i in range(len(thres)):
+                if nodes_stored_blocks_popularity[nodeID][blocks_i][1]>=thres[thres_i]:
+                    # store into maxinum thres_r[thres_i] nodes
+                    replica_nums_thisnode=thres_r[thres_i]
+                    for _nid in range(0,nodes_num):
+                        if _nid not in blocks_in_which_nodes_and_timelived[blocks_i-beginID]:
+                            store_nodes_tmp.append([_nid,NODE_ID[_nid]^BLOCK_ID[blocks_i-beginID]])
+                    store_nodes_tmp=sorted(store_nodes_tmp,key=lambda x:x[1],reverse=False)[:replica_nums_thisnode]
+                    break
+            for store_blk_nodes in store_nodes_tmp:
+                store_block_to_node(blocks_i,store_blk_nodes[0],period)
+                stored_blocks[store_blk_nodes[0]]=blocks_i
+        return [],len(blocks_to_be_offload),stored_blocks
     else:
         print("invalid active type! default('random') is set.")
         node_to_be_offload=random.randint(0,nodes_num-1)
@@ -631,7 +712,8 @@ def store_block_to_node(blockID,nodeID,period):#,popularity_value):
     # update the storage used
     if nodeID not in blocks_in_which_nodes_and_timelived[blockID-beginID]:
         nodes_storage_used[nodeID]+=blocksizes[blockID-beginID]
-    # update lifetime
+    # update lifetime, this function shall be called when nodeID not in blocks_in_which_nodes_and_timelived[blockID-beginID]
+    # if blocks_in_which_nodes_and_timelived[blockID-beginID][nodeID]!=np.inf:
     blocks_in_which_nodes_and_timelived[blockID-beginID][nodeID]=time_lived
     # update popularity
     # popularity is inherent from giving node
@@ -807,19 +889,23 @@ def update_communication(chosen_blocks_storage_per_node,chosen_blocks_request_ti
                 communication_cost[i][j]=chosen_blocks_request_time_per_node[i][j]/chosen_blocks_storage_per_node[i][j]
     
 def get_block_from_which_xor(nodeID,blockID):
+    '''(int,int) --> (list of list of int)
+
+    return all avaliable nodes info: [[nid,time_cost],..]. entries in the list are sorted with large distance ahead.
+    '''
     storage_nodes_of_blockID=blocks_in_which_nodes_and_timelived[blockID-beginID].keys()
-    min_distance=np.inf
-    min_node=-1
-    for nodes_store in storage_nodes_of_blockID:
-        this_distance=blockID^nodes_store
-        if this_distance<min_distance:
-            min_distance=this_distance
-            min_node=nodes_store
-    if min_node==-1:
+    if(nodeID in blocks_in_which_nodes_and_timelived[blockID-beginID]):
+        return [[-1,0]]
+    if len(storage_nodes_of_blockID)<=0:
         print("no block stored now! for blocks:",blockID,',requesting node:',nodeID,',store block nodes:',storage_nodes_of_blockID)
         exit(-1)
-    time_cost=communication_cost_ori[nodeID][min_node]*blocksizes[beginID-beginID]
-    return min_node,time_cost
+    min_vector=[]#[[nodeid,distance,time_cost],[nodeid,distance,time_cost],...]
+    for nodes_store in storage_nodes_of_blockID:
+        this_distance=NODE_ID[blockID]^BLOCK_ID[nodes_store-beginID]
+        time_cost=communication_cost_ori[nodeID][nodes_store]*blocksizes[blockID-beginID]
+        min_vector.append([nodes_store,this_distance,time_cost])
+    min_vector=sorted(min_vector,key=lambda x:x[1],reverse=True)
+    return [[mv[0],mv[2]] for mv in min_vector]
 
 
 
@@ -846,7 +932,7 @@ def get_blockID_from_which(nodeID,blockID):
         print(communication_cost)
         exit(-1)
     # get time cost
-    time_cost=communication_cost_ori[nodeID][min_node]*blocksizes[beginID-beginID]
+    time_cost=communication_cost_ori[nodeID][min_node]*blocksizes[blockID-beginID]
     # time_cost=min_communication*blocksizes[beginID-beginID]
     # return min_node and time cost   
     return min_node, time_cost

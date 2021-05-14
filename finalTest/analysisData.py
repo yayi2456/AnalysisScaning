@@ -6,9 +6,9 @@ import time
 import os
 import popularity_analysis
 
-def load_avg_times(chosen_block_distribution,piece,passive_item,active_item,expel_item,total_times):
+def load_avg_times(chosen_block_distribution,static_type,piece,passive_item,active_item,expel_item,total_times):
     # file_average_time='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\averageTime-'+chosen_block_distribution+'-'+passive_replicate_type+'.'+str(passive_on)+'-'+active_replicate_type+'.'+str(active_on)+'-'+str(period)+'-'+str(lambdai)+'-'+str(top_num_to_offload)+'.txt'
-    file_average_time='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\A-CLIENT'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
+    file_average_time='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\A-CLIENT'+chosen_block_distribution+'-'+static_type+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
     last_time=time.ctime(os.stat(file_average_time).st_mtime)
     print('file modify time: ',last_time,', file: ',file_average_time)
     avg_time=[]
@@ -36,14 +36,15 @@ def plot_avg():
     # avgtime,_,_,_=load_avg_times(chosen_block_distribution,passive_replicate_type,passive_on,active_replicate_type,active_on,np.inf,lambdai,top_num_to_offload)
     # avg_time.append(avgtime)
     distribution='zipf'
+    static_type='piecekad'
     replica_sum=3
     passive_type='kad'
-    passive_items_su=['10','95','96','97','100','150','160','200']
+    passive_items_su=['10','20','40','60','95','96']#,'97','100','150']#,'160','200']#,'20','40','60','95'
     passive_items=[passive_type+x for x in passive_items_su]
     active_item='noactive'
     expel_item='curve3'
     run_times=[15]*len(passive_items)#[15,10,6,5]
-    run_times[0]=100
+    # run_times[0]=100
     Avg=[]
     b=0
     e=0
@@ -59,8 +60,8 @@ def plot_avg():
     # Avg4l,b,e,s=load_avg_times(distribution,replica_sum,'load40',active_item,expel_item,25)
     # Avg5p,b,e,s=load_avg_times(distribution,replica_sum,'popularity50',active_item,expel_item,20)
     # Avg5l,b,e,s=load_avg_times(distribution,replica_sum,'load50',active_item,expel_item,20)
-    for i in range(5):#len(passive_items_su)):
-        avg_t,b,e,s=load_avg_times(distribution,replica_sum,passive_items[i],active_item,expel_item,run_times[i])
+    for i in range(len(passive_items_su)):
+        avg_t,b,e,s=load_avg_times(distribution,static_type,replica_sum,passive_items[i],active_item,expel_item,run_times[i])
         Avg.append(avg_t)
     
     b_x=0
@@ -297,8 +298,8 @@ def plot_avg():
     # plt.ylim(ymin=0,ymax=5)
     plt.show()
 
-def load_storage(chosen_block_distribution,piece,passive_item,active_item,expel_item,total_times):
-    file_storage_used='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\S-CLIENT'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
+def load_storage(chosen_block_distribution,static_type,piece,passive_item,active_item,expel_item,total_times):
+    file_storage_used='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\S-CLIENT'+chosen_block_distribution+'-'+static_type+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
     NodesSizeAll =[] 
     BlockSize=[]
     NodeSize_se=[]
@@ -334,23 +335,28 @@ def load_storage(chosen_block_distribution,piece,passive_item,active_item,expel_
 
 def plot_storage():
     distribution='zipf'
+    static_type='piecekad'
     replica_sum=3
     passive_type='kad'
-    passive_items_su=['95','96','97','100','150','160','200']
+    passive_items_su=['10','20','40','60','95','96','97','100','150','155','160','200']
     passive_items=[passive_type+x for x in passive_items_su]
-    active_item='noactive'
+    active_item='kadvary3'
     expel_item='curve3'
-    run_times=100
+    run_times=15
     
     colors = ['blue', 'red', 'green', 'skyblue', 'pink', 'yellow', 'purple', 'black', 'cyan', 'orange','gold','brown','grey','lime']
-    blk,node100,b,e,s,_,node_num_se100=load_storage('zipf',3,'popularity200','noactive',expel_item,1)
+
+    blk,node100,b,e,s,eachnode100,node_num_se100=load_storage('zipf',static_type,3,'kad100','kadvary3',expel_item,15)
     x_axis=range(b,e,s)
     str_send='['
     len_10=len(node_num_se100[0])-1
     for i in range(len(node_num_se100)):
         # plt.plot(x_axis,node_num_se100[i],color=colors[i],label=str(i))
         str_send+=str(node_num_se100[i][len_10])+','
-    print(str_send)
+    print(str_send,']')
+    print('blk=',blk)
+    print('np.sum(node100,axis=0)=',np.sum(node100,axis=0))
+    print('node100/blk=',sum(node100)/sum(blk))
     plt.title('storage per node')
 
     # blk4,node4, b02, e02, s02,_,nn4 = load_storage(distribution,replica_sum,'popularity10','calculate3',expel_item,run_times)
@@ -408,9 +414,9 @@ def plot_storage():
 
     # # plt.plot(range(b01, e01, s01),np.array(NodeSize04),color='gold',label='SUM-block')
     # # plt.plot(range(b01, e01, s01),np.array(Blocksize01),color='brown',label='SUM')
-    
+    plt.plot(range(b, e, s),np.array(node100)/np.array(blk),color=colors[0])#,label=str(i))
     # for i in range(10):
-    #     plt.plot(range(b02, e02, s02),np.array(each_node_block[i])/np.array(blk4),color=colors[i],label=str(i))
+    #     plt.plot(range(b, e, s),np.array(eachnode100[i])/np.array(blk),color=colors[i],label=str(i))
     # plt.plot(range(b01, e01, s01),np.array(NodeSize04)/np.array(Blocksize01),color=colors[2],label='llu4')
     # plt.plot(range(b01, e01, s01),np.array(NodeSize05)/np.array(Blocksize01),color=colors[3],label='llu5')
     # # # plt.plot(range(b01, e01, s01),np.array(NodeSize05r)/np.array(Blocksize01),color=colors[4],label='5r')
@@ -448,10 +454,12 @@ def plot_storage():
     #         line2+=','+str(blk4[line_index])+','+str(node4[line_index])
     #         print(line2,file=file_in)
 
-def load_delay_info(chosen_block_distribution,piece,passive_item,active_item,expel_item,total_times):
-    file_name='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\D-CLIENT'+chosen_block_distribution+'-'+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
+def load_delay_info(chosen_block_distribution,static_type,piece,passive_item,active_item,expel_item,total_times):
+    file_name='D:\\Languages\\PythonSpace\\AnalysisSanning\\finalTest\\finalRes\\D-CLIENT'+chosen_block_distribution+'-'+static_type+str(piece)+'-'+passive_item+'-'+active_item+'-'+expel_item+'-'+str(total_times)+'.txt'
     delay_percentile=[]
-    delay_time=[]
+    delay_time_div_total_time=[]
+    total_access_time=[]
+    total_cost_time=[]
     last_time=time.ctime(os.stat(file_name).st_mtime)
     print('file modify time: ',last_time,', file: ',file_name)
     with open(file_name, 'r') as datafile:
@@ -465,41 +473,71 @@ def load_delay_info(chosen_block_distribution,piece,passive_item,active_item,exp
             elif i==1:
                 delay_percentile=json.loads(dataline)
             elif i==2:
-                delay_time=json.loads(dataline)
+                delay_time_div_total_time=json.loads(dataline)
+            elif i==3:
+                total_access_time=json.loads(dataline)
+            elif i==4:
+                total_cost_time=json.loads(dataline)
             i+=1
-    return delay_percentile,delay_time,begin,ends,step
+    return delay_percentile,delay_time_div_total_time,total_access_time,total_cost_time,begin,ends,step
 
 
 def plot_delay():
     distribution='zipf'
+    static_type='piecekad'
     replica_sum=3
     passive_type='kad'
-    passive_items_su=['95','96','97','100','150','160','200']
+    passive_items_su=['10','20','40','60','95','96','97','100','150','155','160','200']
     passive_items=[passive_type+x for x in passive_items_su]
-    active_item='noactive'
+    active_item='kadvary3'
     expel_item='curve3'
-    run_times=[15,15,15,15,15,15,15]
+    run_times=[15]*len(passive_items_su)
     dps=[]
     dts=[]
-    
+    tas=[]
+    tcs=[]
     colors = ['blue', 'red', 'green', 'skyblue', 'pink', 'yellow', 'purple', 'black', 'cyan', 'orange','gold','brown','grey','lime']
-    for i in range(len(passive_items)):
-        dp,dt,b,e,s=load_delay_info(distribution,replica_sum,passive_items[i],active_item,expel_item,run_times[i])
-        dps.append(dp)
-        dts.append(dt)
+    # for i in range(len(passive_items)):
+    #     dp,dt,ta,tc,b,e,s=load_delay_info(distribution,static_type,replica_sum,passive_items[i],active_item,expel_item,run_times[i])
+    #     dps.append(dp)
+    #     dts.append(dt)
+    #     tas.append(ta)
+    #     tcs.append(tc)
     
-    # dp5,dt5, b01, e01, s01 = load_delay_info(distribution,replica_sum,'popularity90',active_item,expel_item,20)
+    # # dp5,dt5, b01, e01, s01 = load_delay_info(distribution,replica_sum,'popularity90',active_item,expel_item,20)
 
-    s01=s*10
-    x_axis=range(b,e,s01)
+    # s01=s*10
+    # x_axis=range(b,e,s01)
 
     # for i in range(len(dps)):
     #     plt.plot(x_axis,dts[i][::s01],color=colors[i],label=passive_items[i])
     # plt.ylabel('average delay time')
-
-    for i in range(len(dps)):
-        plt.plot(x_axis,dps[i][::s01],color=colors[i],label=passive_items[i])
-    plt.ylabel('delay percentile(%)')
+    #不区分节点
+    # print((dps[0][0]))
+    # for i in range(len(dps)):
+    #     dps_isum=[sum(tcs[i][j]) for j in range(len(dps[i]))]
+    #     plt.plot(x_axis,dps_isum[::s01],color=colors[i],label=passive_items[i])
+    # # plt.ylabel('delay percentile(%)')
+    # # plt.ylabel('delay time percent(%):total delay time/total cost time')
+    # # plt.ylabel('total requests')
+    # plt.ylabel('total cost time')
+    #####################################
+    dp,dt,ta,tc,b,e,s=load_delay_info(distribution,static_type,replica_sum,'kad60',active_item,expel_item,15)
+    step=10
+    for i in range(10):
+        yaxisdp=[]
+        yaxisdt=[]
+        yaxista=[]
+        yaxistc=[]
+        for j in range(len(dp)):
+            yaxisdp.append(dp[j][i])
+            yaxisdt.append(dt[j][i])
+            yaxista.append(ta[j][i])
+            yaxistc.append(tc[j][i])
+        # plt.plot(range(b,e,step),np.array(yaxisdp[::step])*np.array(yaxista[::step]),color=colors[i],label=str(i))
+    plt.bar(range(0,10),np.mean(ta,axis=0),color='blue',label='total requests')
+    plt.bar(range(0,10),np.mean(dp,axis=0)*np.mean(ta,axis=0),color='red',label='delay requets')
+    plt.ylabel('averag total requests of each node')
 
 
     plt.title('delay')
@@ -520,8 +558,8 @@ if __name__=='__main__':
     # plt.legend()
     # plt.show()
 
-    # plot_delay()
-    plot_avg()
+    plot_delay()
+    # plot_avg()
     # plot_storage()
 
     # plot_storage_end_epoch()

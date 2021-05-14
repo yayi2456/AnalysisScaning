@@ -44,17 +44,30 @@ def each_node_delay_percentile(to_node_serve_queue):
             serve_time_queue[_nid]=request_time[1]
     return total_requests,delay_requests
 
-
-if __name__=='__main__':
+def print_delay_info():
     fnames=[]
     prefix_file='./finalTest/finalRes/request/REQ-'
+    static_type=''
     # fnames.append(prefix_file+'zipf-3-popularity160-noactive-curve3-1'+'.txt')
-    fnames.append(prefix_file+'zipf-3-kad100-noactive-curve3-15'+'.txt')
-    requests_list=get_requests_list(fnames[0])
-    to_node_serve_queue=get_to_node_queue(requests_list)
-    total_requests,delay_requests=each_node_delay_percentile(to_node_serve_queue)
-    print('total=',total_requests)
-    print('delay percentile=',[round(delay_requests[i]/total_requests[i],4) for i in range(10)])
+    passive_='popularity'
+    passive_num=[10,20,40,60,95,96,97,100,150,155,160,200]#'kad95','kad96','kad97','kad100','kad150','kad160','kad200']
+    passive_type=[passive_+str(pn) for pn in passive_num]
+    active_type='calculate3'
+    for ptype in passive_type:
+        fnames.append(prefix_file+'zipf-'+static_type+'3-'+ptype+'-'+active_type+'-curve3-15'+'.txt')
+    for fname_i in fnames:
+        print(fname_i[len(prefix_file):])
+        requests_list=get_requests_list(fname_i)
+        to_node_serve_queue=get_to_node_queue(requests_list)
+        total_requests,delay_requests=each_node_delay_percentile(to_node_serve_queue)
+        
+        print('total requests=\n',total_requests)
+        print('delay percentile(delay requests/total requests)=\n',[round(delay_requests[i]/total_requests[i],4) for i in range(10)])
+        print()
+
+if __name__=='__main__':
+    print_delay_info()
+    
     #
     # str_p=''
     # for i in range(10):
