@@ -128,6 +128,13 @@ nodes_storage_used=[]
 # REPLICA_LIMIT=[.699,.299]
 REPLICA_LIMIT=[5,3]
 
+# store the is index of each block
+master_node=[]
+
+# liast of dict of (int(blockID),int(accessed epochid)), 
+# each block is stored in his master node dict.
+block_last_access_epochid=[]
+
 def static_assign_blocks(piece,period,type):
     """(int,int) - list of dict:(int, int), list of dict:(int,int), list of int
 
@@ -148,11 +155,15 @@ def static_assign_blocks(piece,period,type):
     """
     # init node_storage_used
     global nodes_storage_used
+    global block_last_access_epochid
+    global LEFT_BLOCKS
+    LEFT_BLOCKS=piece
     nodes_storage_used=[0]*nodes_num
 
     #init nodes_stored_blocks_popularity
     for i in range(nodes_num):
         nodes_stored_blocks_popularity.append({})
+        block_last_access_epochid.append({})
 
     # statically assign each blocks one by one
     for blockID in range(beginID,beginID+static_blocks):
@@ -179,6 +190,17 @@ def assign_one_block(blockID,piece,period,type):#,popularity_epoch_list):
         the dict's key is blockID and value is popularity.
     Get the storage of each nodes. a list, whose index is nodeID and value is the node's storage used.
     """
+    # calculate the master node id
+    global master_node
+    min_nodeid=-1
+    min_distance=np.inf
+    for node_id in range(nodes_num):
+        this_distance=NODE_ID[node_id]^BLOCK_ID[blockID-beginID]
+        if this_distance<min_distance:
+            min_distance=this_distance
+            min_nodeid=node_id
+    master_node.append(min_nodeid)
+    block_last_access_epochid[min_nodeid][blockID]=blockID-beginID
     
     # get replica numbers
     replica_numbers=piece
@@ -235,7 +257,7 @@ def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_
     global nodes_num
     # if len(chosen_blocks)==0:
     #     print('passive_dynamic_replication_one_node: no chosen blocks. no need to replicate.')
-    if (passive_type=='popularity' or passive_type=='load') and len(sort_value_dict)!=len(chosen_blocks):
+    if (passive_type=='popularity' or passive_type=='load' or passive_type=='load_kad' or passive_type=='pop_kad') and len(sort_value_dict)!=len(chosen_blocks):
         print('passive replication: bad sort_value_dict!','sort_value_dict:',len(sort_value_dict),'vs. chosen:',len(chosen_blocks))
     # blocksID that will be stored locally
     all_blocks_replicated=[]
@@ -261,7 +283,7 @@ def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_
         # if len(all_blocks_replicated)<blocks_replicated_num:
         #     print('passive replication: expected numbers:,',blocks_replicated_num,',actual numbers,',len(all_blocks_replicated))
         # popularity_value=[popularity_passing_dict[chosen_blocks[i]] for i in all_blocks_num]
-    elif passive_type=='load' or passive_type=='popularity':
+    elif passive_type=='load' or passive_type=='popularity' or passive_type=='pop_kad' or passive_type=='load_kad':
         # sort the dict by value value. reversed sort.
         kvs=sorted(sort_value_dict.items(),key=lambda x:x[1],reverse=True)
         chosen_kvs=[]
@@ -301,7 +323,7 @@ def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_
     # print('passive blocks stored=',len(all_blocks_replicated))
     #debug end
     # assign and update the 3 big list
-    if passive_type!='kad':
+    if len(passive_type)<3 or passive_type[len(passive_type)-3:]!='kad':
         for i in range(len(all_blocks_replicated)):
             store_block_to_node(all_blocks_replicated[i],nodeID,period)#,popularity_value[i])
     else:#passive_type=='kad'
@@ -751,13 +773,92 @@ def update_livetime_and_expel(end_since,epochs,fp):
                 # update popularity
                 nodes_stored_blocks_popularity[nodeID].pop(blockID)
                 # update storage_used
-                if nodeID in blocks_in_which_nodes_and_timelived[blockID-beginID]:
-                    nodes_storage_used[nodeID]-=blocksizes[blockID-beginID]
+                # if nodeID in blocks_in_which_nodes_and_timelived[blockID-beginID]:
+                nodes_storage_used[nodeID]-=blocksizes[blockID-beginID]
                 # update time_lived
                 blocks_in_which_nodes_and_timelived[blockID-beginID].pop(nodeID)
                 delete_blocks_debug[nodeID].append(blockID)
     # nothing to return
     return delete_blocks_debug
+
+def scan_for_encode(end_since,encode_epoch_limit,batch_size,encode_piece_count,beginID,time_to_expel):
+    #debug info
+    # node_delete=0
+    # node_add=0
+    # storage_delete=0
+    # storage_add=0
+    #end
+    for nodeid in range(nodes_num):
+        last_access_dict=block_last_access_epochid[nodeid]
+        kvs=sorted(last_access_dict.items(),key=lambda x:x[1])
+        if len(kvs)>=batch_size and kvs[batch_size-1][1]<=end_since-encode_epoch_limit:
+            # start encode
+            encode_block_id=[kvs[i][0] for i in range(batch_size)]
+            involved_nodes=set()
+            for blockID in encode_block_id:
+                for stored_id in blocks_in_which_nodes_and_timelived[blockID-beginID].keys():
+                    involved_nodes.add(stored_id)
+            involved_nodes.discard(nodeid)
+            # get data piece set and encode piece set
+            corresponding_nodeid=[]
+            if len(involved_nodes)==batch_size:
+                corresponding_nodeid=list(involved_nodes)
+            elif len(involved_nodes)<batch_size:
+                corresponding_nodeid=list(involved_nodes)
+                involved_nodes_list=list(involved_nodes)
+                for i in range(batch_size-len(involved_nodes)):
+                    corresponding_nodeid.append(involved_nodes_list[random.randint(0,len(involved_nodes)-1)])
+            else:
+                corresponding_nodeid=np.random.choice(involved_nodes,size=batch_size,replace=False).tolist()
+            encode_nodeid=[]
+            for i in range(nodes_num):
+                if not i in corresponding_nodeid:
+                    encode_nodeid.append(i)
+            # assign and update
+            blocksize_sum=0
+            for block_id in range(len(encode_block_id)):
+                
+                blockID=encode_block_id[block_id]
+                # marked as nencodeed
+                block_last_access_epochid[master_node[blockID-beginID]][blockID]=np.inf
+                for nodeID in blocks_in_which_nodes_and_timelived[blockID-beginID]:
+                    # update popularity
+                    nodes_stored_blocks_popularity[nodeID].pop(blockID)
+                    # update storage_used
+                    nodes_storage_used[nodeID]-=blocksizes[blockID-beginID]
+                    ##
+                    # storage_delete+=blocksizes[blockID-beginID]
+                    # node_delete+=1
+                    ##
+                    # update time_lived
+                blocks_in_which_nodes_and_timelived[blockID-beginID].clear()
+                new_node=corresponding_nodeid[block_id]
+                ##
+                # node_add+=1
+                ##
+                blocks_in_which_nodes_and_timelived[blockID-beginID][new_node]=time_to_expel
+                nodes_stored_blocks_popularity[new_node][blockID]=[0,0]
+                nodes_storage_used[new_node]+=blocksizes[blockID-beginID]
+                ##
+                # storage_add+=blocksizes[blockID-beginID]
+                ##
+                blocksize_sum+=blocksizes[blockID-beginID]
+            blocksize_avg=blocksize_sum/batch_size
+            # encode piece assign
+            for i in range(encode_piece_count):
+                this_node=encode_nodeid[random.randint(0,len(encode_nodeid)-1)]
+                nodes_storage_used[this_node]+=blocksize_avg
+                ##
+                # storage_add+=blocksize_avg
+                ##
+    ##debug info print
+    # print("at epoch=",end_since)
+    # print('node_add=',node_add)
+    # print('node_delete=',node_delete)
+    # print("storage_add",storage_add)
+    # print("storage_delete",storage_delete,'\n')
+
+
 
 def expel_blocks_LLU(last_num_to_expel,end_since,fp):
     '''
@@ -901,7 +1002,7 @@ def get_block_from_which_xor(nodeID,blockID):
         exit(-1)
     min_vector=[]#[[nodeid,distance,time_cost],[nodeid,distance,time_cost],...]
     for nodes_store in storage_nodes_of_blockID:
-        this_distance=NODE_ID[blockID]^BLOCK_ID[nodes_store-beginID]
+        this_distance=NODE_ID[nodes_store]^BLOCK_ID[blockID-beginID]
         time_cost=communication_cost_ori[nodeID][nodes_store]*blocksizes[blockID-beginID]
         min_vector.append([nodes_store,this_distance,time_cost])
     min_vector=sorted(min_vector,key=lambda x:x[1],reverse=True)
@@ -1006,6 +1107,9 @@ def set_communication_cost():
         0.11826715, 2.28277831, 0.37742129, 1.38527299, 0.95568288]]
     for i in range(nodes_num):
         communication_cost_ori[i][i]=0
+    
+    communication_cost=np.array(communication_cost)/5
+    communication_cost_ori=np.array(communication_cost_ori)/5
 
 
 

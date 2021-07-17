@@ -130,7 +130,8 @@ def generate_communication_cost(nodes_num, distribution_type):
     # nodes have no communication cost with itself
     for i in range(nodes_num):
         communication_cost[i][i]=0
-    #
+    # lower communication cost by 5 times
+    communication_cost=np.array(communication_cost)/5
     
     return communication_cost
     

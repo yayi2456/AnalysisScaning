@@ -114,6 +114,13 @@ avg_comm=[1.076801667, 0.8593266470000002, 0.946050746, 0.89489131, 0.9736247579
 avgcomm=[1.08, 0.86, 0.95, 0.89, 0.97, 1.08, 1.13, 0.76, 0.99, 1.0]
 xper=[0.1, 0.11, 0.08, 0.11, 0.08, 0.12, 0.08, 0.11, 0.08, 0.13]
 
+granularity=100# granularity of time
+epoch_interval=600
+probability=[0]*granularity
+happend_times=2*lambdai+int(1/2*lambdai)
+one_interval=epoch_interval/happend_times# get a approximate time range for time increasment list.
+one_step=one_interval/granularity
+
 plt.bar(range(0,10),np.array(xper)*10,color='black',label='10*xper')
 plt.bar(range(0,10),np.array(avgcomm),color='pink',label='avgcomm')
 plt.show()
