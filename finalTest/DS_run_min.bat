@@ -256,7 +256,7 @@
 @REM python ./finalTest/DS_CLIENT.py zipf piece 3 popularity 160 noactive curve 3 1
 
 @rem 0704只有初始散步
-@REM python ./finalTest/DS_CLIENT.py zipf piecekad 2 nopassive 10 noactive curve 3   100  noencode
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 nopassive 10 noactive curve 3   100  noencode
 @REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 nopassive 20 noactive curve 3   50  noencode
 @REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 nopassive 50 noactive curve 3   20  noencode
 @REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 nopassive 100 noactive curve 3   10 noencode
@@ -275,8 +275,37 @@
 
 @rem 0704 encoded
 @REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 pop_kad 10 kadvary  3 curve 3   100 2  encode 4 2 6
-python ./finalTest/DS_CLIENT.py zipf piecekad 3 pop_kad 20 kadvary  3 curve 3   50 2  encode 4 2 6
-python ./finalTest/DS_CLIENT.py zipf piecekad 3 pop_kad 50 kadvary  3 curve 3   20 2  encode 4 2 6
-python ./finalTest/DS_CLIENT.py zipf piecekad 3 pop_kad 100 kadvary 3 curve 3   10 2 encode 4 2 6
-python ./finalTest/DS_CLIENT.py zipf piecekad 3 pop_kad 200 kadvary 3 curve 3   5 2 encode 4 2 6
-python ./finalTest/DS_CLIENT.py zipf piecekad 3 pop_kad 300 kadvary 3 curve 3   4 2 encode 4 2 6
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 pop_kad 20 kadvary  3 curve 3   50 2  encode 4 2 6
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 pop_kad 50 kadvary  3 curve 3   20 2  encode 4 2 6
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 pop_kad 100 kadvary 3 curve 3   10 2 encode 4 2 6
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 pop_kad 200 kadvary 3 curve 3   5 2 encode 4 2 6
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 pop_kad 300 kadvary 3 curve 3   4 2 encode 4 2 6
+
+@rem 0717只有初始散步
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 nopassive 10 noactive curve 3   100  noencode
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 nopassive 20 noactive curve 3   50  noencode
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 nopassive 50 noactive curve 3   20  noencode
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 nopassive 300 noactive curve 3   4  noencode
+
+@rem 0717 popkad
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 pop_kad 10 kadvary  3 curve 3   100 0  noencode
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 pop_kad 20 kadvary  3 curve 3   50 0  noencode
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 pop_kad 50 kadvary  3 curve 3   20 0  noencode
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 load_kad 10 kadvary  3 curve 3   100 0  noencode
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 load_kad 20 kadvary  3 curve 3   50 0  noencode
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 load_kad 50 kadvary  3 curve 3   20 0  noencode
+python ./finalTest/DS_CLIENT.py zipf piecekad 3 kad 10 kadvary  3 curve 3   100 0  noencode
+python ./finalTest/DS_CLIENT.py zipf piecekad 3 kad 20 kadvary  3 curve 3   50 0  noencode
+python ./finalTest/DS_CLIENT.py zipf piecekad 3 kad 50 kadvary  3 curve 3   20 0  noencode
+
+
+@rem 0717 encoded
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 pop_kad 10 kadvary  3 curve 3   100 0  encode 4 2 6
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 pop_kad 20 kadvary  3 curve 3   50 0  encode 4 2 6
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 pop_kad 50 kadvary  3 curve 3   20 0  encode 4 2 6
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 load_kad 10 kadvary  3 curve 3   100 0  encode 4 2 6
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 load_kad 20 kadvary  3 curve 3   50 0  encode 4 2 6
+@REM python ./finalTest/DS_CLIENT.py zipf piecekad 3 load_kad 50 kadvary  3 curve 3   20 0  encode 4 2 6
+python ./finalTest/DS_CLIENT.py zipf piecekad 3 kad 10 kadvary  3 curve 3   100 0  encode 4 2 6
+python ./finalTest/DS_CLIENT.py zipf piecekad 3 kad 20 kadvary  3 curve 3   50 0  encode 4 2 6
+python ./finalTest/DS_CLIENT.py zipf piecekad 3 kad 50 kadvary  3 curve 3   20 0  encode 4 2 6

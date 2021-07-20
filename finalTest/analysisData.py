@@ -507,6 +507,11 @@ def load_delay_info(chosen_block_distribution,static_type,piece,passive_item,act
     total_access_time=[]
     total_cost_time=[]
     requests_tag=[]
+    last_delay_percentile=[]
+    last_delay_time_div_total_time=[]
+    last_total_access_time=[]
+    last_total_cost_time=[]
+    last_requests_tag=[]
     last_time=time.ctime(os.stat(file_name).st_mtime)
     print('file modify time: ',last_time,', file: ',file_name)
     with open(file_name, 'r') as datafile:
@@ -527,10 +532,20 @@ def load_delay_info(chosen_block_distribution,static_type,piece,passive_item,act
                 total_cost_time=json.loads(dataline)
             elif i==5:
                 requests_tag=json.loads(dataline)
+            elif i==6:
+                last_delay_percentile=json.loads(dataline)
+            elif i==7:
+                last_delay_time_div_total_time=json.loads(dataline)
+            elif i==8:
+                last_total_access_time=json.loads(dataline)
+            elif i==9:
+                last_total_cost_time=json.loads(dataline)
+            elif i==10:
+                last_requests_tag=json.loads(dataline)
             i+=1
-    print(delay_percentile)
+    # print(delay_percentile)
     # print(delay_time_div_total_time)
-    return delay_percentile,delay_time_div_total_time,total_access_time,total_cost_time,requests_tag,begin,ends,step
+    return delay_percentile,delay_time_div_total_time,total_access_time,total_cost_time,requests_tag,begin,ends,step,last_delay_percentile,last_delay_time_div_total_time,last_total_access_time,last_total_cost_time,last_requests_tag
 
 
 def plot_delay():
@@ -575,7 +590,7 @@ def plot_delay():
     # # plt.ylabel('total requests')
     # plt.ylabel('total cost time')
     #####################################
-    dp,dt,ta,tc,rt,b,e,s=load_delay_info(distribution,static_type,replica_sum,'pop_kad300',active_item,expel_item,4,2.0,encode_type)
+    dp,dt,ta,tc,rt,b,e,s,ldp,ldt,lta,ltc,lrt=load_delay_info(distribution,static_type,replica_sum,'pop_kad300',active_item,expel_item,4,2.0,encode_type)
     step=10
     for i in range(10):
         yaxisdp=[]
@@ -615,16 +630,16 @@ def plot_delay():
     plt.show()
 
 
-def _3_exp_time(lambdai):
+def _3_exp_time(lambdai,timeout):
     distribution='zipf'
     static_type='piecekad'
     replica_sum=3
-    passive_type=['nopassive','pop_kad','pop_kad']
+    passive_type=['nopassive','kad','kad']
     passive_item_su=str(lambdai)
     passive_items=[x+passive_item_su for x in passive_type]
     active_item=['noactive','kadvary3','kadvary3']
     expel_item='curve3'
-    timeup=[np.inf,float(2),float(2)]
+    timeup=[np.inf,float(timeout),float(timeout)]
     if(lambdai==10):
         run_times=100
     elif(lambdai==20):
@@ -647,7 +662,7 @@ def _3_exp_time(lambdai):
         label_items.append(static_type+str(replica_sum)+'-'+passive_items[i]+'-'+active_item[i]+'-'+expel_item+'-'+encode_type[i]+'-'+str(np.mean(avg_t)))
     b_x=0
     e_x=len(Avg[0])
-    s=5
+    s=1
     xaxis=range(0,e_x,s)
     count=0
     for avg in Avg:
@@ -655,22 +670,30 @@ def _3_exp_time(lambdai):
         plt.plot(xaxis, yaxis, color=colors[count], label=label_items[count])#passive_items[i]+'-'+j)
         count+=1
         plt.legend()
+    ##
+    with open('time_kad_'+str(lambdai)+'-'+str(timeout)+'.txt','w')as f:
+        print('x '+label_items[0]+' '+label_items[1]+' '+label_items[2],file=f)
+        for i in range(len(xaxis)):
+            line1=str(xaxis[i])+' '+str(Avg[0][i])+' '+str(Avg[1][i])+' '+str(Avg[2][i])
+            print(line1,file=f)
+    ##
     plt.xlabel('blocks')
     plt.ylabel('avg time')
     plt.title(distribution)
     # plt.ylim(ymin=0,ymax=5)
     plt.show()
+
     
-def _3_exp_storage(lambdai):
+def _3_exp_storage(lambdai,timeout):
     distribution='zipf'
     static_type='piecekad'
     replica_sum=3
-    passive_type=['nopassive','pop_kad','pop_kad']
+    passive_type=['nopassive','kad','kad']
     passive_item_su=str(lambdai)
     passive_items=[x+passive_item_su for x in passive_type]
     active_item=['noactive','kadvary3','kadvary3']
     expel_item='curve3'
-    timeup=[np.inf,float(2),float(2)]
+    timeup=[np.inf,float(timeout),float(timeout)]
     if(lambdai==10):
         run_times=100
     elif(lambdai==20):
@@ -694,29 +717,37 @@ def _3_exp_storage(lambdai):
         label_items.append(static_type+str(replica_sum)+'-'+passive_items[i]+'-'+active_item[i]+'-'+expel_item+'-'+encode_type[i]+'-'+str(np.mean(all_div_blk_per)))
     b_x=0
     e_x=len(all_div_blk[0])
-    s=5
+    s=1
     xaxis=range(0,e_x,s)
     count=0
     for avg in all_div_blk:
         yaxis=avg[::s]
         plt.plot(xaxis, yaxis, color=colors[count], label=label_items[count])
         count+=1
+    ##
+    with open('store_kad_'+str(lambdai)+'-'+str(timeout)+'.txt','w')as f:
+        print('x '+label_items[0]+' '+label_items[1]+' '+label_items[2],file=f)
+        for i in range(len(xaxis)):
+            line1=str(xaxis[i])+' '+str(all_div_blk[0][i])+' '+str(all_div_blk[1][i])+' '+str(all_div_blk[2][i])
+            print(line1,file=f)
+    ##
+
     plt.legend()
     plt.xlabel('blocks')
     plt.title('total storage / one blokchcain')
     # plt.ylim(ymin=0,ymax=5)
     plt.show()
 
-def _3_exp_delay(lambdai):
+def _3_exp_delay(lambdai,timeout):
     distribution='zipf'
     static_type='piecekad'
     replica_sum=3
-    passive_type=['nopassive','pop_kad','pop_kad']
+    passive_type=['nopassive','kad','kad']
     passive_item_su=str(lambdai)
     passive_items=[x+passive_item_su for x in passive_type]
     active_item=['noactive','kadvary3','kadvary3']
     expel_item='curve3'
-    timeup=[np.inf,float(2),float(2)]
+    timeup=[np.inf,float(timeout),float(timeout)]
     if(lambdai==10):
         run_times=100
     elif(lambdai==20):
@@ -731,37 +762,38 @@ def _3_exp_delay(lambdai):
         run_times=4
     encode_type=['noencode','noencode',"encode4-2-6"]
     colors = ['blue', 'red', 'green', 'skyblue', 'pink', 'yellow', 'purple', 'black', 'cyan', 'orange','lime','grey']
+    label_items=[]
+    dpy=[]
+    tay=[]
     for i in range(3):
         plt.subplot(220+i+1)
-        dp,dt,ta,tc,rt,b,e,s=load_delay_info(distribution,static_type,replica_sum,passive_items[i],active_item[i],expel_item,run_times,timeup[i],encode_type[i])
+        dp,dt,ta,tc,rt,b,e,s,ldp,ldt,lta,ltc,lrt=load_delay_info(distribution,static_type,replica_sum,passive_items[i],active_item[i],expel_item,run_times,timeup[i],encode_type[i])
         step=10
-        for ik in range(10):
-            yaxisdp=[]
-            yaxisdt=[]
-            yaxista=[]
-            yaxistc=[]
-            yaxisrt=[]
-            for j in range(len(dp)):
-                yaxisdp.append(dp[j][ik])
-                yaxisdt.append(dt[j][ik])
-                yaxista.append(ta[j][ik])
-                yaxistc.append(tc[j][ik])
-                yaxisrt.append(rt[j][ik])
-            # plt.plot(range(b,e,step),np.array(yaxisdt[::step])*np.array(yaxistc[::step])/np.array(yaxista[::step]),color=colors[i],label=str(i))
-            # plt.plot(range(b,e,step),np.array(yaxista[::step]),color=colors[i],label=str(i))
-        plt.bar(range(0,10),np.mean(ta,axis=0),color='blue',label='total requests')
-        plt.bar(range(0,10),np.mean(dp,axis=0)*np.mean(ta,axis=0),color='red',label='delay requets')
-        print(i)
-        label=static_type+str(replica_sum)+'-'+passive_items[i]+'-'+active_item[i]+'-'+expel_item+'-'+encode_type[i]+'-'+str(round(np.mean(np.mean(dp,axis=0)),6))
+        # plt.bar(range(0,10),np.mean(tc,axis=0),color='blue',label='total requests')
+        plt.bar(range(0,10),(ta[len(ta)-1]),color='blue',label='total requests in last epoch')
+        # print(i)
+        label=static_type+str(replica_sum)+'-'+passive_items[i]+'-'+active_item[i]+'-'+expel_item+'-'+encode_type[i]+'-'+str(round(np.std(ta[len(ta)-1]),4))
+        label_items.append(label)
         plt.title(label)
+        dpy.append(np.mean(dp,axis=0))
+        tay.append(np.mean(ta,axis=0))
     plt.show()
+        ##
+    with open('delay_kad_'+str(lambdai)+'-'+str(timeout)+'.txt','w')as f:
+        print('x '+label_items[0]+' '+'delay_percentile '+label_items[1]+' '+'delay_percentile '+label_items[2]+''+'delay_percentile ',file=f)
+        for i in range(10):
+            line1=str(i)+' '+str(tay[0][i])+' '+str(dpy[0][i])+' '+str(tay[1][i])+' '+str(dpy[1][i])+' '+str(tay[2][i])+' '+str(dpy[2][i])
+            print(line1,file=f)
+    ##
     
 
 
 if __name__=='__main__':
-    # _3_exp_time(300)
-    # _3_exp_storage(200)
-    _3_exp_delay(10)
+    lambdai=10
+    time_out=0
+    _3_exp_time(lambdai,time_out)
+    _3_exp_storage(lambdai,time_out)
+    _3_exp_delay(lambdai,time_out)
     # Avgtime04nn, b02, e02, s02 = load_avg_times('zipf',3,'nopassive','noactive','noexpel',100)
     # Avgtime04r, b02, e02, s02 = load_avg_times('zipfr',3,'nopassive','noactive','noexpel',100)
     # plt.figure()

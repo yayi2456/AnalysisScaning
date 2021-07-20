@@ -150,11 +150,16 @@ def replication_run(get_average_time=True,get_storage_used=False,get_delay_info=
     avg_time=[]
     # delay percentile
     delay_percentile=[]
+    last_delay_percentile=[]
     # delay per request
     delay_time_div_total_time=[]
     total_access_time=[]
     total_cost_time=[]
     request_tags=[]
+    last_delay_time_div_total_time=[]
+    last_total_access_time=[]
+    last_total_cost_time=[]
+    last_request_tags=[]
     # blocks size stored by nodes, a list of list of float. key=nodeID,value=blocksize
     block_sizes_stored_by_nodes=[]
     block_nums_stored_by_nodes=[]
@@ -274,6 +279,12 @@ def replication_run(get_average_time=True,get_storage_used=False,get_delay_info=
                     total_access_time.append(total_a_t)
                     total_cost_time.append(total_t_c)
                     request_tags.append(rq_tag)
+                    if end_since==dsrpal.endID-1:
+                        last_delay_percentile.append(delay_p)
+                        last_delay_time_div_total_time.append(delay_time_dtt)
+                        last_total_access_time.append(total_a_t)
+                        last_total_cost_time.append(total_t_c)
+                        last_request_tags.append(rq_tag)
                 else:
                     # print('len-delay-per=',len(delay_percentile))
                     # print('len-inside=',len(delay_percentile[0]))
@@ -283,7 +294,12 @@ def replication_run(get_average_time=True,get_storage_used=False,get_delay_info=
                     total_access_time[end_since_index]=np.array(total_access_time[end_since_index])+np.array(total_a_t)
                     total_cost_time[end_since_index]=np.array(total_cost_time[end_since_index])+np.array(total_t_c)
                     request_tags[end_since_index]=np.array(request_tags[end_since_index])+np.array(rq_tag)
-
+                    if end_since==dsrpal.endID-1:
+                        last_delay_percentile=np.array(delay_percentile)+np.array(delay_p)
+                        last_delay_time_div_total_time=np.array(delay_time_div_total_time)+np.array(delay_time_dtt)
+                        last_total_access_time=np.array(total_access_time)+np.array(total_a_t)
+                        last_total_cost_time=np.array(total_cost_time)+np.array(total_t_c)
+                        last_request_tags=np.array(request_tags)+np.array(rq_tag)
             # passive_replicate
             if passive_on:
                 store_actually_all=replicate_passivly(chosen_blocks,passive_replicate_type,passive_type_blks,period,lambdai)
@@ -402,6 +418,11 @@ def replication_run(get_average_time=True,get_storage_used=False,get_delay_info=
             total_access_time=np.array(total_access_time)/total_times
             total_cost_time=np.array(total_cost_time)/total_times
             request_tags=np.array(request_tags)/total_times
+            last_delay_percentile=np.array(delay_percentile)/total_times
+            last_delay_time_div_total_time=np.array(delay_time_div_total_time)/total_times
+            last_total_access_time=np.array(total_access_time)/total_times
+            last_total_cost_time=np.array(total_cost_time)/total_times
+            last_request_tags=np.array(request_tags)/total_times
             # delay_p_mean=np.mean(delay_percentile,axis=0)
             # delay_p_r_mean=np.mean(delay_time_div_total_time,axis=0)
             print(json.dumps(delay_percentile.tolist()),file=file_write)
@@ -409,6 +430,11 @@ def replication_run(get_average_time=True,get_storage_used=False,get_delay_info=
             print(json.dumps(total_access_time.tolist()),file=file_write)
             print(json.dumps(total_cost_time.tolist()),file=file_write)
             print(json.dumps(request_tags.tolist()),file=file_write)
+            print(json.dumps(last_delay_percentile.tolist()),file=file_write)
+            print(json.dumps(last_delay_time_div_total_time.tolist()),file=file_write)
+            print(json.dumps(last_total_access_time.tolist()),file=file_write)
+            print(json.dumps(last_total_cost_time.tolist()),file=file_write)
+            print(json.dumps(last_request_tags.tolist()),file=file_write)
     # close record file
     f_write_request.close()
     #end

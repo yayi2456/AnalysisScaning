@@ -285,6 +285,7 @@ def passive_dynamic_replication_one_node(chosen_blocks,nodeID,passive_type,sort_
         # popularity_value=[popularity_passing_dict[chosen_blocks[i]] for i in all_blocks_num]
     elif passive_type=='load' or passive_type=='popularity' or passive_type=='pop_kad' or passive_type=='load_kad':
         # sort the dict by value value. reversed sort.
+        # print(sort_value_dict)
         kvs=sorted(sort_value_dict.items(),key=lambda x:x[1],reverse=True)
         chosen_kvs=[]
         i=0
