@@ -309,3 +309,5 @@ python ./finalTest/DS_CLIENT.py zipf piecekad 3 kad 50 kadvary  3 curve 3   20 0
 python ./finalTest/DS_CLIENT.py zipf piecekad 3 kad 10 kadvary  3 curve 3   100 0  encode 4 2 6
 python ./finalTest/DS_CLIENT.py zipf piecekad 3 kad 20 kadvary  3 curve 3   50 0  encode 4 2 6
 python ./finalTest/DS_CLIENT.py zipf piecekad 3 kad 50 kadvary  3 curve 3   20 0  encode 4 2 6
+python ./finalTest/DS_CLIENT.py zipf bft 2 kad 10 kadvary  3 curve 3   20 0  encode 4 2 6
+python ./finalTest/DS_CLIENT.py zipf bft 2 kad 20 kadvary  3 curve 3   20 0  encode 4 2 6
